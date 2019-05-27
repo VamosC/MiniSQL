@@ -15,7 +15,7 @@ using namespace std;
 //一个数据的类型以及数据的存放
 //sdata的长度为 1~255 
 struct Data{
-	int type;				//-1 - int; 0 - float; 1 - string
+	int type;				//1 - int; 0 - float; 2 - string
 	int idata;
 	float fdata;
 	string sdata;

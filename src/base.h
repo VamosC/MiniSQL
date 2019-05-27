@@ -11,9 +11,9 @@
 using namespace std;
 
 
-//Êı¾İ 
-//Ò»¸öÊı¾İµÄÀàĞÍÒÔ¼°Êı¾İµÄ´æ·Å
-//sdataµÄ³¤¶ÈÎª 1~255 
+//æ•°æ® 
+//ä¸€ä¸ªæ•°æ®çš„ç±»å‹ä»¥åŠæ•°æ®çš„å­˜æ”¾
+//sdataçš„é•¿åº¦ä¸º 1~255 
 struct Data{
 	int type;				//-1 - int; 0 - float; 1 - string
 	int idata;
@@ -22,27 +22,26 @@ struct Data{
 };
 
 
-//ÊôĞÔ 
-//ÊıÁ¿¡¢ÊôĞÔÃû¡¢ÀàĞÍ¡¢ÊÇ·ñÎ¨Ò»¡¢ÊÇ·ñ´æÔÚË÷Òı¡¢Ö÷Âë
-//×î¶à´æ·Å30¸öÊôĞÔ 
+//å±æ€§ 
+//æ•°é‡ã€å±æ€§åã€ç±»å‹ã€æ˜¯å¦å”¯ä¸€ã€æ˜¯å¦å­˜åœ¨ç´¢å¼•ã€ä¸»ç 
+//æœ€å¤šå­˜æ”¾30ä¸ªå±æ€§ 
 struct Attribute{
 	int amount;
 	string attr_name[30];
-	int attr_type[30];		//-1 - int; 0 - float; 1 - string
+	int attr_type[30];		//1 - int; 0 - float; 2 - string
 	bool is_unique[30];
-	bool is_hasindex[30];
-	int primary_key;		//Ö÷ÂëµÄĞòºÅ 
+	int primary_key;		//ä¸»ç çš„åºå· 
 };
 
 
-//Ôª×é
+//å…ƒç»„
 class Tuple{
 private:
 	vector<Data> data;
 public:
 	Tuple(){};
 	
-	//¿½±´º¯Êı 
+	//æ‹·è´å‡½æ•° 
 	Tuple(Tuple &copytuple)
 	{
 		std::vector<Data>::iterator it;
@@ -54,8 +53,8 @@ public:
 	}
 	
 	
-	//ÊäÈëÔª×é
-	//³õ²½ÉèÏëÊÇÔÚinsert²Ù×÷Ê±°´Ë³ĞòÒ»¸öÒ»¸ö°Ñdataµ¼½øÀ´ 
+	//è¾“å…¥å…ƒç»„
+	//åˆæ­¥è®¾æƒ³æ˜¯åœ¨insertæ“ä½œæ—¶æŒ‰é¡ºåºä¸€ä¸ªä¸€ä¸ªæŠŠdataå¯¼è¿›æ¥ 
 	void Inputdata( Data &td )
 	{
 		struct Data tmp = td;
@@ -63,8 +62,8 @@ public:
 	}
 	
 	
-	//´òÓ¡Ò»¸öÔª×æµÄÊı¾İ
-	//°´Ë³ĞòÊä³ö£¬ÖĞ¼äµÄ¼ä¸ô»¹Ğèµ÷Õû 
+	//æ‰“å°ä¸€ä¸ªå…ƒç¥–çš„æ•°æ®
+	//æŒ‰é¡ºåºè¾“å‡ºï¼Œä¸­é—´çš„é—´éš”è¿˜éœ€è°ƒæ•´ 
 	void Printdata()
 	{
 		std::vector<Data>::iterator it;
@@ -82,16 +81,16 @@ public:
 }; 
 
 
-//Ë÷Òı
-//Ò»ÕÅ±í×î¶àÓĞ10¸öË÷Òı 
+//ç´¢å¼•
+//ä¸€å¼ è¡¨æœ€å¤šæœ‰10ä¸ªç´¢å¼• 
 struct Index{
 	int amount;
 	string name[10]; 
-	int whose[10];			//Ë÷Òı¼´¶ÔÓ¦µÄÊôĞÔ 
+	int whose[10];			//ç´¢å¼•åŠå¯¹åº”çš„å±æ€§ 
 	//file where[10];
 }; 
 
-//±í¸ñ
+//è¡¨æ ¼
 class Table{
 private:
 public:

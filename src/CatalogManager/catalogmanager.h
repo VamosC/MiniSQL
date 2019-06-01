@@ -1,6 +1,6 @@
 //
 //	catalogmanager.h
-//	目录管理员
+//	目录管理
 
 #ifndef _CATALOGMANAGER_H_
 #define _CATALOGMANAGER_H_ 1
@@ -9,6 +9,7 @@
 #include <math>
 #include <string>
 #include <vector>
+#include <sstream>
 #include "../base.h" 
 using namespace std;
 
@@ -36,8 +37,8 @@ class Catalog{
 		 
 		//通过表名查看表是否存在	
 		//输入：表格名称
-		//输出：true-存在； false-不存在
-		bool isTableExist(string tablename);
+		//输出：正整数-索引序号； 0-不存在	
+		int isTableExist(string tablename);
 		
 		//打印表格信息  ??待定，不知道查询结果的反馈方式 
 		void PrintTable(string tablename, Attribute tattr); 
@@ -49,8 +50,8 @@ class Catalog{
 		//输入：表格名称、属性名称
 		//输出：true-存在； false-不存在		 
 		bool isAttributeExist(string tablename, string tattr);
-		
-		//得到某表的全部属性
+				
+		//得到某表的全部属性,必须在表存在时才可以用 
 		//输入：表格名称
 		//输出：Attribute结构数据
 		Attribute GetTableAttribute(string tablename);
@@ -70,6 +71,10 @@ class Catalog{
 		//输出：true-存在； false-不存在		 
 		bool isIndexExist(string tablename, string indexname);
 		 
+		//得到某表的全部索引,必须在表存在时才可以用 
+		//输入：表格名称
+		//输出：Index结构数据
+		Index GetTableIndex(string tablename);
 };
 
 #endif 

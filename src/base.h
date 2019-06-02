@@ -24,12 +24,12 @@ struct Data{
 
 //属性 
 //数量、属性名、类型、是否唯一、是否存在索引、主码
-//最多存放30个属性 
+//最多存放32个属性 
 struct Attribute{
 	int amount;
-	string attr_name[30];
-	int attr_type[30];		//1 - int; 0 - float; 2 - string
-	bool is_unique[30];
+	string attr_name[32];
+	int attr_type[32];		//1 - int; 0 - float; 2 - string
+	bool is_unique[32];
 	int primary_key;		//主码的序号 
 };
 

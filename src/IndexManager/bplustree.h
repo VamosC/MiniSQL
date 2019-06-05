@@ -92,7 +92,7 @@ public:
 	}
 
 	// 内部结点插入key
-	void add(const T& key, std::shared_ptr<TreeNode<T>> node, NodeFound<T>& res)
+	void add(const T& key, std::shared_ptr<TreeNode<T>> node)
 	{
 		keys.push_back(key);
 		children.push_back(node);
@@ -105,7 +105,6 @@ public:
 			}
 			else
 			{
-				res.pos = i+1;
 				break;
 			}
 		}
@@ -233,7 +232,7 @@ bool BPTree<T>::_insert(const T& key, int block_id)
 			{
 				auto new_node = std::make_shared<TreeNode<T>>();
 				new_node->setLeaf();
-				auto n_2 = round_2(degree);
+				auto n_2 = round_2(degree-1);
 				node->add(key, block_id);
 				// split
 				for(auto i = n_2; i < node->num; i++)
@@ -257,6 +256,8 @@ bool BPTree<T>::_insert(const T& key, int block_id)
 
 				new_node->num = degree - n_2;
 				node->num = n_2;
+
+				new_node->parent = node->parent;
 
 				// 继续调整父结点
 				insert_in_parent(node, new_node->keys[0], new_node);
@@ -300,32 +301,28 @@ void BPTree<T>::insert_in_parent(std::shared_ptr<TreeNode<T>> &l_node, const T& 
 	else
 	{
 		auto parent_node = l_node->parent;
-		r_node->parent = parent_node;
 		//父结点满
 		if(parent_node->num + 1 > degree)
 		{
 			//split
 			auto new_node = std::make_shared<TreeNode<T>>();
 			auto n_2 = round_2(degree);
-			NodeFound<T> res;
-			parent_node->add(key, r_node, res);
+			parent_node->add(key, r_node);
 			auto ret_key = parent_node->keys[n_2-1];
 			for(auto i = n_2; i < parent_node->num-1;i++)
 			{
-				if(res.pos == i || res.pos-1 == i)
-				{
-					parent_node->children[i]->parent = new_node;
-				}
 				new_node->keys.push_back(parent_node->keys[i]);
 				new_node->children.push_back(parent_node->children[i]);
 			}
 			new_node->children.push_back(parent_node->children[parent_node->children.size()-1]);
-
 			//抹掉右半部分
 			parent_node->keys.erase(parent_node->keys.begin()+n_2-1, parent_node->keys.end());
 			parent_node->children.erase(parent_node->children.begin()+n_2, parent_node->children.end());
 			parent_node->num = n_2;
-			new_node->num = degree - n_2;
+			new_node->num = degree+1 - n_2;
+
+			for(auto i = 0; i < new_node->children.size(); i++)
+				new_node->children[i]->parent = new_node;
 
 			// 改变左右兄弟指针关系
 			new_node->next_sibling = parent_node->next_sibling;
@@ -339,8 +336,7 @@ void BPTree<T>::insert_in_parent(std::shared_ptr<TreeNode<T>> &l_node, const T& 
 		// 父结点未满
 		else
 		{
-			NodeFound<T> res;
-			parent_node->add(key, r_node, res);
+			parent_node->add(key, r_node);
 		}
 	}
 }

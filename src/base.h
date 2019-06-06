@@ -26,7 +26,7 @@ struct Data{
 //operation here: 0- =	1- <>	2- <	3- >	4- <=	5- >=
 struct SelectCondition{
 	int amount;
-	string attr[30];
+	std::string attr[30];
 	int operationtype[30];
 	Data key[30];
 };

@@ -14,7 +14,7 @@
 //一个数据的类型以及数据的存放
 //sdata的长度为 1~255 
 struct Data{
-	int type;				//1 - int; 0 - float; 2 - string
+	int type;				//-1 - int; 0 - float; 正数 - string（varchar长度） 
 	int idata;
 	float fdata;
 	std::string sdata;

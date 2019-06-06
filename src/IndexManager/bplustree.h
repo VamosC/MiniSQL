@@ -64,6 +64,7 @@ public:
 		is_leaf = true;
 	}
 
+	// for debug
 	void print()
 	{
 		std::cout << "{\"node\":[";
@@ -141,10 +142,10 @@ public:
 private:
 	std::shared_ptr<TreeNode<T>> root;
 	int degree;
-	void insert_in_parent(std::shared_ptr<TreeNode<T>> &l_node, const T& key, std::shared_ptr<TreeNode<T>> &r_node);
-	void adjust_in_parent(std::shared_ptr<TreeNode<T>> &node);
-	void left_rotate(std::shared_ptr<TreeNode<T>> &l_node, std::shared_ptr<TreeNode<T>> &r_node);
-	void right_rotate(std::shared_ptr<TreeNode<T>> &l_node, std::shared_ptr<TreeNode<T>> &r_node);
+	void insert_in_parent(std::shared_ptr<TreeNode<T>> &l_node, const T& key, std::shared_ptr<TreeNode<T>> &r_node);// split后插入父结点
+	void adjust_in_parent(std::shared_ptr<TreeNode<T>> &node);// delete后调整父结点
+	void left_rotate(std::shared_ptr<TreeNode<T>> &l_node, std::shared_ptr<TreeNode<T>> &r_node);// 辅助函数, delete向左旋转
+	void right_rotate(std::shared_ptr<TreeNode<T>> &l_node, std::shared_ptr<TreeNode<T>> &r_node);// 辅助函数, delete向右旋转
 };
 
 template <typename T>
@@ -205,6 +206,46 @@ bool BPTree<T>::_find(const T &key, NodeFound<T> &res)
 		}
 		res.node = node;
 		return false;
+	}
+}
+
+template <typename T>
+bool BPTree<T>::_find_range(const T& start, const T& end, std::vector<int> &res)
+{
+	if(root == nullptr)
+	{
+		return false;
+	}
+	else
+	{
+		NodeFound<T> res;
+		// 不关心能否找到, 只关心在哪个叶结点中
+		_find(start, res);
+		auto node = res.node;
+		auto over_flag = false;
+		while(node != nullptr)
+		{
+			for(auto i = 0; i < node->keys.size(); i++)
+			{
+				if(node->keys[i] >= start && node->keys[i] <= end)
+				{
+					res.push_back(node->block_ids[i]);
+				}
+
+				// 超过范围
+				if(node->keys[i] > end)
+				{
+					over_flag = true;
+					break;
+				}
+			}
+			if(over_flag)
+			{
+				break;
+			}
+			node = node->next_sibling;
+		}
+		return true;
 	}
 }
 

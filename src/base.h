@@ -8,7 +8,6 @@
 #include <iostream>
 #include <vector>
 #include <string>
-using namespace std;
 
 
 //数据 
@@ -18,7 +17,7 @@ struct Data{
 	int type;				//1 - int; 0 - float; 2 - string
 	int idata;
 	float fdata;
-	string sdata;
+	std::string sdata;
 };
 
 
@@ -27,7 +26,7 @@ struct Data{
 //最多存放32个属性 
 struct Attribute{
 	int amount;
-	string attr_name[32];
+	std::string attr_name[32];
 	int attr_type[32];		//1 - int; 0 - float; 2 - string
 	bool is_unique[32];
 	int primary_key;		//主码的序号 
@@ -37,7 +36,7 @@ struct Attribute{
 //元组
 class Tuple{
 private:
-	vector<Data> data;
+	std::vector<Data> data;
 public:
 	Tuple(){};
 	
@@ -85,7 +84,7 @@ public:
 //一张表最多有10个索引 
 struct Index{
 	int amount;
-	string name[10]; 
+	std::string name[10]; 
 	int whose[10];			//索引及对应的属性 
 	//file where[10];
 }; 
@@ -94,13 +93,13 @@ struct Index{
 class Table{
 private:
 public:
-	string table_name;
+	std::string table_name;
 	struct Attribute attr;
 	struct Index indices; 
-	vector<Tuple> tuples;
+	std::vector<Tuple> tuples;
 	
 	Table(){};
-	Table( string name, Attribute tmpa ): table_name(name), attr(tmpa){};
+	Table( std::string name, Attribute tmpa ): table_name(name), attr(tmpa){};
 	
 	void PrintTable();
 	void PrintTable( int* limitattr );
@@ -111,7 +110,7 @@ public:
 	int SetIndex( int numofattr, string name );
 	int DropIndex( string name );
 	
-	string GetTablename()
+	std::string GetTablename()
 	{
 		return table_name;
 	}
@@ -119,7 +118,7 @@ public:
 	{
 		return attr;
 	}
-	vector<Tuple>& GetTuples()
+	std::vector<Tuple>& GetTuples()
 	{
 		return tuples;
 	} 

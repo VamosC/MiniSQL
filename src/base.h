@@ -22,6 +22,17 @@ struct Data{
 };
 
 
+//查找条件
+//最多30个条件 
+//operation here: 0- =	1- <>	2- <	3- >	4- <=	5- >=
+struct SelectCondition{
+	int amount;
+	string attr[30];
+	int operationtype[30];
+	Data key[30];
+};
+
+
 //属性 
 //数量、属性名、类型、是否唯一、是否存在索引、主码
 //最多存放32个属性 

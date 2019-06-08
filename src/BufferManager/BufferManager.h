@@ -8,8 +8,6 @@
 #include <memory>
 #include "../base.h"
 
-using namespace std;
-
 /*
     创建一个BufferManager的对象
     
@@ -36,10 +34,10 @@ class Page {
         void initialize();
 
         //命名
-        void setFileName(string file_name);
+        void setFileName(std::string file_name);
 
         //获取文件名
-        string getFileName();
+        std::string getFileName();
 
         //设置块ID
         void setBlockId(int block_id);
@@ -76,25 +74,25 @@ class Page {
 
     private:
         //一个page是大小为 PAGESIZE 4096 的数组
-        char buffer_[_PAGESIZE];
+        char buffer[_PAGESIZE];
 
         //页所对应的文件名
-        std::string file_name_;
+        std::string FileName;
 
         //页在所在文件中的块号(磁盘中通常叫块)
-        int block_id_;
+        int BlockID;
 
         //记录被钉住的次数
-        int pin_count_;
+        int PinCount;
 
         //记录脏页
-        bool dirty_;
+        bool IsDirty;
 
         //用于时钟替换策略
-        bool ref_;
+        bool IsRef;
 
         //avaliable标示页是否被load到磁盘块
-        bool avaliable_;
+        bool IsAvaliable;
 };
 
 // BufferManager类，对外提供操作缓冲区的接口。

@@ -12,7 +12,7 @@ void Page::initialize()
     BlockID = -1;
     PinCount = -1;
     IsDirty = false;
-    ref_ = false;
+    IsRef = false;
     IsAvaliable = true;
     for (int i = 0;i < _PAGESIZE;i++)
     {
@@ -20,12 +20,12 @@ void Page::initialize()
     }      
 }
 
-inline void Page::setFileName(string FileName) 
+inline void Page::setFileName(std::string FileName) 
 {
     FileName = FileName;
 }
 
-inline string Page::getFileName() 
+inline std::string Page::getFileName() 
 {
     return FileName;
 }
@@ -62,12 +62,12 @@ inline bool Page::getDirty()
 
 inline void Page::setRef(bool ref) 
 {
-    ref_ = ref;
+    IsRef = ref;
 }
 
 inline bool Page::getRef() 
 {
-    return ref_;
+    return IsRef;
 }
 
 inline void Page::setAvaliable(bool Is_Avaliable) 
@@ -114,7 +114,7 @@ BufferManager::~BufferManager()
     for (int i = 0;i < frame_size_;i++) 
     {
         int BlockID;
-        string FileName;
+        std::string FileName;
         FileName = Frames[i].getFileName();
         BlockID = Frames[i].getBlockId();
         if(flushPage(i , FileName , BlockID)==0)
@@ -125,7 +125,7 @@ BufferManager::~BufferManager()
     delete[] Frames;
 }
 
-char* BufferManager::getPage(string FileName , int BlockID) 
+char* BufferManager::getPage(std::string FileName , int BlockID) 
 {
     int PageID = getPageId(FileName , BlockID);
     if (PageID == -1) {
@@ -158,10 +158,10 @@ int BufferManager::unpinPage(int PageID)
 }
 
 // 遍历获取页号
-int BufferManager::getPageId(string FileName , int BlockID) 
+int BufferManager::getPageId(std::string FileName , int BlockID) 
 {
     for (int i = 0;i < frame_size_;i++) {
-        string tmp_file_name = Frames[i].getFileName();
+        std::string tmp_file_name = Frames[i].getFileName();
         int tmp_block_id = Frames[i].getBlockId();
         if (tmp_file_name == FileName && tmp_block_id == BlockID)
             return i;
@@ -170,7 +170,7 @@ int BufferManager::getPageId(string FileName , int BlockID)
 }
 
 // 写入一页
-int BufferManager::flushPage(int PageID , string FileName , int BlockID) 
+int BufferManager::flushPage(int PageID , std::string FileName , int BlockID) 
 {
     FILE* f = fopen(FileName.c_str() , "r+");
     // 将文件指针定位到对应位置
@@ -199,7 +199,7 @@ int BufferManager::getEmptyPageId() {
         }
         else if (Frames[current_position_].getPinCount() == 0) {
             if (Frames[current_position_].getDirty() == true) {
-                string FileName = Frames[current_position_].getFileName();
+                std::string FileName = Frames[current_position_].getFileName();
                 int BlockID = Frames[current_position_].getBlockId();
                 flushPage(current_position_ , FileName , BlockID);
             }
@@ -211,7 +211,7 @@ int BufferManager::getEmptyPageId() {
 }
 
 //内存和磁盘交互的接口。
-int BufferManager::loadDiskBlock(int PageID , string FileName , int BlockID) {
+int BufferManager::loadDiskBlock(int PageID , std::string FileName , int BlockID) {
     // 初始化一个页
     Frames[PageID].initialize();
     // 打开磁盘文件

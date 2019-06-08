@@ -19,6 +19,7 @@ inline int round_2(int degree)
 }
 
 // 转换成json方便调试
+// 仅可调试int, float
 template <typename T>
 inline std::string to_string(std::vector<T> &arr)
 {
@@ -130,11 +131,12 @@ template <typename T>
 class BPTree
 {
 public:
-	BPTree() {}
+	BPTree(int degree) : degree(degree){}
 	bool _find(const T &key, NodeFound<T> &res);// 查询key的所在的节点
 	bool _insert(const T &key, int block_id);// 插入索引结点
 	bool _delete(const T &key);// 删除索引结点
 	bool _find_range(const T& start, const T& end, std::vector<int> &res);// 范围查找
+	std::shared_ptr<TreeNode<T>> _get_leftist_leaf();
 	void print() // for debug
 	{
 		root->print();
@@ -147,6 +149,7 @@ private:
 	void left_rotate(std::shared_ptr<TreeNode<T>> &l_node, std::shared_ptr<TreeNode<T>> &r_node);// 辅助函数, delete向左旋转
 	void right_rotate(std::shared_ptr<TreeNode<T>> &l_node, std::shared_ptr<TreeNode<T>> &r_node);// 辅助函数, delete向右旋转
 };
+
 
 template <typename T>
 bool BPTree<T>::_find(const T &key, NodeFound<T> &res)
@@ -209,6 +212,7 @@ bool BPTree<T>::_find(const T &key, NodeFound<T> &res)
 	}
 }
 
+
 template <typename T>
 bool BPTree<T>::_find_range(const T& start, const T& end, std::vector<int> &res)
 {
@@ -248,6 +252,7 @@ bool BPTree<T>::_find_range(const T& start, const T& end, std::vector<int> &res)
 		return true;
 	}
 }
+
 
 template <typename T>
 bool BPTree<T>::_insert(const T &key, int block_id)
@@ -328,6 +333,7 @@ bool BPTree<T>::_insert(const T &key, int block_id)
 	}
 }
 
+
 template <typename T>
 void BPTree<T>::insert_in_parent(std::shared_ptr<TreeNode<T>> &l_node, const T &key, std::shared_ptr<TreeNode<T>> &r_node)
 {
@@ -391,6 +397,7 @@ void BPTree<T>::insert_in_parent(std::shared_ptr<TreeNode<T>> &l_node, const T &
 		}
 	}
 }
+
 
 template <typename T>
 bool BPTree<T>::_delete(const T &key)
@@ -670,6 +677,7 @@ bool BPTree<T>::_delete(const T &key)
 	}
 }
 
+
 template <typename T>
 void BPTree<T>::adjust_in_parent(std::shared_ptr<TreeNode<T>> &node)
 {
@@ -917,6 +925,7 @@ void BPTree<T>::adjust_in_parent(std::shared_ptr<TreeNode<T>> &node)
 	}
 }
 
+
 template <typename T>
 void BPTree<T>::left_rotate(std::shared_ptr<TreeNode<T>> &l_node, std::shared_ptr<TreeNode<T>> &r_node)
 {
@@ -1000,4 +1009,23 @@ void BPTree<T>::right_rotate(std::shared_ptr<TreeNode<T>> &l_node, std::shared_p
 	// 调整结点大小
 	r_node->num++;
 	l_node->num--;
+}
+
+
+template <typename T>
+std::shared_ptr<TreeNode<T>> BPTree<T>::_get_leftist_leaf()
+{
+	if(root == nullptr)
+	{
+		return nullptr;
+	}
+	else
+	{
+		auto node = root;
+		while(!node->isLeaf())
+		{
+			node = node->children[0];
+		}
+		return node;
+	}
 }

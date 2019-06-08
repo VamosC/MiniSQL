@@ -9,6 +9,8 @@
 #include <vector>
 #include <string>
 
+const int _PAGESIZE = 4096;
+const int _MAXFRAMESIZE = 100;
 
 //数据 
 //一个数据的类型以及数据的存放
@@ -20,6 +22,13 @@ struct Data{
 	std::string sdata;
 };
 
+// 单个属性的查找条件
+struct condition
+{
+	int operation_type;
+	Data start;
+	Data end;
+};
 
 //查找条件
 //最多30个条件 
@@ -54,12 +63,7 @@ public:
 	//拷贝函数 
 	Tuple(Tuple &copytuple)
 	{
-		std::vector<Data>::iterator it;
-		for( it = copytuple.begin(); it != data.end(); it++ )
-		{
-			struct Data tmp = *it;
-			data.push_back(tmp);
-		}
+		data = copytuple.data;
 	}
 	
 	
@@ -80,13 +84,13 @@ public:
 		for( it = data.begin(); it != data.end(); it++ )
 		{
 			if( (*it).type == -1 )
-				cout << (*it).idata << "\t\t\t";
+				std::cout << (*it).idata << "\t\t\t";
 			else if( (*it).type == 0 )
-				cout << (*it).fdata << "\t\t\t";
+				std::cout << (*it).fdata << "\t\t\t";
 			else
-				cout << (*it).sdata << "\t\t\t";
+				std::cout << (*it).sdata << "\t\t\t";
 		}
-		cout <<	endl;
+		std::cout << '\n';
 	}
 }; 
 
@@ -118,8 +122,8 @@ public:
 	int InsertTuple( Tuple &tmpt );
 	int DeleteTuple( Tuple &tmpt );
 	
-	int SetIndex( int numofattr, string name );
-	int DropIndex( string name );
+	int SetIndex( int numofattr, std::string name );
+	int DropIndex( std::string name );
 	
 	std::string GetTablename()
 	{

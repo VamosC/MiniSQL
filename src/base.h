@@ -23,10 +23,14 @@ struct Data{
 };
 
 // 单个属性的查找条件
+// start <(<=) x <(<=) end
 struct condition
 {
-	int operation_type;
+	// -1:不存在 4:<= 2:<
+	int l_op;
 	Data start;
+	// -1:不存在 4:<= 2:<
+	int r_op;
 	Data end;
 };
 

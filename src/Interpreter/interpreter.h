@@ -4,35 +4,36 @@
 
 #ifndef _INTERPRETER_H_
 #define _INTERPRETER_H_ 1
- 
+
+//#include "stdafx.h"
 #include <iostream>
 #include <string>
 #include <sstream>
 #include <fstream> 
 #include <Windows.h>
-#include "stdafx.h"
-#include "../base.h"
-#include "../CatalogManager/catalogmanager.h"
-//ÒıÓÃÆäËû²¿·Ö 
+#include "base.h"
+#include "catalogmanager.h"
+#include "api.h"
+//å¼•ç”¨å…¶ä»–éƒ¨åˆ† 
 
 
 class Interpreter
 {
 public:
-	//¹¹Ôìº¯Êı,µÃµ½²Ù×÷Ö¸Áî×Ö·û´®²¢°ÑËü´æ´¢µ½µ±Ç°Ö¸ÁîÖĞÈ¥ 
-	Interpreter(string &input);
-	//Îö¹¹º¯Êı 
+	//æ„é€ å‡½æ•°,å¾—åˆ°æ“ä½œæŒ‡ä»¤å­—ç¬¦ä¸²å¹¶æŠŠå®ƒå­˜å‚¨åˆ°å½“å‰æŒ‡ä»¤ä¸­å» 
+	Interpreter(std::string &input);
+	//ææ„å‡½æ•° 
 	~Interpreter() {};
 	
 	
 
-	//ÅĞ¶ÏÊÇÄÄÖÖÃüÁîÓï¾ä ¹²9ÖÖ,Ö®ºóµ÷ÓÃÏàÓ¦µÄº¯Êı£¿£¿ 
-	//ÊäÈë£º±í¸ñÃû³Æ¡¢±í¸ñÊôĞÔ¡¢Ë÷Òı¶ÔÏó¡¢Ö÷Âë 
-	//Êä³ö: 1-³É¹¦£» 0-Ê§°Ü,°üº¬Òì³£ 
+	//åˆ¤æ–­æ˜¯å“ªç§å‘½ä»¤è¯­å¥ å…±9ç§,ä¹‹åè°ƒç”¨ç›¸åº”çš„å‡½æ•°ï¼Ÿï¼Ÿ 
+	//è¾“å…¥ï¼šè¡¨æ ¼åç§°ã€è¡¨æ ¼å±æ€§ã€ç´¢å¼•å¯¹è±¡ã€ä¸»ç  
+	//è¾“å‡º: 1-æˆåŠŸï¼› 0-å¤±è´¥,åŒ…å«å¼‚å¸¸ 
 	int JudgeAndExec();
 	
-	//¾ßÌå²Ù×÷º¯Êı 
-	//ÅĞ¶ÏÓï¾äÊÇ·ñÕıÈ·£¬¸ø³ö´íÎóÔ­Òò/²ğ½âµ÷ÓÃÖ´ĞĞº¯Êı 
+	//å…·ä½“æ“ä½œå‡½æ•° 
+	//åˆ¤æ–­è¯­å¥æ˜¯å¦æ­£ç¡®ï¼Œç»™å‡ºé”™è¯¯åŸå› /æ‹†è§£è°ƒç”¨æ‰§è¡Œå‡½æ•° 
 	int ExecCreateTable();
 	int ExecDropTable();
 	int ExecCreateIndex();
@@ -42,13 +43,14 @@ public:
 	int ExecDelete();
 	void ExecFile(); 
 	
-	//¶ÔÓÚÁ÷µÄ²Ù×÷
-	void GetInstruction(string &input); 
-	string GetWord();
+	//å¯¹äºæµçš„æ“ä½œ
+	int GetInstruction(); 
+	std::string GetWord();
 
 private:
-	istringstream instruction;
+	std::istringstream instruction;
 
 };
 
 
+#endif

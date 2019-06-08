@@ -2,6 +2,7 @@
 #include "../BufferManager/BufferManager.h"
 #include "../base.h"
 #include "bplustree.h"
+#include "../util.h"
 
 #include <cstdio>
 #include <iostream>
@@ -63,13 +64,19 @@ private:
 	std::map<std::string, std::shared_ptr<BPTree<int>>> int_index;
 	std::map<std::string, std::shared_ptr<BPTree<float>>> float_index;
 	std::map<std::string, std::shared_ptr<BPTree<std::string>>> string_index;
+	std::map<std::string, int> string_index_length;
 
 	// 判断b+tree是否存在内存
 	bool is_BPTree_exist(const std::string &index, int type);
 
-	// 判断文件是否存在
-	bool is_file_exist(const std::string &file_name);
-
 	// 新建索引文件
 	void new_file(const std::string &file_name);
+
+	void write_back();
+
+	void read_into(const std::string file_name, int type);
+
+	int get_block_num(const std::string &file_name);
+
+	int get_degree(int type);
 };

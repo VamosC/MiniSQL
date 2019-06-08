@@ -453,7 +453,7 @@ bool BPTree<T>::_delete(const T &key)
 						auto l_bro = node->left_sibling;
 						auto key_tmp = l_bro->keys.back();
 						node->keys.insert(node->keys.begin(), l_bro->keys.back());
-						node->block_ids.insert(node->block_ids.begin(), l_bro->keys.back());
+						node->block_ids.insert(node->block_ids.begin(), l_bro->block_ids.back());
 						node->num++;
 
 						// 抹掉左兄弟的key

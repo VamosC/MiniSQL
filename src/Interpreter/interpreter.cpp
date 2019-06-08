@@ -3,8 +3,9 @@
 //operation here: 0- =	1- <>	2- <	3- >	4- <=	5- >=
 //
 
+#include "interpreter.h"
 std::ifstream file; 
-int readmode = 0;//¶ÁÈ¡ÎÄ¼şÄ£Ê½£º0-¿¿ÊäÈë¶ÁÈ¡£» 1-´ÓÎÄ¼şÖĞ¶ÁÈ¡ 
+int readmode = 0;//è¯»å–æ–‡ä»¶æ¨¡å¼ï¼š0-é è¾“å…¥è¯»å–ï¼› 1-ä»æ–‡ä»¶ä¸­è¯»å– 
 
 Interpreter::Interpreter(string &input)
 {
@@ -15,7 +16,7 @@ int Interpreter::GetInstruction()
 {
 	std::string input;
 	if(readmode==0)
-		getline(std::cin, input);
+		getline(cin, input);
 	else
 		if(!file.eof())
 			getline(file, input);
@@ -33,107 +34,107 @@ string Interpreter::GetWord()
 	return word;
 }
 
-//ÊäÈë£ºÎŞ
-//Êä³ö£º1-²Ù×÷³É¹¦£¬»áÖ´ĞĞÏàÓ¦µÄ½á¹û£» 0-Ê§°Ü£» 2-ÍË³ö 
+//è¾“å…¥ï¼šæ— 
+//è¾“å‡ºï¼š1-æ“ä½œæˆåŠŸï¼Œä¼šæ‰§è¡Œç›¸åº”çš„ç»“æœï¼› 0-å¤±è´¥ï¼› 2-é€€å‡º 
 int Interpreter::JudgeAndExec()
 {
 	std::string singleword;
 
 	singleword = GetWord();
-	cout << singleword << endl;
+	std::cout << singleword << std::endl;
 
 	if( singleword == "quit" )
 		return 2;
 	else if (singleword == "create")
 	{
 		singleword = GetWord();
-		if (singleword == "table")//ĞÂ½¨±í²Ù×÷
+		if (singleword == "table")//æ–°å»ºè¡¨æ“ä½œ
 		{
-			//cout << "createtable" << endl;
+			//std::cout << "createtable" << std::endl;
 			if(ExecCreateTable() == 0)
 			{
-				cout << "ĞÂ½¨±íÊ§°Ü" <<endl;
+				std::cout << "æ–°å»ºè¡¨å¤±è´¥" << std::endl;
 				return 0;
 			}
 		}
-		else if (singleword == "index")//ĞÂ½¨Ë÷Òı²Ù×÷
+		else if (singleword == "index")//æ–°å»ºç´¢å¼•æ“ä½œ
 		{
 			if(ExecCreateIndex() == 0)
 			{
-				cout << "ĞÂ½¨Ë÷ÒıÊ§°Ü" << endl;
+				std::cout << "æ–°å»ºç´¢å¼•å¤±è´¥" << std::endl;
 				return 0;
 			}
 		}
-		else//ÊäÈë´íÎó
+		else//è¾“å…¥é”™è¯¯
 		{
-			cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+			std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 			return 0; 
 		}
 	}
 	else if (singleword == "drop")
 	{
 		singleword = GetWord();
-		if (singleword == "table")//É¾³ı±í²Ù×÷
+		if (singleword == "table")//åˆ é™¤è¡¨æ“ä½œ
 		{
 			if(ExecDropTable() == 0)
 			{
-				cout << "É¾³ı±íÊ§°Ü" << endl;
+				std::cout << "åˆ é™¤è¡¨å¤±è´¥" << std::endl;
 				return 0;
 			}
 		}
-		else if (singleword == "index")//É¾³ıË÷Òı²Ù×÷
+		else if (singleword == "index")//åˆ é™¤ç´¢å¼•æ“ä½œ
 		{
 			if(ExecDropIndex() == 0)
 			{
-				cout << "É¾³ıË÷ÒıÊ§°Ü" << endl;
+				std::cout << "åˆ é™¤ç´¢å¼•å¤±è´¥" << std::endl;
 				return 0;
 			}
 		}
-		else//ÊäÈë´íÎó
+		else//è¾“å…¥é”™è¯¯
 		{
-			cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+			std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 			return 0; 			
 		}
 	}
-	else if (singleword == "select")//ËÑË÷²Ù×÷
+	else if (singleword == "select")//æœç´¢æ“ä½œ
 	{
 		if(ExecSelect() == 0)
 		{
-			cout << "ËÑË÷Ê§°Ü" << endl;
+			std::cout << "æœç´¢å¤±è´¥" << std::endl;
 			return 0;
 		}
 		else if(ExecSelect() == -1)
-		 	cout << "ËÑË÷¼ÇÂ¼Îª¿Õ" << endl;
+		 	std::cout << "æœç´¢è®°å½•ä¸ºç©º" << std::endl;
 	}
-	else if (singleword == "insert")//²åÈë²Ù×÷
+	else if (singleword == "insert")//æ’å…¥æ“ä½œ
 		if(ExecInsert() == 0)
 		{
-			cout << "²åÈëÊ§°Ü" << endl;
+			std::cout << "æ’å…¥å¤±è´¥" << std::endl;
 			return 0;
 		}		
-	else if (singleword == "delete")//É¾³ıÔª×é²Ù×÷
+	else if (singleword == "delete")//åˆ é™¤å…ƒç»„æ“ä½œ
 		if(ExecDelete() == 0)
 		{
-			cout << "²åÈëÊ§°Ü" << endl;
+			std::cout << "æ’å…¥å¤±è´¥" << std::endl;
 			return 0;
 		}		
-	else if (singleword == "execfile")//Ö´ĞĞÎÄ¼şÄÚÈİ²Ù×÷
+	else if (singleword == "execfile")//æ‰§è¡Œæ–‡ä»¶å†…å®¹æ“ä½œ
 	{
 		ExecFile();
 	}
-	else//ÊäÈë´íÎó
+	else//è¾“å…¥é”™è¯¯
 	{
-			cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+			std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 			return 0; 		
 	}
 	
 	return 1;
 }
 
-//¾ßÌå²Ù×÷º¯Êı 
-//ÅĞ¶ÏÓï¾äÊÇ·ñÕıÈ·£¬¸ø³ö´íÎóÔ­Òò/²ğ½âµ÷ÓÃÖ´ĞĞº¯Êı
+//å…·ä½“æ“ä½œå‡½æ•° 
+//åˆ¤æ–­è¯­å¥æ˜¯å¦æ­£ç¡®ï¼Œç»™å‡ºé”™è¯¯åŸå› /æ‹†è§£è°ƒç”¨æ‰§è¡Œå‡½æ•°
 
-//´ËÊ±´Ócreate tableºóÃæ¿ªÊ¼¶Á 
+//æ­¤æ—¶ä»create tableåé¢å¼€å§‹è¯» 
 int Interpreter::ExecCreateTable()
 {
 	std::string nameoftable;	
@@ -143,7 +144,11 @@ int Interpreter::ExecCreateTable()
 
 	nameoftable = GetWord();	
 	cur_attr.amount = 0;
-	if(GetInstruction() != 1) return 0;
+	if (GetInstruction() == 0)
+	{
+		std::cout << "è¯»å…¥é”™è¯¯" << std::endl;
+		return 0;
+	}
 	cur_word = GetWord();
 	while( cur_word != ");" )
 	{
@@ -154,34 +159,35 @@ int Interpreter::ExecCreateTable()
 				cur_word = GetWord();
 				if( cur_word != "(" )
 				{
-					cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+					std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 					return 0;
 				}
 				
 				cur_word = GetWord();
-				for( int i = 0; i < cur_attr.amount; i++ )
+				int i;
+				for(  i = 0; i < cur_attr.amount; i++ )
 				{
 					if( cur_word == cur_attr.attr_name[i] )
 						break;
 				}
-				if( i < amount )
+				if( i < cur_attr.amount)
 					cur_attr.primary_key = i;
 				else
 				{
-					cout << "²»´æÔÚ¸ÃÖ÷Âë" << endl; 
+					std::cout << "ä¸å­˜åœ¨è¯¥ä¸»ç " << std::endl; 
 					return 0; 						
 				}
 				
 				cur_word = GetWord();
 				if( cur_word != ")" )
 				{
-					cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+					std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 					return 0;
 				}
 			}
 			else
 			{
-				cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+				std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 				return 0; 				
 			}
 		}
@@ -197,18 +203,18 @@ int Interpreter::ExecCreateTable()
 				{
 					if( cur_word == "unique" && GetWord() != "," )
 					{
-						cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+						std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 						return 0; 	
 					}
 		
-					cur_attr.attr_name[cur_attr.amount] = attrname
+					cur_attr.attr_name[cur_attr.amount] = attrname;
 					cur_attr.attr_type[cur_attr.amount] = -1;
 					if( cur_word == "unique" )	cur_attr.is_unique[cur_attr.amount] = true;
 					cur_attr.amount++;					
 				}
 				else
 				{
-					cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+					std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 					return 0; 					
 				}
 			}
@@ -219,18 +225,18 @@ int Interpreter::ExecCreateTable()
 				{
 					if( cur_word == "unique" && GetWord() != "," )
 					{
-						cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+						std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 						return 0; 	
 					}
 		
-					cur_attr.attr_name[cur_attr.amount] = attrname
+					cur_attr.attr_name[cur_attr.amount] = attrname;
 					cur_attr.attr_type[cur_attr.amount] = 0;
 					if( cur_word == "unique" )	cur_attr.is_unique[cur_attr.amount] = true;
 					cur_attr.amount++;	
 				}
 				else
 				{
-					cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+					std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 					return 0; 					
 				}
 			}
@@ -239,7 +245,6 @@ int Interpreter::ExecCreateTable()
 				attrtype.erase(0, 4);
 				int len = 0, pos = 1;
 				if( attrtype[0] == '(' )
-				{
 					while( attrtype[pos] != ')' )
 					{
 						len = 10 * len + attrtype[pos] -'0';
@@ -247,51 +252,55 @@ int Interpreter::ExecCreateTable()
 							return 0; 
 						pos++;
 					}
-					
+				
 				cur_word = GetWord();
 				if( cur_word =="unique" || cur_word =="," )
 				{
 					if( cur_word == "unique" && GetWord() != "," )
 					{
-						cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+						std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 						return 0; 	
 					}
-		
-					cur_attr.attr_name[cur_attr.amount] = attrname
+					
+					cur_attr.attr_name[cur_attr.amount] = attrname;
 					cur_attr.attr_type[cur_attr.amount] = len;
 					if( cur_word == "unique" )	cur_attr.is_unique[cur_attr.amount] = true;
 					cur_attr.amount++;	
 				}
 				else
 				{
-					cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+					std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 					return 0; 					
 				}
 			}	
 			
 			
 		} 
-		if( GetInstruction() != 1 )	 return 0;
+		if (GetInstruction() == 0)
+		{
+			std::cout << "è¯»å…¥é”™è¯¯" << std::endl;
+			return 0;
+		}
 		cur_word = GetWord();
 		flag = 1;
 	}
 	
-	if( flag != 1 || cur_attr.amount == 0 )//´ÓÒ»¿ªÊ¼¾ÍÓĞÓï·¨´íÎó 
+	if( flag != 1 || cur_attr.amount == 0 )//ä»ä¸€å¼€å§‹å°±æœ‰è¯­æ³•é”™è¯¯ 
 	{
-		cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+		std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 		return 0; 
 	}
 	
 	API curapi;
 	if( curapi.CreateTable(nameoftable, cur_attr) == 1 ) 
 	{
-		cout << "³É¹¦Ìí¼Ó±í¸ñ" << nameoftable << endl; 
+		std::cout << "æˆåŠŸæ·»åŠ è¡¨æ ¼" << nameoftable << std::endl; 
 		return 1;
 	}
 	else return 0;
 }
 
-//´ËÊ±´Ódrop tableºóÃæ¿ªÊ¼¶Á 
+//æ­¤æ—¶ä»drop tableåé¢å¼€å§‹è¯» 
 int Interpreter::ExecDropTable()
 {
 	std::string nameoftable;	
@@ -303,13 +312,13 @@ int Interpreter::ExecDropTable()
 	API curapi;
 	if( curapi.DropTable(nameoftable) == 1 ) 
 	{
-		cout << "³É¹¦É¾³ı±í¸ñ" << nameoftable << endl; 
+		std::cout << "æˆåŠŸåˆ é™¤è¡¨æ ¼" << nameoftable << std::endl; 
 		return 1;
 	}
 	else return 0;
 }
 
-//´ËÊ±´Ócreate indexºóÃæ¿ªÊ¼¶Á 
+//æ­¤æ—¶ä»create indexåé¢å¼€å§‹è¯» 
 int Interpreter::ExecCreateIndex()
 {
 	std::string indexname, tablename, tattr;
@@ -317,30 +326,30 @@ int Interpreter::ExecCreateIndex()
 	indexname = GetWord();
 	if( GetWord() != "on" )
 	{
-		cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+		std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 		return 0; 
 	}	
 	tablename = GetWord();
 	if( GetWord() != "(" )
 	{
-		cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+		std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 		return 0; 
 	}
 	tattr = GetWord();
 	if( GetWord() != ");" )
 	{
-		cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+		std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 		return 0; 
 	}
 	
-	//½ÓÏÂÀ´¼ì²é¸Ã±í¸ÃÊôĞÔÊÇ·ñ´æÔÚ
+	//æ¥ä¸‹æ¥æ£€æŸ¥è¯¥è¡¨è¯¥å±æ€§æ˜¯å¦å­˜åœ¨
 	Catalog curc;
-	if ( curc.isTableExist(tablename) == 1 && isAttributeExist(tablename, tattr) == true )
+	if ( curc.isTableExist(tablename) == 1 && curc.isAttributeExist(tablename, tattr) == true )
 	{
 		API curapi;
-		if( curapi.CreateIndex(tablename, attr, indexname) == 1 ) 
+		if( curapi.CreateIndex(tablename, tattr, indexname) == 1 ) 
 		{
-			cout << "³É¹¦²åÈëË÷Òı" << indexname << endl; 
+			std::cout << "æˆåŠŸæ’å…¥ç´¢å¼•" << indexname << std::endl; 
 			return 1;
 		}
 		else return 0;	
@@ -348,7 +357,7 @@ int Interpreter::ExecCreateIndex()
 	
 }
 
-//Óï·¨ÓĞËùĞŞ¸Ä£¬Ê¾Àı£ºdrop index xxxx on tablename ; 
+//è¯­æ³•æœ‰æ‰€ä¿®æ”¹ï¼Œç¤ºä¾‹ï¼šdrop index xxxx on tablename ; 
 int Interpreter::ExecDropIndex()
 {
 	std::string indexname, tablename, tattr;
@@ -356,19 +365,19 @@ int Interpreter::ExecDropIndex()
 	indexname = GetWord();
 	if( GetWord() != "on" )
 	{
-		cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+		std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 		return 0; 
 	}	
 	tablename = GetWord();
 
-	//½ÓÏÂÀ´¼ì²é¸Ã±í¸ÃÊôĞÔÊÇ·ñ´æÔÚ
+	//æ¥ä¸‹æ¥æ£€æŸ¥è¯¥è¡¨è¯¥å±æ€§æ˜¯å¦å­˜åœ¨
 	Catalog curc;
-	if ( curc.isTableExist(tablename) == 1 && isIndexExist(tablename, indexname) == true )
+	if ( curc.isTableExist(tablename) == 1 && curc.isIndexExist(tablename, indexname) == true )
 	{
 		API curapi;
 		if( curapi.DropIndex(tablename, indexname) == 1 ) 
 		{
-			cout << "³É¹¦É¾³ıË÷Òı" << indexname << endl; 
+			std::cout << "æˆåŠŸåˆ é™¤ç´¢å¼•" << indexname << std::endl; 
 			return 1;
 		}
 		else return 0;	
@@ -380,7 +389,7 @@ int Interpreter::ExecSelect()
 {
 	std::string tablename;
 	std::string curword;
-	Catolog curcatolog;
+	Catalog curCatalog;
 	std::vector<std::string> targetattr;
 	SelectCondition scondition;
 	Attribute curattr; 
@@ -388,6 +397,7 @@ int Interpreter::ExecSelect()
 	int isAll = 0; 
 	Table selectresult;	
 	API curapi;
+	int isall = 0;
 
 	scondition.amount = 0;
 	curword = GetWord();
@@ -407,99 +417,99 @@ int Interpreter::ExecSelect()
 			
 			if( targetan > 30 )
 			{
-				cout << "ËÑË÷ÊôĞÔÊıÁ¿³¬±ê£¬ËÑË÷ÎŞĞ§" << endl; 
+				std::cout << "æœç´¢å±æ€§æ•°é‡è¶…æ ‡ï¼Œæœç´¢æ— æ•ˆ" << std::endl; 
 				return 0;	
 			}
 		}
 	}
 	if( curword != "from" )
 	{
-		cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+		std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 		return 0;	
 	} 
 	
 	tablename = GetWord();
-	//¼ìÑé¸Ã±íÊÇ·ñ´æÔÚ 
-	if(curcatolog.isTableExist(tablename) != 1)
+	//æ£€éªŒè¯¥è¡¨æ˜¯å¦å­˜åœ¨ 
+	if(curCatalog.isTableExist(tablename) != 1)
 	{
-		cout << "²»´æÔÚ¸Ã±í£¬ÊäÈë´íÎó" << endl; 
+		std::cout << "ä¸å­˜åœ¨è¯¥è¡¨ï¼Œè¾“å…¥é”™è¯¯" << std::endl; 
 		return 0; 		
 	}
-	//Í¬Ê±¿ÉÒÔ¼ìÑéÔ­À´µÄÄÇĞ©ÊôĞÔÊÇ·ñ´æÔÚ
+	//åŒæ—¶å¯ä»¥æ£€éªŒåŸæ¥çš„é‚£äº›å±æ€§æ˜¯å¦å­˜åœ¨
 	for( int i = 0; i < targetan; i++ )
-		if(isAttributeExist(tablename, targetattr[targetan]) == -1)
+		if(curCatalog.isAttributeExist(tablename, targetattr[targetan]) == -1)
 		{
-			cout << "²éÕÒÊôĞÔÊäÈë´íÎó£¬ËÑË÷ÎŞĞ§" << endl; 
+			std::cout << "æŸ¥æ‰¾å±æ€§è¾“å…¥é”™è¯¯ï¼Œæœç´¢æ— æ•ˆ" << std::endl; 
 			return 0; 		
 		}
-	curattr = curcatolog.GetTableAttribute(tablename);
+	curattr = curCatalog.GetTableAttribute(tablename);
 	
 	curword = GetWord();
 	
-	//Çø·ÖÊÇ·ñÓĞ²éÕÒÌõ¼ş 
+	//åŒºåˆ†æ˜¯å¦æœ‰æŸ¥æ‰¾æ¡ä»¶ 
 	if( curword == ";" )
 	{
-		isAll = 1;//±íÊ¾Ñ¡ÔñÈ«²¿ĞÅÏ¢ 
+		isAll = 1;//è¡¨ç¤ºé€‰æ‹©å…¨éƒ¨ä¿¡æ¯ 
 	} 
 	else if( curword != "where" )
 	{
-		cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+		std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 		return 0; 
 	}
 	
-	//¿ªÊ¼Ìí¼Ó²éÕÒÌõ¼ş 
+	//å¼€å§‹æ·»åŠ æŸ¥æ‰¾æ¡ä»¶ 
 	if( curword == "where" )
 	{
 		while( curword != ";" )
 		{
 			int position;
-			//ÊôĞÔ
+			//å±æ€§
 			// 
 			curword =  GetWord();
-			//ÊôĞÔÊÇ·ñ´æÔÚ 
-			position = isAttributeExist(tablename, curword);
+			//å±æ€§æ˜¯å¦å­˜åœ¨ 
+			position = curCatalog.isAttributeExist(tablename, curword);
 			if( position == -1)
 			{
-				cout << "²éÕÒÊôĞÔÊäÈë´íÎó£¬ËÑË÷ÎŞĞ§" << endl; 
+				std::cout << "æŸ¥æ‰¾å±æ€§è¾“å…¥é”™è¯¯ï¼Œæœç´¢æ— æ•ˆ" << std::endl; 
 				return 0; 		
 			}
 			scondition.attr[scondition.amount] = curword;
 			scondition.amount ++; 
 			
-			//Ìõ¼ş
+			//æ¡ä»¶
 			//
 			curword =  GetWord();
 			if( curword == "=" )
-				scondition.attr_type[scondition.amount-1] = 0;
+				scondition.operationtype[scondition.amount-1] = 0;
 			else if( curword == "<>" )
-				scondition.attr_type[scondition.amount-1] = 1;
+				scondition.operationtype[scondition.amount-1] = 1;
 			else if( curword == "<" )
-				scondition.attr_type[scondition.amount-1] = 2;
+				scondition.operationtype[scondition.amount-1] = 2;
 			else if( curword == ">" )
-				scondition.attr_type[scondition.amount-1] = 3;
+				scondition.operationtype[scondition.amount-1] = 3;
 			else if( curword == "<=" )
-				scondition.attr_type[scondition.amount-1] = 4;
+				scondition.operationtype[scondition.amount-1] = 4;
 			else if( curword == ">=" )
-				scondition.attr_type[scondition.amount-1] = 5;
+				scondition.operationtype[scondition.amount-1] = 5;
 			else
 			{
-				cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+				std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 				return 0;					
 			}
 			
-			//¹Ø¼üÖµ 
+			//å…³é”®å€¼ 
 			// 
 			curword =  GetWord();
 			int type = curattr.attr_type[position];
 			if( type == -1 )//int
 			{
 				scondition.key[scondition.amount-1].type = -1;
-				scondition.key[scondition.amount-1].idata = atoi(curword);
+				scondition.key[scondition.amount-1].idata = atoi(curword.c_str());
 			}
 			else if( type == 0 )//float
 			{
 				scondition.key[scondition.amount-1].type = 0;
-				scondition.key[scondition.amount-1].fdata = atoi(curword);		
+				scondition.key[scondition.amount-1].fdata = atoi(curword.c_str());
 			}
 			else if( type > 0 )//string
 			{
@@ -508,30 +518,35 @@ int Interpreter::ExecSelect()
 			} 
 			else
 			{
-				cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+				std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 				return 0;					
 			}			
 			
 			curword =  GetWord();
-			//Á¬½Ó×Ö·û-and
+			//è¿æ¥å­—ç¬¦-and
 			if( curword != "and" || curword != ";" )
 			{
-				cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+				std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 				return 0;					
 			}						 
 		}
 		
-		//ÕıÊ½µ÷ÓÃAPIº¯Êı²éÕÒ
+		//æ­£å¼è°ƒç”¨APIå‡½æ•°æŸ¥æ‰¾
 		if(isall!=1)
 			selectresult = curapi.Select( tablename, targetattr, scondition );
-		else
-			selectresult = curapi.Select( tablename, curattr, scondition );
+		else//select *
+		{
+			for (int i = 0; i < curattr.amount; i++)
+				targetattr[i] = curattr.attr_name[i];
+
+			selectresult = curapi.Select(tablename, targetattr, scondition);
+		}
 	}
 	
-	//Êä³ö½á¹û 
-	//±íÃû
-	cout << "------------------" << selectresult.table_name << "------------------" << endl;
-	//ÊôĞÔÃû 
+	//è¾“å‡ºç»“æœ 
+	//è¡¨å
+	std::cout << "------------------" << selectresult.table_name << "------------------" << std::endl;
+	//å±æ€§å 
 	int namelength = 0;
 	Attribute tmp_attr = selectresult.attr; 
 	
@@ -542,10 +557,10 @@ int Interpreter::ExecSelect()
 	}
 	
 	for( int i = 0; i < tmp_attr.amount; i++ )
-		cout << left << setw( namelength+5 ) << tmp_attr.attr_name[i] << '|';
-	cout << endl;
+		std::cout << left << setw( namelength+5 ) << tmp_attr.attr_name[i] << '|';
+	std::cout << std::endl;
 	
-	//Ôª×é 
+	//å…ƒç»„ 
 	std::vector<Tuple>::iterator it;
 	for( it = selectresult.tuples.begin(); it != selectresult.tuples.end(); it++ )
 		it->Printdata(namelength);
@@ -564,29 +579,29 @@ int Interpreter::ExecInsert()
 	curword = GetWord();
 	if( curword != "into" )
 	{
-		cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+		std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 		return 0;
 	}
 	
 	tablename = GetWord();
-	//¼ìÑé¸Ã±íÊÇ·ñ´æÔÚ 
-	if(curcatolog.isTableExist(tablename) != 1)
+	//æ£€éªŒè¯¥è¡¨æ˜¯å¦å­˜åœ¨ 
+	if(curcatalog.isTableExist(tablename) != 1)
 	{
-		cout << "²»´æÔÚ¸Ã±í£¬ÊäÈë´íÎó" << endl; 
+		std::cout << "ä¸å­˜åœ¨è¯¥è¡¨ï¼Œè¾“å…¥é”™è¯¯" << std::endl; 
 		return 0; 		
 	}
 	
 	curword = GetWord();
 	if( curword != "values" )
 	{
-		cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+		std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 		return 0;
 	}
 
 	curword = GetWord();
 	if( curword != "(" )
 	{
-		cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+		std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 		return 0;
 	}	
 	
@@ -600,7 +615,7 @@ int Interpreter::ExecInsert()
 			curword.erase( 0, 1 );
 		else
 		{
-			cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+			std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 			return 0;
 		} 
 		
@@ -608,27 +623,27 @@ int Interpreter::ExecInsert()
 			curword.erase( curword.length()-1, 1 );
 		else
 		{
-			cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+			std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 			return 0;
 		} 
 		
 		tmp.type = curattr.attr_type[number];
 		if( tmp.type == -1 )//int
-			tmp.idata = atoi(curword);
+			tmp.idata = atoi(curword.c_str());
 		else if( tmp.type == 0 )//float
-			tmp.fdata = atoi(curword);		
+			tmp.fdata = atoi(curword.c_str());
 		else if( tmp.type > 0 )//string
 			tmp.sdata = curword;	
 		else
 		{
-			cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+			std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 			return 0;					
 		}
 		
 		curword = GetWord();
 		if( curword != "," )
 		{
-			cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+			std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 			return 0;			
 		}
 		else if( curword != ";" )
@@ -641,18 +656,18 @@ int Interpreter::ExecInsert()
 	
 	if( curapi.Insert(tablename, tuple) == 1 ) 
 	{
-		cout << "³É¹¦²åÈëÔª×é" << endl; 
+		std::cout << "æˆåŠŸæ’å…¥å…ƒç»„" << std::endl; 
 		return 1;
 	}
 	else return 0;	
 }
 
-//Ò»¶¨ÒªÓĞwhereµÄÌõ¼ş£¬²»È»²»ÖªµÀÉ¾³ıÊ²Ã´Ôª×é 
+//ä¸€å®šè¦æœ‰whereçš„æ¡ä»¶ï¼Œä¸ç„¶ä¸çŸ¥é“åˆ é™¤ä»€ä¹ˆå…ƒç»„ 
 int Interpreter::ExecDelete()
 {
 	std::string tablename;
 	std::string curword;
-	Catolog curcatolog;
+	Catalog curCatalog;
 	SelectCondition scondition;
 	Attribute curattr; 
 	int targetan = 0;
@@ -662,82 +677,82 @@ int Interpreter::ExecDelete()
 	curword = GetWord();
 	if( curword != "from" )
 	{
-		cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+		std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 		return 0;	
 	} 
 	
 	tablename = GetWord();
-	//¼ìÑé¸Ã±íÊÇ·ñ´æÔÚ 
-	if(curcatolog.isTableExist(tablename) != 1)
+	//æ£€éªŒè¯¥è¡¨æ˜¯å¦å­˜åœ¨ 
+	if(curCatalog.isTableExist(tablename) != 1)
 	{
-		cout << "²»´æÔÚ¸Ã±í£¬ÊäÈë´íÎó" << endl; 
+		std::cout << "ä¸å­˜åœ¨è¯¥è¡¨ï¼Œè¾“å…¥é”™è¯¯" << std::endl; 
 		return 0; 		
 	}
 
-	curattr = curcatolog.GetTableAttribute(tablename);
+	curattr = curCatalog.GetTableAttribute(tablename);
 	
 	curword = GetWord();
 	
-	//Çø·ÖÊÇ·ñÓĞ²éÕÒÌõ¼ş 
+	//åŒºåˆ†æ˜¯å¦æœ‰æŸ¥æ‰¾æ¡ä»¶ 
 	if( curword != "where" )
 	{
-		cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+		std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 		return 0; 
 	}
 	
-	//¿ªÊ¼Ìí¼ÓÉ¾³ıÌõ¼ş 
+	//å¼€å§‹æ·»åŠ åˆ é™¤æ¡ä»¶ 
 	if( curword == "where" )
 	{
 		while( curword != ";" )
 		{
 			int position;
-			//ÊôĞÔ
+			//å±æ€§
 			// 
 			curword =  GetWord();
-			//ÊôĞÔÊÇ·ñ´æÔÚ 
-			position = isAttributeExist(tablename, curword);
+			//å±æ€§æ˜¯å¦å­˜åœ¨ 
+			position = curCatalog.isAttributeExist(tablename, curword);
 			if( position == -1)
 			{
-				cout << "²éÕÒÊôĞÔÊäÈë´íÎó£¬ËÑË÷ÎŞĞ§" << endl; 
+				std::cout << "æŸ¥æ‰¾å±æ€§è¾“å…¥é”™è¯¯ï¼Œæœç´¢æ— æ•ˆ" << std::endl; 
 				return 0; 		
 			}
 			scondition.attr[scondition.amount] = curword;
 			scondition.amount ++; 
 			
-			//Ìõ¼ş
+			//æ¡ä»¶
 			//
 			curword =  GetWord();
 			if( curword == "=" )
-				scondition.attr_type[scondition.amount-1] = 0;
+				scondition.operationtype[scondition.amount-1] = 0;
 			else if( curword == "<>" )
-				scondition.attr_type[scondition.amount-1] = 1;
+				scondition.operationtype[scondition.amount-1] = 1;
 			else if( curword == "<" )
-				scondition.attr_type[scondition.amount-1] = 2;
+				scondition.operationtype[scondition.amount-1] = 2;
 			else if( curword == ">" )
-				scondition.attr_type[scondition.amount-1] = 3;
+				scondition.operationtype[scondition.amount-1] = 3;
 			else if( curword == "<=" )
-				scondition.attr_type[scondition.amount-1] = 4;
+				scondition.operationtype[scondition.amount-1] = 4;
 			else if( curword == ">=" )
-				scondition.attr_type[scondition.amount-1] = 5;
+				scondition.operationtype[scondition.amount-1] = 5;
 			else
 			{
-				cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+				std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 				return 0;					
 			}
 			
-			//¹Ø¼üÖµ 
+			//å…³é”®å€¼ 
 			// 
 			curword =  GetWord();
 			int type = curattr.attr_type[position];
 			if( type == -1 )//int
 			{
 				scondition.key[scondition.amount-1].type = -1;
-				scondition.key[scondition.amount-1].idata = atoi(curword);
+				scondition.key[scondition.amount-1].idata = atoi(curword.c_str());
 			}
 			else if( type == 0 )//float
 			{
 				scondition.key[scondition.amount-1].type = 0;
-				scondition.key[scondition.amount-1].fdata = atoi(curword);		
+				scondition.key[scondition.amount-1].fdata = atoi(curword.c_str());
 			}
 			else if( type > 0 )//string
 			{
@@ -746,68 +761,64 @@ int Interpreter::ExecDelete()
 			} 
 			else
 			{
-				cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+				std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 				return 0;					
 			}			
 			
 			curword =  GetWord();
-			//Á¬½Ó×Ö·û-and
+			//è¿æ¥å­—ç¬¦-and
 			if( curword != "and" || curword != ";" )
 			{
-				cout << "Óï·¨´íÎó£¬ÇëÖØĞÂÊäÈë" << endl; 
+				std::cout << "è¯­æ³•é”™è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥" << std::endl; 
 				return 0;					
 			}						 
 		}
 	}
 	
-	//ÕıÊ½µ÷ÓÃAPIº¯ÊıÉ¾³ı 
+	//æ­£å¼è°ƒç”¨APIå‡½æ•°åˆ é™¤ 
 	int deletetuplenum = 0; 
 	deletetuplenum = curapi.Delete( tablename, scondition );
 	
 	if( deletetuplenum != -1 )
 	{
-		cout << "³É¹¦É¾³ı" << deletetuplenum << "Ôª×é" << endl; 
+		std::cout << "æˆåŠŸåˆ é™¤" << deletetuplenum << "å…ƒç»„" << std::endl; 
 		return 1;
 	}	
 	else
 		return 0;
 }
 
-void ExecFile()
+void Interpreter::ExecFile()
 {
 	std::string fileaddress;
 	fileaddress = GetWord();
 	
 	file = ifstream(fileaddress);
-	if( !file.open() )
+	if( !file.is_open() )
 	{
-		cout << "´ò¿ªÎÄ¼şÊ§°Ü" << endl; 
-		return 0; 		
+		std::cout << "æ‰“å¼€æ–‡ä»¶å¤±è´¥" << std::endl; 
+		return; 		
 	}
 	readmode = 1;
 	
 	int execresult;
-	//Ã¿´Î²Ù×÷ 
+	//æ¯æ¬¡æ“ä½œ 
 	while( !file.eof() )
 	{
-		if( GetInstruction() == 1 )
+		if (GetInstruction() == 0)
 		{
-			execresult = JudgeAndExec();
-			if(execresult == 0)
-			{
-				break; 
-			}
+			std::cout << "è¯»å…¥é”™è¯¯" << std::endl;
+			return;
 		}
-		else
-		{
-			cout << "ÎÄ¼ş¶ÁÈ¡´íÎó" << endl; 
-			break;	
-		}	
+		execresult = JudgeAndExec();
+		if(execresult == 0)
+			break; 
+
 	}
 		
-	if( !file.eof() )	cout << "ÎÄ¼şÖ´ĞĞ´íÎó" << endl; 
+	if( !file.eof() )	std::cout << "æ–‡ä»¶æ‰§è¡Œé”™è¯¯" << std::endl; 
 	
-	//Ö´ĞĞÍêÇĞ»»»ØÊäÈëÄ£Ê½ 
+	//æ‰§è¡Œå®Œåˆ‡æ¢å›è¾“å…¥æ¨¡å¼ 
 	readmode = 0; 
 }
 

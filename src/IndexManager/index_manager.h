@@ -76,7 +76,5 @@ private:
 
 	void read_into(const std::string file_name, int type);
 
-	int get_block_num(const std::string &file_name);
-
 	int get_degree(int type);
 };

@@ -828,18 +828,37 @@ void Interpreter::ExecFile()
 {
 	std::string fileaddress;
 	fileaddress = GetWord();
-	
-	file.open(fileaddress.c_str());
-	if( !file.is_open() )
+
+	if (fileaddress[0] != '\"')
 	{
-		std::cout << "打开文件失败" << std::endl; 
-		return; 		
+		std::cout << "语法错误，请重新输入" << std::endl;
+		return;
 	}
+	fileaddress.erase(0, 1);
+	if (fileaddress[fileaddress.length()-1] != '\"')
+	{
+		std::cout << "语法错误，请重新输入" << std::endl;
+		return;
+	}
+	fileaddress.erase(fileaddress.length() - 1, 1);
+		
+
+	//std::ifstream tmp;
+	file.open(fileaddress.c_str()); 
+
+	//file = tmp;
+	if (!file)
+	{
+		std::cout << "打开文件失败" << std::endl;
+		return;
+	}
+
+	fileaddress = GetWord();
 	readmode = 1;
-	
+
 	int execresult;
 	//每次操作 
-	while( !file.eof() )
+	while (!file.eof())
 	{
 		if (GetInstruction() == 0)
 		{
@@ -847,14 +866,19 @@ void Interpreter::ExecFile()
 			return;
 		}
 		execresult = JudgeAndExec();
-		if(execresult == 0)
-			break; 
+		if (execresult == 0)
+			break;
 
 	}
-		
-	if( !file.eof() )	std::cout << "文件执行错误" << std::endl; 
-	
-	//执行完切换回输入模式 
-	readmode = 0; 
-}
 
+	if (!file.eof())	std::cout << "文件执行错误" << std::endl;
+
+	//执行完切换回输入模式 
+	readmode = 0;
+
+	if (fileaddress != ";")
+	{
+		std::cout << "语法错误，请重新输入" << std::endl;
+		return;
+	}
+}

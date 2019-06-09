@@ -98,26 +98,31 @@ int Interpreter::JudgeAndExec()
 	}
 	else if (singleword == "select")//搜索操作
 	{
-		if(ExecSelect() == 0)
+		int result = ExecSelect();
+		if (result == 0)
 		{
 			std::cout << "搜索失败" << std::endl;
 			return 0;
 		}
-		else if(ExecSelect() == -1)
-		 	std::cout << "搜索记录为空" << std::endl;
+		else if (result == -1)
+			std::cout << "搜索记录为空" << std::endl;
 	}
 	else if (singleword == "insert")//插入操作
+	{
 		if(ExecInsert() == 0)
 		{
 			std::cout << "插入失败" << std::endl;
 			return 0;
-		}		
+		}	
+	}
 	else if (singleword == "delete")//删除元组操作
+	{
 		if(ExecDelete() == 0)
 		{
 			std::cout << "插入失败" << std::endl;
 			return 0;
-		}		
+		}	
+	}
 	else if (singleword == "execfile")//执行文件内容操作
 	{
 		ExecFile();
@@ -141,8 +146,15 @@ int Interpreter::ExecCreateTable()
 	std::string cur_word;
 	Attribute cur_attr;
 	int flag = 0, primarykey;
+	API curapi;
 
 	nameoftable = GetWord();
+	if( curapi.CL.isTableExist(nameoftable) == 1)
+	{
+		std::cout << "该表已存在，请重新输入" << std::endl;
+		return 0;		
+	}
+	
 	if(GetWord() != "(")
 	{
 		std::cout << "语法错误，请重新输入" << std::endl;
@@ -297,7 +309,7 @@ int Interpreter::ExecCreateTable()
 		flag = 1;
 	}
 	
-	API curapi;
+	
 	if( curapi.CreateTable(nameoftable, cur_attr) == 1 ) 
 	{
 		std::cout << "成功添加表格" << nameoftable << std::endl; 
@@ -376,6 +388,11 @@ int Interpreter::ExecDropIndex()
 	}	
 	tablename = GetWord();
 
+	if (GetWord() != ";")
+	{
+		std::cout << "语法错误，请重新输入" << std::endl;
+		return 0;
+	}
 	//接下来检查该表该属性是否存在
 	Catalog curc;
 	if ( curc.isTableExist(tablename) == 1 && curc.isIndexExist(tablename, indexname) == true )
@@ -410,12 +427,13 @@ int Interpreter::ExecSelect()
 	if( curword == "*" )
 	{
 		curword = GetWord();
+		isall = 1;
 	}
 	else
 	{
 		while( curword != "from" )
 		{
-			targetattr[targetan] = curword;
+			targetattr.push_back(curword);
 			targetan++;
 			curword = GetWord();
 			if(curword == ",")
@@ -520,6 +538,8 @@ int Interpreter::ExecSelect()
 			else if( type > 0 )//string
 			{
 				scondition.key[scondition.amount-1].type = type;
+				curword = curword.erase(0,1);
+				curword = curword.erase(curword.length()-1,1);
 				scondition.key[scondition.amount-1].sdata = curword;	
 			} 
 			else
@@ -530,23 +550,25 @@ int Interpreter::ExecSelect()
 			
 			curword =  GetWord();
 			//连接字符-and
-			if( curword != "and" || curword != ";" )
+			if( curword != "and" && curword != ";" )
 			{
 				std::cout << "语法错误，请重新输入" << std::endl; 
 				return 0;					
 			}						 
-		}
-		
-		//正式调用API函数查找
-		if(isall!=1)
-			selectresult = curapi.Select( tablename, targetattr, scondition );
-		else//select *
-		{
-			for (int i = 0; i < curattr.amount; i++)
-				targetattr[i] = curattr.attr_name[i];
+		}	
+	}
+	
+	if( isAll == 1 )	scondition.amount = 0;
+	
+	//正式调用API函数查找
+	if(isall!=1)
+		selectresult = curapi.Select( tablename, targetattr, scondition );
+	else//select *
+	{
+		for (int i = 0; i < curattr.amount; i++)
+			targetattr[i] = curattr.attr_name[i];
 
-			selectresult = curapi.Select(tablename, targetattr, scondition);
-		}
+		selectresult = curapi.Select(tablename, targetattr, scondition );
 	}
 	
 	//输出结果 
@@ -647,17 +669,23 @@ int Interpreter::ExecInsert()
 		}
 		
 		curword = GetWord();
-		if( curword != "," )
+		if( curword != "," && curword != ")" )
 		{
 			std::cout << "语法错误，请重新输入" << std::endl; 
 			return 0;			
 		}
-		else if( curword != ";" )
+		else
 		{
-			tuple[number] = tmp; 
+			tuple.push_back(tmp);
 			number++;	
-			curword = GetWord();	
+			if( curword != ")" )	curword = GetWord();
 		}
+	}
+	
+	if( GetWord() != ";" )
+	{
+		std::cout << "语法错误，请重新输入" << std::endl;
+		return 0;
 	}
 	
 	if( curapi.Insert(tablename, tuple) == 1 ) 
@@ -763,6 +791,8 @@ int Interpreter::ExecDelete()
 			else if( type > 0 )//string
 			{
 				scondition.key[scondition.amount-1].type = type;
+				curword = curword.erase(0,1);
+				curword = curword.erase(curword.length()-1,1);
 				scondition.key[scondition.amount-1].sdata = curword;	
 			} 
 			else
@@ -773,12 +803,12 @@ int Interpreter::ExecDelete()
 			
 			curword =  GetWord();
 			//连接字符-and
-			if( curword != "and" || curword != ";" )
+			if( curword != "and" && curword != ";" )
 			{
 				std::cout << "语法错误，请重新输入" << std::endl; 
 				return 0;					
 			}						 
-		}
+		}	
 	}
 	
 	//正式调用API函数删除 
@@ -799,7 +829,7 @@ void Interpreter::ExecFile()
 	std::string fileaddress;
 	fileaddress = GetWord();
 	
-	file = ifstream(fileaddress);
+	file.open(fileaddress.c_str());
 	if( !file.is_open() )
 	{
 		std::cout << "打开文件失败" << std::endl; 

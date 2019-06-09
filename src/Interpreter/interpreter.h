@@ -10,7 +10,6 @@
 #include <string>
 #include <sstream>
 #include <fstream> 
-#include <Windows.h>
 #include "base.h"
 #include "catalogmanager.h"
 #include "api.h"

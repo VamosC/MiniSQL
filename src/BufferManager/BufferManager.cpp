@@ -119,9 +119,9 @@ BufferManager::~BufferManager()
         BlockID = Frames[i].getBlockId();
         if(FileName == "")
             continue;
-        if(flushPage(i , FileName , BlockID)==0)
+        if(is_file_exist(FileName))
         {
-            //报错机制，此处省略
+            flushPage(i , FileName , BlockID);
         }
     }
     delete[] Frames;

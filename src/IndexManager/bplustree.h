@@ -135,7 +135,9 @@ public:
 	bool _find(const T &key, NodeFound<T> &res);// 查询key的所在的节点
 	bool _insert(const T &key, int block_id);// 插入索引结点
 	bool _delete(const T &key);// 删除索引结点
-	bool _find_range(const T& start, const T& end, std::vector<int> &res);// 范围查找
+	bool _find_range(const T &start, const T &end, int l_op, int r_op, std::vector<int> &res);// 范围查找
+	bool _find_range_lt(const T &end, int r_op, std::vector<int> &res);
+	bool _find_range_gt(const T &start, int l_op, std::vector<int> &res);
 	std::shared_ptr<TreeNode<T>> _get_leftist_leaf();
 	void print() // for debug
 	{
@@ -214,7 +216,7 @@ bool BPTree<T>::_find(const T &key, NodeFound<T> &res)
 
 
 template <typename T>
-bool BPTree<T>::_find_range(const T& start, const T& end, std::vector<int> &res)
+bool BPTree<T>::_find_range(const T& start, const T& end, int l_op, int r_op, std::vector<int> &res)
 {
 	if(root == nullptr)
 	{
@@ -222,25 +224,87 @@ bool BPTree<T>::_find_range(const T& start, const T& end, std::vector<int> &res)
 	}
 	else
 	{
-		NodeFound<T> res;
+		NodeFound<T> found;
 		// 不关心能否找到, 只关心在哪个叶结点中
-		_find(start, res);
-		auto node = res.node;
+		_find(start, found);
+		auto node = found.node;
 		auto over_flag = false;
 		while(node != nullptr)
 		{
 			for(auto i = 0; i < node->keys.size(); i++)
 			{
-				if(node->keys[i] >= start && node->keys[i] <= end)
+				if(l_op == 2)
 				{
-					res.push_back(node->block_ids[i]);
+					if(r_op == 2)
+					{
+						if(node->keys[i] > start && node->keys[i] < end)
+						{
+							res.push_back(node->block_ids[i]);
+						}
+						// 超过范围
+						if(node->keys[i] >= end)
+						{
+							over_flag = true;
+							break;
+						}
+					}
+					else if(r_op == 4)
+					{
+						if(node->keys[i] > start && node->keys[i] <= end)
+						{
+							res.push_back(node->block_ids[i]);
+						}
+						// 超过范围
+						if(node->keys[i] > end)
+						{
+							over_flag = true;
+							break;
+						}
+					}
+					// 运算符错误
+					else
+					{
+						assert(false);
+					}
 				}
-
-				// 超过范围
-				if(node->keys[i] > end)
+				else if(l_op == 4)
 				{
-					over_flag = true;
-					break;
+					if(r_op == 2)
+					{
+						if(node->keys[i] >= start && node->keys[i] < end)
+						{
+							res.push_back(node->block_ids[i]);
+						}
+						// 超过范围
+						if(node->keys[i] >= end)
+						{
+							over_flag = true;
+							break;
+						}
+					}
+					else if(r_op == 4)
+					{
+						if(node->keys[i] >= start && node->keys[i] <= end)
+						{
+							res.push_back(node->block_ids[i]);
+						}
+						// 超过范围
+						if(node->keys[i] > end)
+						{
+							over_flag = true;
+							break;
+						}
+					}
+					// 运算符错误
+					else
+					{
+						assert(false);
+					}
+				}
+				// 运算符错误
+				else
+				{
+					assert(false);
 				}
 			}
 			if(over_flag)
@@ -250,6 +314,98 @@ bool BPTree<T>::_find_range(const T& start, const T& end, std::vector<int> &res)
 			node = node->next_sibling;
 		}
 		return true;
+	}
+}
+
+template <typename T>
+bool BPTree<T>::_find_range_lt(const T &end, int r_op, std::vector<int> &res)
+{
+	if(root == nullptr)
+	{
+		return false;
+	}
+	else
+	{
+		NodeFound<T> found;
+		_find(end, found);
+		auto node = found.node;
+		while(node != nullptr)
+		{
+			for(auto i = 0; i < node->keys.size(); i++)
+			{
+				if(r_op == 2)
+				{
+					if(node->keys[i] < end)
+					{
+						res.push_back(node->block_ids[i]);
+					}
+					else
+					{
+						break;
+					}
+				}
+				else if(r_op == 4)
+				{
+					if(node->keys[i] <= end)
+					{
+						res.push_back(node->block_ids[i]);
+					}
+					else
+					{
+						break;
+					}
+				}
+				// 错误的运算符
+				else
+				{
+					assert(false);
+				}
+			}
+			node = node->left_sibling;
+		}
+		return res.size() != 0;
+	}
+}
+
+template <typename T>
+bool BPTree<T>::_find_range_gt(const T &start, int l_op, std::vector<int> &res)
+{
+	if(root == nullptr)
+	{
+		return false;
+	}
+	else
+	{
+		NodeFound<T> found;
+		_find(start, found);
+		auto node = found.node;
+		while(node != nullptr)
+		{
+			for(auto i = 0; i < node->keys.size(); i++)
+			{
+				if(l_op == 2)
+				{
+					if(node->keys[i] > start)
+					{
+						res.push_back(node->block_ids[i]);
+					}
+				}
+				else if(l_op == 4)
+				{
+					if(node->keys[i] >= start)
+					{
+						res.push_back(node->block_ids[i]);
+					}
+				}
+				// 错误的运算符
+				else
+				{
+					assert(false);
+				}
+			}
+			node = node->next_sibling;
+		}
+		return res.size() != 0;
 	}
 }
 

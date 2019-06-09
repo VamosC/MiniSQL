@@ -105,6 +105,10 @@ bool IndexManager::find_key(const std::string &table_name, const std::string &in
 			return false;
 		}
 	}
+	else
+	{
+		assert(false);
+	}
 }
 
 
@@ -134,15 +138,60 @@ bool IndexManager::find_range_key(const std::string &table_name, const std::stri
 	}
 	if(type == INT_TYPE)
 	{
-		return true;
+		if(cond.l_op != -1 && cond.r_op != -1)
+		{
+			return int_index[file_name]->_find_range(cond.start.idata, cond.end.idata, cond.l_op, cond.r_op, block_ids);
+		}
+
+		if(cond.r_op != -1)
+		{
+			return int_index[file_name]->_find_range_lt(cond.end.idata, cond.r_op, block_ids);
+		}
+
+		if(cond.l_op != -1)
+		{
+			return int_index[file_name]->_find_range_gt(cond.start.idata, cond.l_op, block_ids);
+		}
+		// 运算符错误
+		assert(false);
 	}
 	else if(type == FLOAT_TYPE)
 	{
-		return true;
+		if(cond.l_op != -1 && cond.r_op != -1)
+		{
+			return float_index[file_name]->_find_range(cond.start.fdata, cond.end.fdata, cond.l_op, cond.r_op, block_ids);
+		}
+
+		if(cond.r_op != -1)
+		{
+			return float_index[file_name]->_find_range_lt(cond.end.fdata, cond.r_op, block_ids);
+		}
+
+		if(cond.l_op != -1)
+		{
+			return float_index[file_name]->_find_range_gt(cond.start.fdata, cond.l_op, block_ids);
+		}
+		// 运算符错误
+		assert(false);
 	}
 	else if(type > 0)
 	{
-		return true;
+		if(cond.l_op != -1 && cond.r_op != -1)
+		{
+			return string_index[file_name]->_find_range(cond.start.sdata, cond.end.sdata, cond.l_op, cond.r_op, block_ids);
+		}
+
+		if(cond.r_op != -1)
+		{
+			return string_index[file_name]->_find_range_lt(cond.end.sdata, cond.r_op, block_ids);
+		}
+
+		if(cond.l_op != -1)
+		{
+			return string_index[file_name]->_find_range_gt(cond.start.sdata, cond.l_op, block_ids);
+		}
+		// 运算符错误
+		assert(false);
 	}
 	// 编程逻辑错误
 	else
@@ -174,6 +223,11 @@ bool IndexManager::insert_index(const std::string &table_name, const std::string
 	else if(data.type > 0)
 	{
 		return string_index[file_name]->_insert(data.sdata, block_id);
+	}
+	// 错误
+	else
+	{
+		assert(false);
 	}
 }
 
@@ -542,27 +596,44 @@ int IndexManager::get_degree(int type)
 
 // int main(int argc, char const *argv[])
 // {
-// 	int x;
+// 	// int x;
 // 	BufferManager bm;
 // 	// std::string a("132");
 // 	// std::string b("ads");
 // 	// std::string c("02da");
-// 	auto data = Data{.type = -1, .idata = 3};
-// 	auto data1 = Data{.type = -1, .idata = 100};
-// 	auto data2 = Data{.type = -1, .idata = 4};
+// 	auto data = Data{.type = -1, .idata = 40};
+// 	auto data1 = Data{.type = -1, .idata = 300};
+// 	auto data2 = Data{.type = -1, .idata = 44};
+// 	auto data3 = Data{.type = -1, .idata = 100};
+// 	auto data4 = Data{.type = -1, .idata = 200};
+// 	auto data5 = Data{.type = -1, .idata = 344};
+
 // 	IndexManager im(bm);
 // 	std::vector<int> block_id;
-// 	im.create_index("student", "grade", -1);
-// 	im.insert_index("student", "grade", data, 0);
-// 	im.insert_index("student", "grade", data1, 100);
-// 	im.insert_index("student", "grade", data2, 3);
-// 	// im.create_index("student", "age", 4);
+// 	// im.create_index("student", "grade", -1);
+// 	// im.insert_index("student", "grade", data, 40);
+// 	// im.insert_index("student", "grade", data1, 300);
+// 	// im.insert_index("student", "grade", data2, 244);
+// 	// im.insert_index("student", "grade", data3, 144);
+// 	// im.insert_index("student", "grade", data4, 444);
+// 	// im.insert_index("student", "grade", data5, 544);
 // 	// im.insert_index("student", "age", data, 9);
 // 	// im.insert_index("student", "age", data1, 0);
 // 	// im.insert_index("student", "age", data2, 3);
-// 	im.find_key("student", "grade", data1, block_id);
-// 	im.drop_index("student", "age", 4);
-// 	std::cout << block_id[0] << '\n';
-// 	std::cin >> x;
+// 	// im.delete_index("student", "grade", data1);
+// 	// im.delete_index("student", "grade", data2);
+// 	// im.delete_index("student", "grade", data4);
+// 	// im.delete_index("student", "grade", data3);
+// 	// im.find_key("student", "grade", data, block_id);
+// 	// im.drop_index("student", "age", 4);
+// 	auto cond = condition{.l_op = 4, .r_op = 4, .start = data, .end = data5};
+// 	im.find_range_key("student", "grade", cond, block_id);
+// 	for(auto it : block_id)
+// 	{
+// 		std::cout << it << " ";
+// 	}
+// 	std::cout << '\n';
+// 	// std::cout << block_id[0] << '\n';
+// 	// std::cin >> x;
 // 	return 0;
 // }

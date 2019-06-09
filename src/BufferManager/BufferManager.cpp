@@ -22,7 +22,7 @@ void Page::initialize()
 
 inline void Page::setFileName(std::string FileName) 
 {
-    FileName = FileName;
+    this->FileName = FileName;
 }
 
 inline std::string Page::getFileName() 
@@ -117,6 +117,8 @@ BufferManager::~BufferManager()
         std::string FileName;
         FileName = Frames[i].getFileName();
         BlockID = Frames[i].getBlockId();
+        if(FileName == "")
+            continue;
         if(flushPage(i , FileName , BlockID)==0)
         {
             //报错机制，此处省略

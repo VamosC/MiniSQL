@@ -7,6 +7,7 @@
 #include <vector>
 #include <memory>
 #include "../base.h"
+#include "../util.h"
 
 /*
     创建一个BufferManager的对象

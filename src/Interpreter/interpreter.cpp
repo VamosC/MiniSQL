@@ -137,12 +137,17 @@ int Interpreter::JudgeAndExec()
 //此时从create table后面开始读 
 int Interpreter::ExecCreateTable()
 {
-	std::string nameoftable;	
+	std::string nameoftable;
 	std::string cur_word;
 	Attribute cur_attr;
 	int flag = 0, primarykey;
 
-	nameoftable = GetWord();	
+	nameoftable = GetWord();
+	if(GetWord() != "(")
+	{
+		std::cout << "语法错误，请重新输入" << std::endl;
+		return 0;
+	}
 	cur_attr.amount = 0;
 	if (GetInstruction() == 0)
 	{
@@ -150,132 +155,139 @@ int Interpreter::ExecCreateTable()
 		return 0;
 	}
 	cur_word = GetWord();
-	while( cur_word != ");" )
+	while (cur_word != ");")
 	{
-		if( cur_word == "primary" )
+		if (cur_word == "primary")
 		{
-			if( cur_word == "key" )
+			cur_word = GetWord();
+			if (cur_word == "key")
 			{
 				cur_word = GetWord();
-				if( cur_word != "(" )
+				if (cur_word != "(")
 				{
-					std::cout << "语法错误，请重新输入" << std::endl; 
+					std::cout << "语法错误，请重新输入" << std::endl;
 					return 0;
 				}
-				
+
 				cur_word = GetWord();
 				int i;
-				for(  i = 0; i < cur_attr.amount; i++ )
+				for (i = 0; i < cur_attr.amount; i++)
 				{
-					if( cur_word == cur_attr.attr_name[i] )
+					if (cur_word == cur_attr.attr_name[i])
 						break;
 				}
-				if( i < cur_attr.amount)
+				if (i < cur_attr.amount)
 					cur_attr.primary_key = i;
 				else
 				{
-					std::cout << "不存在该主码" << std::endl; 
-					return 0; 						
+					std::cout << "不存在该属性" << std::endl;
+					return 0;
 				}
-				
+
 				cur_word = GetWord();
-				if( cur_word != ")" )
+				if (cur_word != ")")
 				{
-					std::cout << "语法错误，请重新输入" << std::endl; 
+					std::cout << "语法错误，请重新输入" << std::endl;
 					return 0;
 				}
 			}
 			else
 			{
-				std::cout << "语法错误，请重新输入" << std::endl; 
-				return 0; 				
+				std::cout << "语法错误，请重新输入" << std::endl;
+				return 0;
 			}
 		}
 		else
-		{		
+		{
 			std::string attrname, attrtype;
 			attrname = cur_word;
 			attrtype = GetWord();
-			if( attrtype == "int" )
+
+
+			if (attrtype == "int")
 			{
 				cur_word = GetWord();
-				if( cur_word =="unique" || cur_word =="," )
+				if (cur_word == "unique" || cur_word == ",")
 				{
-					if( cur_word == "unique" && GetWord() != "," )
+					if (cur_word == "unique" && GetWord() != ",")
 					{
-						std::cout << "语法错误，请重新输入" << std::endl; 
-						return 0; 	
+						std::cout << "语法错误，请重新输入" << std::endl;
+						return 0;
 					}
-		
+
 					cur_attr.attr_name[cur_attr.amount] = attrname;
 					cur_attr.attr_type[cur_attr.amount] = -1;
-					if( cur_word == "unique" )	cur_attr.is_unique[cur_attr.amount] = true;
-					cur_attr.amount++;					
+					if (cur_word == "unique")	cur_attr.is_unique[cur_attr.amount] = true;
+					cur_attr.amount++;
 				}
 				else
 				{
-					std::cout << "语法错误，请重新输入" << std::endl; 
-					return 0; 					
+					std::cout << "语法错误，请重新输入" << std::endl;
+					return 0;
 				}
 			}
-			else if( attrtype == "float" )
+			else if (attrtype == "float")
 			{
 				cur_word = GetWord();
-				if( cur_word =="unique" || cur_word =="," )
+				if (cur_word == "unique" || cur_word == ",")
 				{
-					if( cur_word == "unique" && GetWord() != "," )
+					if (cur_word == "unique" && GetWord() != ",")
 					{
-						std::cout << "语法错误，请重新输入" << std::endl; 
-						return 0; 	
+						std::cout << "语法错误，请重新输入" << std::endl;
+						return 0;
 					}
-		
+
 					cur_attr.attr_name[cur_attr.amount] = attrname;
 					cur_attr.attr_type[cur_attr.amount] = 0;
-					if( cur_word == "unique" )	cur_attr.is_unique[cur_attr.amount] = true;
-					cur_attr.amount++;	
+					if (cur_word == "unique")	cur_attr.is_unique[cur_attr.amount] = true;
+					cur_attr.amount++;
 				}
 				else
 				{
-					std::cout << "语法错误，请重新输入" << std::endl; 
-					return 0; 					
+					std::cout << "语法错误，请重新输入" << std::endl;
+					return 0;
 				}
 			}
-			else if( attrtype.substr( 0, 3 ) == "char" )
+			else if (attrtype.substr(0, 4) == "char")
 			{
 				attrtype.erase(0, 4);
 				int len = 0, pos = 1;
-				if( attrtype[0] == '(' )
-					while( attrtype[pos] != ')' )
+				if (attrtype[0] == '(')
+					while (attrtype[pos] != ')')
 					{
-						len = 10 * len + attrtype[pos] -'0';
-						if( len > 255 || len == 0 || pos >= 4 )
-							return 0; 
+						len = 10 * len + attrtype[pos] - '0';
+						if (len > 255 || len == 0 || pos >= 4)
+							return 0;
 						pos++;
 					}
-				
+
 				cur_word = GetWord();
-				if( cur_word =="unique" || cur_word =="," )
+				if (cur_word == "unique" || cur_word == ",")
 				{
-					if( cur_word == "unique" && GetWord() != "," )
+					if (cur_word == "unique" && GetWord() != ",")
 					{
-						std::cout << "语法错误，请重新输入" << std::endl; 
-						return 0; 	
+						std::cout << "语法错误，请重新输入" << std::endl;
+						return 0;
 					}
-					
+
 					cur_attr.attr_name[cur_attr.amount] = attrname;
 					cur_attr.attr_type[cur_attr.amount] = len;
-					if( cur_word == "unique" )	cur_attr.is_unique[cur_attr.amount] = true;
-					cur_attr.amount++;	
+					if (cur_word == "unique")	cur_attr.is_unique[cur_attr.amount] = true;
+					cur_attr.amount++;
 				}
 				else
 				{
-					std::cout << "语法错误，请重新输入" << std::endl; 
-					return 0; 					
+					std::cout << "语法错误，请重新输入" << std::endl;
+					return 0;
 				}
-			}	
-			
-			
-		} 
+			}
+			else
+			{
+				std::cout << "语法错误，请重新输入" << std::endl;
+				return 0;
+			}
+
+		}
 		if (GetInstruction() == 0)
 		{
 			std::cout << "读入错误" << std::endl;
@@ -283,12 +295,6 @@ int Interpreter::ExecCreateTable()
 		}
 		cur_word = GetWord();
 		flag = 1;
-	}
-	
-	if( flag != 1 || cur_attr.amount == 0 )//从一开始就有语法错误 
-	{
-		std::cout << "语法错误，请重新输入" << std::endl; 
-		return 0; 
 	}
 	
 	API curapi;

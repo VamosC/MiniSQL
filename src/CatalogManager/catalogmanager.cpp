@@ -1,19 +1,19 @@
 //
 //	catalogmanager.cpp
-//	Ä¿Â¼¹ÜÀí
+//	ç›®å½•ç®¡ç†
 
 #include "catalogmanager.h"
 
-//½«Êı×Ö×Ö·û´®×ª»¯ÎªÊı×Ö 
-int Catolog::String2Num(string tmp)
+//å°†æ•°å­—å­—ç¬¦ä¸²è½¬åŒ–ä¸ºæ•°å­— 
+int Catolog::String2Num(std::string tmp)
 {
 	return atoi(tmp.c_str());
 }
 
-//½«Êı×Ö×ª»¯Îª×Ö·û´® 
-string Catolog::Num2String(int tmp)
+//å°†æ•°å­—è½¬åŒ–ä¸ºå­—ç¬¦ä¸² 
+std::string Catolog::Num2String(int tmp)
 {
-	string result = "";
+	std::string result = "";
 	if( tmp < 0 )
 	{
 		tmp = -tmp;
@@ -26,51 +26,51 @@ string Catolog::Num2String(int tmp)
 	return result;
 } 
 
-//µÃµ½´æ·ÅÄ³±í¸ñĞÅÏ¢µÄ¿éÊı -----------------------------------------
-//¿éÊıÖÁÉÙÎª0 
-int Catolog::GetBlockAmount(string tablename)
+//å¾—åˆ°å­˜æ”¾æŸè¡¨æ ¼ä¿¡æ¯çš„å—æ•° -----------------------------------------
+//å—æ•°è‡³å°‘ä¸º0 
+int Catolog::GetBlockAmount(std::string tablename)
 {
 	char *pagecontent;
 	int num = 0;
 	
-	pagecontent = //µÃµ½buffer_managerÖĞÒ»¿éµÄËùÓĞÄÚÈİ,ĞèÊ¹ÓÃµ½±íÃûºÍnum£¿ 
+	pagecontent = //å¾—åˆ°buffer_managerä¸­ä¸€å—çš„æ‰€æœ‰å†…å®¹,éœ€ä½¿ç”¨åˆ°è¡¨åå’Œnumï¼Ÿ 
 	while( pagecontent[0] != '\0' )
 	{
 		num++;
-		pagecontent = //µÃµ½buffer_managerÖĞÒ»¿éµÄËùÓĞÄÚÈİ,ĞèÊ¹ÓÃµ½±íÃûºÍnum£¿ 
+		pagecontent = //å¾—åˆ°buffer_managerä¸­ä¸€å—çš„æ‰€æœ‰å†…å®¹,éœ€ä½¿ç”¨åˆ°è¡¨åå’Œnumï¼Ÿ 
 	}
 	
 	return num; 
 }
 
 
-//¹ØÓÚ±í¸ñµÄ²Ù×÷ 
+//å…³äºè¡¨æ ¼çš„æ“ä½œ 
 		
-//´´½¨±í¸ñ
-//ÊäÈë£º±í¸ñÃû³Æ¡¢±í¸ñÊôĞÔ¡¢Ë÷Òı¶ÔÏó¡¢Ö÷Âë 
-//Êä³ö: 1-³É¹¦£» 0-Ê§°Ü,°üº¬Òì³£ 
-int Catolog::CreateTable(string tablename, Attribute attr, Index indices, int primary_key)
+//åˆ›å»ºè¡¨æ ¼
+//è¾“å…¥ï¼šè¡¨æ ¼åç§°ã€è¡¨æ ¼å±æ€§ã€ç´¢å¼•å¯¹è±¡ã€ä¸»ç  
+//è¾“å‡º: 1-æˆåŠŸï¼› 0-å¤±è´¥,åŒ…å«å¼‚å¸¸ 
+int Catolog::CreateTable(std::string tablename, Attribute attr, Index indices, int primary_key)
 {
-	//¼ì²âÊÇ·ñÓĞÍ¬Ãû±íµÄ´æÔÚ 
+	//æ£€æµ‹æ˜¯å¦æœ‰åŒåè¡¨çš„å­˜åœ¨ 
 	if( isTableExist(tablename) == true )
 	{
-		cout << "ÒÑ´æÔÚ¸Ã±í£¬ÊäÈë´íÎó" << endl;
+		std::cout << "å·²å­˜åœ¨è¯¥è¡¨ï¼Œè¾“å…¥é”™è¯¯" << std::endl;
 		return 0; 
 	} 
 	
-	//°ÑËùÓĞĞÅÏ¢±£´æµ½×Ö·û´®ÖĞÓÃÓÚÊä³öµ½ÎÄ¼şÖĞ
-	//¸ñÊ½,ÓÉÓÚÓÃÁ÷¿ÉÒÔÒ»¸öµ¥´ÊÒ»¸öµ¥´ÊµÄ¶ÁÈë£¬ËùÓĞÕâÀïÒ»°ãĞÅÏ¢ÓÃ¿Õ¸ñ¸ô¿ª 
-	//@@ tablename attribute_number attrbute_name type is_unique(°´Ë³Ğò) primarykeynumber
+	//æŠŠæ‰€æœ‰ä¿¡æ¯ä¿å­˜åˆ°å­—ç¬¦ä¸²ä¸­ç”¨äºè¾“å‡ºåˆ°æ–‡ä»¶ä¸­
+	//æ ¼å¼,ç”±äºç”¨æµå¯ä»¥ä¸€ä¸ªå•è¯ä¸€ä¸ªå•è¯çš„è¯»å…¥ï¼Œæ‰€æœ‰è¿™é‡Œä¸€èˆ¬ä¿¡æ¯ç”¨ç©ºæ ¼éš”å¼€ 
+	//@@ tablename attribute_number attrbute_name type is_unique(æŒ‰é¡ºåº) primarykeynumber
 	// index_number index_name towhatattribute
 	//\n
-	string outputstr = "@@ ";
+	std::string outputstr = "@@ ";
 	outputstr += tablename;
 	output += (" " + Num2String(attr.amount));
 	
-	string TorF;
+	std::string TorF;
 	for(int i = 0; i < attr.amount; i++)
 	{
-		if(attr.is_unique == true)
+		if(attr.is_unique)
 			TorF = "true";
 		else
 			TorF = "false";
@@ -82,13 +82,13 @@ int Catolog::CreateTable(string tablename, Attribute attr, Index indices, int pr
 	
 	outputstr += ( " " + Num2String(indices.amount) );
 	for(int i = 0; i < attr.amount; i++)
-		outputstr += ( " " + indices.attr_name[i] + Num2String(indices.whose[i]) );		
+		outputstr += ( " " + indices.name[i] + Num2String(indices.whose[i]) );		
 	outputstr += "\n";
 	
-	//»¹Éæ¼°µ½´æÈë¿éµÄÎÊÌâ??
-		//¼ÆËãÃ¿ÌõĞÅÏ¢µÄ³¤¶È
-		//¼ÆËãËùÓÃµÄ¿éÊı
-		//±éÀúËùÓĞµÄ¿éÑ°ÕÒºÏÊÊµÄÎ»ÖÃ£¬Èç¹ûÖ®Ç°µÄ¿é²»¹»ÓÃ£¬Çå³öÒ»¿é/ĞÂ½¨Ò»¿é²åÈë 
+	//è¿˜æ¶‰åŠåˆ°å­˜å…¥å—çš„é—®é¢˜??
+		//è®¡ç®—æ¯æ¡ä¿¡æ¯çš„é•¿åº¦
+		//è®¡ç®—æ‰€ç”¨çš„å—æ•°
+		//éå†æ‰€æœ‰çš„å—å¯»æ‰¾åˆé€‚çš„ä½ç½®ï¼Œå¦‚æœä¹‹å‰çš„å—ä¸å¤Ÿç”¨ï¼Œæ¸…å‡ºä¸€å—/æ–°å»ºä¸€å—æ’å…¥ 
 	int BlockNum = GetBlockAmount(TABLE_PATH) / _PAGESIZE;
 	if (!BlockNum)
 	{
@@ -127,26 +127,26 @@ int Catolog::CreateTable(string tablename, Attribute attr, Index indices, int pr
 }
  
 
-//É¾³ı±í¸ñ
-//ÊäÈë£º±í¸ñÃû³Æ
-//Êä³ö£º1-³É¹¦£» 0-Ê§°Ü,°üº¬Òì³£  
-int Catolog::DropTable(string tablename)
+//åˆ é™¤è¡¨æ ¼
+//è¾“å…¥ï¼šè¡¨æ ¼åç§°
+//è¾“å‡ºï¼š1-æˆåŠŸï¼› 0-å¤±è´¥,åŒ…å«å¼‚å¸¸  
+int Catolog::DropTable(std::string tablename)
 {
 	if( isTableExist(tablename) == false )
 	{
-		cout << "²»´æÔÚ¸Ã±í£¬ÊäÈë´íÎó" << endl;
+		std::cout << "ä¸å­˜åœ¨è¯¥è¡¨ï¼Œè¾“å…¥é”™è¯¯" << std::endl;
 		return 0; 
 	} 
-	//ÕÒµ½ÏàÓ¦µÄ¿é
+	//æ‰¾åˆ°ç›¸åº”çš„å—
 	int block;
 	int begin = GetTablePlace(tablename, block);
 
 	char* buffer = buffer_manager.getPage(TABLE_PATH, block);
 	int PID = buffer_manager.getPageId(TABLE_PATH, block);
 
-	string check = buffer;
+	std::string check = buffer;
 
-	//É¾³ı¶ÔÓ¦µÄĞÅÏ¢£¬°üÀ¨±íµÄÊôĞÔºÍË÷ÒıĞÅÏ¢ 
+	//åˆ é™¤å¯¹åº”çš„ä¿¡æ¯ï¼ŒåŒ…æ‹¬è¡¨çš„å±æ€§å’Œç´¢å¼•ä¿¡æ¯ 
 	int end = start + String2Num(check.substr(begin, 4);
 	int index = 0;
 	int current_index = 0;
@@ -168,41 +168,41 @@ int Catolog::DropTable(string tablename)
 	buffer[current_index] = '#';
 	buffer[++current_index] = '\0';
 	
-	//Ë¢ĞÂÒ³Ãæ 
+	//åˆ·æ–°é¡µé¢ 
 	buffer_manager.modifyPage(PID);
 
 	return 1;
 } 
  
-//Í¨¹ı±íÃû²é¿´±íÊÇ·ñ´æÔÚ	
-//ÊäÈë£º±í¸ñÃû³Æ
-//Êä³ö£ºtrue-´æÔÚ£» false-²»´æÔÚ
-bool Catolog::isTableExist(string tablename)
+//é€šè¿‡è¡¨åæŸ¥çœ‹è¡¨æ˜¯å¦å­˜åœ¨	
+//è¾“å…¥ï¼šè¡¨æ ¼åç§°
+//è¾“å‡ºï¼štrue-å­˜åœ¨ï¼› false-ä¸å­˜åœ¨
+bool Catolog::isTableExist(std::string tablename)
 {
-	//±éÀúËùÓĞµÄ¿é£¬Í¨¹ı@@¿ªÍ··Ö±æ±íµÄĞÅÏ¢
-		//Èç¹û´æÔÚÏàÍ¬µÄ±íÃ÷£¬¾Í·µ»Øtrue
+	//éå†æ‰€æœ‰çš„å—ï¼Œé€šè¿‡@@å¼€å¤´åˆ†è¾¨è¡¨çš„ä¿¡æ¯
+		//å¦‚æœå­˜åœ¨ç›¸åŒçš„è¡¨æ˜ï¼Œå°±è¿”å›true
 		if( tmp_name = tablename )	return true;
-		//µ½ÏÂÒ»¸ö±íµÄĞÅÏ¢È¥ 
+		//åˆ°ä¸‹ä¸€ä¸ªè¡¨çš„ä¿¡æ¯å» 
 	
 	
 	return false; 
 } 
 
-//´òÓ¡±í¸ñĞÅÏ¢  ??´ı¶¨£¬²»ÖªµÀ²éÑ¯½á¹ûµÄ·´À¡·½Ê½ 
-void Catolog::PrintTable(string tablename, Attribute tattr)
+//æ‰“å°è¡¨æ ¼ä¿¡æ¯  ??å¾…å®šï¼Œä¸çŸ¥é“æŸ¥è¯¢ç»“æœçš„åé¦ˆæ–¹å¼ 
+void Catolog::PrintTable(std::string tablename, Attribute tattr)
 {
 	if( isTableExist( tablename ) == false )
 	{
-		cout << "²»´æÔÚ¸Ã±í£¬ÊäÈë´íÎó" << endl;
-		return 0; 
+		std::cout << "ä¸å­˜åœ¨è¯¥è¡¨ï¼Œè¾“å…¥é”™è¯¯" << std::endl;
+		return; 
 	}
 	
-	//´òÓ¡±íµÄĞÅÏ¢
-	cout << "------------------" << tablename << "------------------" << endl;
-	//´òÓ¡ÊôĞÔĞÅÏ¢
+	//æ‰“å°è¡¨çš„ä¿¡æ¯
+	std::cout << "------------------" << tablename << "------------------" << std::endl;
+	//æ‰“å°å±æ€§ä¿¡æ¯
 	int namelength = 0;
 	Attribute tmp_attr = GetTableAttribute(tablename); 
-	cout << ">>>Primary key:  "; 
+	std::cout << ">>>Primary key:  "; 
 	
 	for( int i = 0; i < tmp_attr.amount; i++ )
 	{
@@ -212,143 +212,143 @@ void Catolog::PrintTable(string tablename, Attribute tattr)
 			cout << tmp_attr.attr_name[i] << endl;
 	}
 	
-	cout << ">>>Attribute   " << "number:" << tmp_attr.amount << endl;
-	cout << left << setw(namelength + 3) << "Name"  << left << setw(12) << "| Type"  << "| is unique?" << endl;
+	std::cout << ">>>Attribute   " << "number:" << tmp_attr.amount << std::endl;
+	std::cout << left << setw(namelength + 3) << "Name"  << left << setw(12) << "| Type"  << "| is unique?" << std::endl;
 	for( int i = 0; i < tmp_attr.amount; i++ )
 	{
-		//ÊôĞÔÃû
-		cout << left << setw( namelength + 3 ) << tmp_attr.attr_name[i];
-		//ÊôĞÔÀàĞÍ
+		//å±æ€§å
+		std::cout << left << setw( namelength + 3 ) << tmp_attr.attr_name[i];
+		//å±æ€§ç±»å‹
 		switch( tmp_attr.attr_type[i] )
 		{
 			case 0:
 			{
-				cout << left << setw( 10 ) << "float";
+				std::cout << left << setw( 10 ) << "float";
 				break;
 			}
 			case -1:
 			{
-				cout << left << setw( 10 ) << "int";
+				std::cout << left << setw( 10 ) << "int";
 				break;
 			}
 			default:
 			{
-				cout << "varchar("<< left << setw( 3 ) << tmp_attr.attr_type[i] << ")";
+				std::cout << "char("<< left << setw( 3 ) << tmp_attr.attr_type[i] << ")";
 				break;
 			}
 		}
-		//ÊÇ·ñÎ¨Ò» 
+		//æ˜¯å¦å”¯ä¸€ 
 		if( tmp_attr.is_unique[i] == true )
-			cout << " T" << endl;
+			std::cout << " T" << std::endl;
 		else
-			cout << " F" << endl;
+			std::cout << " F" << std::endl;
 	}
 	
-	//´òÓ¡Ë÷Òı
+	//æ‰“å°ç´¢å¼•
 	Index tmp_ind = GetTableIndex(tablename);
-	cout << ">>>Index   number:" << tmp_ind.amount << endl; 
-	cout << left << setw(namelength + 3) << "Name"  << "| Attribute" << endl;
+	std::cout << ">>>Index   number:" << tmp_ind.amount << std::endl; 
+	std::cout << left << setw(namelength + 3) << "Name"  << "| Attribute" << std::endl;
 	for( int i = 0; i < tmp_ind.amount; i++ )
 	{
-		//Ë÷ÒıÃû
-		cout << left << setw( namelength + 3 ) << tmp_ind.attr_name[i];
-		//Ë÷Òı¶ÔÓ¦ÊôĞÔ
-		cout << tmp_attr.attr_name[tmp_ind.whose[i]] << endl;
+		//ç´¢å¼•å
+		std::cout << left << setw( namelength + 3 ) << tmp_ind.attr_name[i];
+		//ç´¢å¼•å¯¹åº”å±æ€§
+		std::cout << tmp_attr.attr_name[tmp_ind.whose[i]] << std::endl;
 	}
 } 	
  
 
 
-//¹ØÓÚÊôĞÔºÍË÷Òı
+//å…³äºå±æ€§å’Œç´¢å¼•
 
-//Ä³Ò»ÊôĞÔÊÇ·ñ´æÔÚ,±ØĞëÔÚ±í´æÔÚÊ±²ÅÄÜÊ¹ÓÃ 
-//ÊäÈë£º±í¸ñÃû³Æ¡¢ÊôĞÔÃû³Æ
-//Êä³ö£ºtrue-´æÔÚ£» false-²»´æÔÚ		 
-bool Catolog::isAttributeExist(string tablename, string tattr)
+//æŸä¸€å±æ€§æ˜¯å¦å­˜åœ¨,å¿…é¡»åœ¨è¡¨å­˜åœ¨æ—¶æ‰èƒ½ä½¿ç”¨ 
+//è¾“å…¥ï¼šè¡¨æ ¼åç§°ã€å±æ€§åç§°
+//è¾“å‡ºï¼šä½ç½®-å­˜åœ¨ï¼› -1 - ä¸å­˜åœ¨	 
+int Catolog::isAttributeExist(std::string tablename, std::string tattr)
 {
 	Attribute tmp_attr = GetAttributeMessage( tablename );
 	for( i = 0; i < tmp_attr.amount; i++ )
 	{
 		if( tmp_attr.attr_name[i] == tattr )
-			return true;
+			return i;
 	}
-	return false;
+	return -1;
 }
 
-//µÃµ½Ä³±íµÄÈ«²¿ÊôĞÔ
-//ÊäÈë£º±í¸ñÃû³Æ
-//Êä³ö£ºAttribute½á¹¹Êı¾İ
-Attribute Catolog::GetTableAttribute(string tablename)
+//å¾—åˆ°æŸè¡¨çš„å…¨éƒ¨å±æ€§
+//è¾“å…¥ï¼šè¡¨æ ¼åç§°
+//è¾“å‡ºï¼šAttributeç»“æ„æ•°æ®
+Attribute Catolog::GetTableAttribute(std::string tablename)
 {
-	string tattr = "";
-	//ÕÒµ½±í¸ñµÄÔÚÄÇ¸ö¿éÖĞ
+	std::string tattr = "";
+	//æ‰¾åˆ°è¡¨æ ¼çš„åœ¨é‚£ä¸ªå—ä¸­
 	int block;
 	int start = GetTablePlace(tablename, block);
 
 
-	//¶ÁÈ¡Õû¿éĞÅÏ¢
+	//è¯»å–æ•´å—ä¿¡æ¯
 	char* buffer = buffer_manager.getPage(TABLE_PATH, block);
-	string check(buffer);
+	std::string check(buffer);
 	
-	//µÃµ½Õû¸ö±íµÄĞÅÏ¢
+	//å¾—åˆ°æ•´ä¸ªè¡¨çš„ä¿¡æ¯
 	int end = 0;
-	string attr_name = getTableName(check, start, end);
-	//µÃµ½attribute²¿·ÖµÄĞÅÏ¢£¬´æÈë×Ö·û´®tattr 
+	std::string attr_name = getTableName(check, start, end);
+	//å¾—åˆ°attributeéƒ¨åˆ†çš„ä¿¡æ¯ï¼Œå­˜å…¥å­—ç¬¦ä¸²tattr 
 	
 	Attribute result;
 
-	istringstream instruction = istringstream(tattr);
-	string singleword;
-	//ÊôĞÔÊıÁ¿ 
+	std::istringstream instruction = istringstream(tattr);
+	std::string singleword;
+	//å±æ€§æ•°é‡ 
 	instruction >> singleword;
 	result.amount = String2Num(singleword);
-	//¸÷ÊôĞÔĞÅÏ¢
+	//å„å±æ€§ä¿¡æ¯
 	for( int i = 0; i < result.amount; i++ )
 	{
-		//ÊôĞÔ
+		//å±æ€§
 		instruction >> singleword;
-		result.attr_name[i] = string(singleword); 
-		//ÀàĞÍ
+		result.attr_name[i] = std::string(singleword); 
+		//ç±»å‹
 		instruction >> singleword;
 		result.attr_type[i] = String2Num( singleword );
-		//ÊÇ·ñÎ¨Ò»
+		//æ˜¯å¦å”¯ä¸€
 		instruction >> singleword;
 		if( singleword == "true" )
 			result.is_unique[i] = true;
 		else
 			result.is_unique[i] = false;
 	} 
-	//Ö÷Âë 
+	//ä¸»ç  
 	instruction >> singleword;
 	result.primary_key = String2Num( singleword );
 
 	return result;
 }
 
-//ÔÚÖ¸¶¨ÊôĞÔÉÏ½¨Á¢Ë÷Òı
-//ÊäÈë£º±í¸ñÃû³Æ¡¢ÊôĞÔÃû³Æ¡¢Ë÷ÒıÃû³Æ
-//Êä³ö£º1-³É¹¦£» 0-Ê§°Ü,°üº¬Òì³£
-int Catolog::CreateIndex(string tablename, string tattr, string indexname)
+//åœ¨æŒ‡å®šå±æ€§ä¸Šå»ºç«‹ç´¢å¼•
+//è¾“å…¥ï¼šè¡¨æ ¼åç§°ã€å±æ€§åç§°ã€ç´¢å¼•åç§°
+//è¾“å‡ºï¼š1-æˆåŠŸï¼› 0-å¤±è´¥,åŒ…å«å¼‚å¸¸
+int Catolog::CreateIndex(std::string tablename, std::string tattr, std::string indexname)
 {
 	if( isTableExist( tablename ) == false )
 	{
-		cout << "²»´æÔÚ¸Ã±í£¬ÊäÈë´íÎó" << endl;
+		cout << "ä¸å­˜åœ¨è¯¥è¡¨ï¼Œè¾“å…¥é”™è¯¯" << endl;
 		return 0; 
 	}
-	if( isAttributeExist( tablename, tattr) == false )
+	if( isAttributeExist( tablename, tattr) == -1 )
 	{
-		cout << "²»´æÔÚ¸ÃÊôĞÔ£¬ÊäÈë´íÎó" << endl;
+		std::cout << "ä¸å­˜åœ¨è¯¥å±æ€§ï¼Œè¾“å…¥é”™è¯¯" << std::endl;
 		return 0; 
 	}
 	
-	//ÅĞ¶ÏÊÇ·ñÔ½½ç»òÕßÖØ¸´ 
+	//åˆ¤æ–­æ˜¯å¦è¶Šç•Œæˆ–è€…é‡å¤ 
 	Index cur_index = GetTableIndex(tablename);
 	Attribute cur_attr = GetTableAttribute(tablename); 
 	int numberofattr = 0;
 	
 	if( cur_index.amount == 10 )
 	{
-		cout << "µ±Ç°±íË÷ÒıÊıÁ¿ÒÑ´ïµ½ÉÏÏŞ£¬²Ù×÷ÎŞĞ§" << endl;
+		std::cout << "å½“å‰è¡¨ç´¢å¼•æ•°é‡å·²è¾¾åˆ°ä¸Šé™ï¼Œæ“ä½œæ— æ•ˆ" << std::endl;
 		return 0;		
 	} 
 
@@ -366,49 +366,49 @@ int Catolog::CreateIndex(string tablename, string tattr, string indexname)
 	{
 		if( cur_index.whose[i] == numberofattr )
 		{
-			cout << "µ±Ç°ÊôĞÔÒÑ´æÔÚË÷Òı£¬²Ù×÷ÎŞĞ§" << endl;
+			std::cout << "å½“å‰å±æ€§å·²å­˜åœ¨ç´¢å¼•ï¼Œæ“ä½œæ— æ•ˆ" << std::endl;
 			return 0;			
 		}
-		if( cur_index.attr_name[i] == indexname )
+		if( cur_index.name[i] == indexname )
 		{
-			cout << "µ±Ç°Ë÷ÒıÃûÒÑ±»Ê¹ÓÃ£¬²Ù×÷ÎŞĞ§" << endl;
+			std::cout << "å½“å‰ç´¢å¼•åå·²è¢«ä½¿ç”¨ï¼Œæ“ä½œæ— æ•ˆ" << std::endl;
 			return 0;			
 		}
 	} 
 	
-	//¼ì²éÎŞÎó£¬ÕıÊ½¿ªÊ¼Ìí¼ÓË÷Òı
+	//æ£€æŸ¥æ— è¯¯ï¼Œæ­£å¼å¼€å§‹æ·»åŠ ç´¢å¼•
 	cur_index.amount++;
 	cur_index.attr_name[amount-1] = indexname;
 	cur_index.whose[amount-1] = numberofattr;
 	
-	//ÓÉÓÚÔ­À´µÄ±íÒÑ¾­¼ÆÈë£¬²»ÄÜ¿Ï¶¨ËüÖ®ºóÊÇ·ñÓĞÆäËûĞÅÏ¢£¬ËùÒÔĞèÒªÕû¸ö±íÉ¾µôÖØĞÂÌí¼Ó 
+	//ç”±äºåŸæ¥çš„è¡¨å·²ç»è®¡å…¥ï¼Œä¸èƒ½è‚¯å®šå®ƒä¹‹åæ˜¯å¦æœ‰å…¶ä»–ä¿¡æ¯ï¼Œæ‰€ä»¥éœ€è¦æ•´ä¸ªè¡¨åˆ æ‰é‡æ–°æ·»åŠ  
 	if( DropTable(tablename) == 0 )
 	{
-		cout << "¸üĞÂĞÅÏ¢Ê§°Ü£¬ÎŞ·¨É¾³ıÔ­±í£¬²Ù×÷ÎŞĞ§" << endl;
+		std::cout << "æ›´æ–°ä¿¡æ¯å¤±è´¥ï¼Œæ— æ³•åˆ é™¤åŸè¡¨ï¼Œæ“ä½œæ— æ•ˆ" << std::endl;
 		return 0		
 	}
 	if(CreateTable(tablename, cur_attr, cur_indexs, cur_attr.primary_key) == 0)
 	{
-		cout << "¸üĞÂĞÅÏ¢Ê§°Ü£¬ÎŞ·¨²åÈë±í£¬²Ù×÷ÎŞĞ§" << endl;
+		std::cout << "æ›´æ–°ä¿¡æ¯å¤±è´¥ï¼Œæ— æ³•æ’å…¥è¡¨ï¼Œæ“ä½œæ— æ•ˆ" << std::endl;
 		return 0		
 	}
 	
 	return 1; 
 }
 
-//É¾³ıË÷Òı
-//ÊäÈë£º±í¸ñÃû³Æ¡¢Ë÷ÒıÃû³Æ
-//Êä³ö£º1-³É¹¦£» 0-Ê§°Ü,°üº¬Òì³£
-int Catolog::DropIndex(string tablename, string indexname)
+//åˆ é™¤ç´¢å¼•
+//è¾“å…¥ï¼šè¡¨æ ¼åç§°ã€ç´¢å¼•åç§°
+//è¾“å‡ºï¼š1-æˆåŠŸï¼› 0-å¤±è´¥,åŒ…å«å¼‚å¸¸
+int Catolog::DropIndex(std::string tablename, std::string indexname)
 {
-	//ÀàËÆÓÚ²åÈëË÷Òı²Ù×÷¾Í¼¸¸öÏ¸½Ú¸ÄÒ»ÏÂ 
+	//ç±»ä¼¼äºæ’å…¥ç´¢å¼•æ“ä½œå°±å‡ ä¸ªç»†èŠ‚æ”¹ä¸€ä¸‹ 
 	if( isTableExist( tablename ) == false )
 	{
-		cout << "²»´æÔÚ¸Ã±í£¬ÊäÈë´íÎó" << endl;
+		std::cout << "ä¸å­˜åœ¨è¯¥è¡¨ï¼Œè¾“å…¥é”™è¯¯" << std::endl;
 		return 0; 
 	}
 	
-	//ÅĞ¶ÏÊÇ·ñÔ½½ç»òÕßÖØ¸´ 
+	//åˆ¤æ–­æ˜¯å¦è¶Šç•Œæˆ–è€…é‡å¤ 
 	Index cur_index = GetTableIndex(tablename);
 	Attribute cur_attr = GetTableAttribute(tablename); 
 	int numberofindex = 0; 
@@ -416,37 +416,37 @@ int Catolog::DropIndex(string tablename, string indexname)
 	numberofindex = isIndexExist(tablename, indexname);	  
 	if( numberofindex == 0 )
 	{
-		cout << "µ±Ç°±íÃ»ÓĞ¸ÃË÷Òı£¬²Ù×÷ÎŞĞ§" << endl;
+		std::cout << "å½“å‰è¡¨æ²¡æœ‰è¯¥ç´¢å¼•ï¼Œæ“ä½œæ— æ•ˆ" << std::endl;
 		return 0;		
 	}
 
-	//¼ì²éÎŞÎó£¬ÕıÊ½¿ªÊ¼É¾³ıË÷Òı
+	//æ£€æŸ¥æ— è¯¯ï¼Œæ­£å¼å¼€å§‹åˆ é™¤ç´¢å¼•
 	cur_index.amount--;
 	if( i != amount )
 	{
-		cur_index.attr_name[i] = cur_index.attr_name[amount];
+		cur_index.name[i] = cur_index.name[amount];
 		cur_index.whose[i] = cur_index.whose[amount];		
 	}
 	
-	//ÓÉÓÚÔ­À´µÄ±íÒÑ¾­¼ÆÈë£¬²»ÄÜ¿Ï¶¨ËüÖ®ºóÊÇ·ñÓĞÆäËûĞÅÏ¢£¬ËùÒÔĞèÒªÕû¸ö±íÉ¾µôÖØĞÂÌí¼Ó 
+	//ç”±äºåŸæ¥çš„è¡¨å·²ç»è®¡å…¥ï¼Œä¸èƒ½è‚¯å®šå®ƒä¹‹åæ˜¯å¦æœ‰å…¶ä»–ä¿¡æ¯ï¼Œæ‰€ä»¥éœ€è¦æ•´ä¸ªè¡¨åˆ æ‰é‡æ–°æ·»åŠ  
 	if( DropTable(tablename) == 0 )
 	{
-		cout << "É¾³ıË÷ÒıÊ§°Ü£¬ÎŞ·¨É¾³ıÔ­±í£¬²Ù×÷ÎŞĞ§" << endl;
+		std::cout << "åˆ é™¤ç´¢å¼•å¤±è´¥ï¼Œæ— æ³•åˆ é™¤åŸè¡¨ï¼Œæ“ä½œæ— æ•ˆ" << std::endl;
 		return 0		
 	}
-	if(CreateTable(tablename, cur_attr, cur_indexs, cur_attr.primary_key) == 0)
+	if(CreateTable(tablename, cur_attr, cur_index, cur_attr.primary_key) == 0)
 	{
-		cout << "É¾³ıË÷ÒıÊ§°Ü£¬ÎŞ·¨²åÈë±í£¬²Ù×÷ÎŞĞ§" << endl;
+		std::cout << "åˆ é™¤ç´¢å¼•å¤±è´¥ï¼Œæ— æ³•æ’å…¥è¡¨ï¼Œæ“ä½œæ— æ•ˆ" << std::endl;
 		return 0		
 	}
 	
 	return 1; 
 }
 
-//Ë÷ÒıÊÇ·ñ´æÔÚ
-//ÊäÈë£º±í¸ñÃû³Æ¡¢Ë÷ÒıÃû³Æ
-//Êä³ö£ºÕıÕûÊı-Ë÷ÒıĞòºÅ£» 0-²»´æÔÚ		 
-int Catolog::isIndexExist(string tablename, string indexname)
+//ç´¢å¼•æ˜¯å¦å­˜åœ¨
+//è¾“å…¥ï¼šè¡¨æ ¼åç§°ã€ç´¢å¼•åç§°
+//è¾“å‡ºï¼šæ­£æ•´æ•°-ç´¢å¼•åºå·ï¼› 0-ä¸å­˜åœ¨		 
+int Catolog::isIndexExist(std::string tablename, std::string indexname)
 {
 	Index cur_index = GetTableIndex(tablename);
 
@@ -457,26 +457,26 @@ int Catolog::isIndexExist(string tablename, string indexname)
 	return 0;
 }
 
-//µÃµ½Ä³±íµÄÈ«²¿Ë÷Òı,±ØĞëÔÚ±í´æÔÚÊ±²Å¿ÉÒÔÓÃ 
-//ÊäÈë£º±í¸ñÃû³Æ
-//Êä³ö£ºIndex½á¹¹Êı¾İ
-Index GetTableIndex(string tablename)
+//å¾—åˆ°æŸè¡¨çš„å…¨éƒ¨ç´¢å¼•,å¿…é¡»åœ¨è¡¨å­˜åœ¨æ—¶æ‰å¯ä»¥ç”¨ 
+//è¾“å…¥ï¼šè¡¨æ ¼åç§°
+//è¾“å‡ºï¼šIndexç»“æ„æ•°æ®
+Index GetTableIndex(std::string tablename)
 {
 	Index result;
-	string sindex;
-	//µÃµ½Ë÷ÒıËùÔÚ±íµÄÎ»ÖÃ
-	//µÃµ½Ë÷ÒıĞÅÏ¢
-	//°ÑĞÅÏ¢Ò»¸öÒ»¸öÂ¼Èë½á¹¹ÖĞ
+	std::string sindex;
+	//å¾—åˆ°ç´¢å¼•æ‰€åœ¨è¡¨çš„ä½ç½®
+	//å¾—åˆ°ç´¢å¼•ä¿¡æ¯
+	//æŠŠä¿¡æ¯ä¸€ä¸ªä¸€ä¸ªå½•å…¥ç»“æ„ä¸­
 	
 	
 	return result; 
 }
 
-//µÃµ½µ¥´Ê
-string GetWord( string input )
+//å¾—åˆ°å•è¯
+std::string GetWord( std::string input )
 {
-	string word = "";
-	istringstream instruction = istringstream(input);
+	std::string word = "";
+	std::istringstream instruction = std::istringstream(input);
 	instruction >> word;
 	return word;
 } 

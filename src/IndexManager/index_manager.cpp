@@ -461,24 +461,6 @@ void IndexManager::write_back()
 	}
 }
 
-int IndexManager::get_block_num(const std::string &file_name)
-{
-	char* p;
-	auto i = 0;
-	while(1)
-	{
-		p = bm.getPage(file_name, i);
-		if(p[0] != -1)
-		{
-			i++;
-		}
-		else
-		{
-			return i+1;
-		}
-	}
-}
-
 
 void IndexManager::read_into(const std::string file_name, int type)
 {

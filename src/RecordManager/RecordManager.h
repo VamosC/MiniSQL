@@ -11,10 +11,12 @@
 #include "base.h"
 #include "../CatalogManager/catalogmanager.h"
 #include "../BufferManager/BufferManager.h"
+#include "../ERROR.h"
 
 extern BufferManager buffer_manager;
 
-class RecordManager {
+class RecordManager 
+{
 
 private:
 	

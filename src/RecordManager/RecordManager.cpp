@@ -4,29 +4,36 @@ void RecordManager::insertRecord(std::string tablename, Tuple& tuple) {
 	std::string tmp_tablename = tablename;
 	tablename = "./database/data/" + tablename;
 	Catalog catalog_manager;
-	//检测表是否存在
+	
+
+	//异常检测
 	if (!catalog_manager.isTableExist(tmp_tablename)) {
-		//表格不存在异常
-
-
+		throw TABLE_NOT_EXISTED();
+		//表不存在异常
 	}
 	Attribute attr = catalog_manager.GetTableAttribute(tmp_tablename);
 	std::vector<Data> v = tuple.getData();
 	
 	for (int i = 0; i < v.size(); i++) {
 		if (v[i].attr_type != attr.attr_type[i])
-			//元组的属性不合法异常
+		{
+			throw TUPLE_ATTR_NOT_MATCH();
+			//属性不匹配异常
+		}
+			
 	}
 	Table table = selectRecord(tmp_tablename);
 	std::vector<Tuple>& tuples = table.getTuple();
 	if (attr.primary_key >= 0) {
 		if (isConflict(tuples, v, attr.primary_key) == true)
 			//主键冲突异常
+			throw PRIM_KEY_CONFLICT();
 	}
 	for (int i = 0; i < attr.amount; i++) {
 		if (attr.is_unique[i] == true) {
 			if (isConflict(tuples, v, i) == true)
 				//存在unqiue冲突异常
+				trow UNIQUE_CONFLICT();
 		}
 	}
 
@@ -47,12 +54,12 @@ void RecordManager::insertRecord(std::string tablename, Tuple& tuple) {
 	for (j = 0; j < v.size(); j++) {
 		Data tmp_data = v[j];
 
-		if (tmp_data.type == 1)
+		if (tmp_data.type == INT)
 		{
 			int l = getDataLength(tmp_data.idata);
 			len += l;
 		}
-		else if (tmp_data.type == 0)
+		else if (tmp_data.type == FLOAT)
 		{
 			int t = getDataLength(tmp_data.fdata);
 			len += l;
@@ -104,7 +111,7 @@ int RecordManager::deleteRecord(std::string tablename) {
 	Catalog catalog_manager;
 	//检测表是否存在
 	if (!catalog_manager.isTableExist(tmp_name)) {
-		throw table_not_exist();
+		throw TABLE_NOT_EXISTED();
 	}
 	int blockAccount = getBlockNum(tablename);
 	//表文件大小为0时直接返回
@@ -149,7 +156,7 @@ int RecordManager::deleteRecord(std::string tablename, std::string to_attr, Wher
 	Catalog catalog_manager;
 	//检测表是否存在
 	if (!catalog_manager.isTableExist(tmp_name)) {
-		throw table_not_exist();
+		throw TABLE_NOT_EXISTED();
 	}
 	Attribute attr = catalog_manager.GetTableAttribute(tmp_name);
 	int index = -1;
@@ -166,10 +173,11 @@ int RecordManager::deleteRecord(std::string tablename, std::string to_attr, Wher
 	//目标属性不存在，抛出异常
 	if (index == -1) {
 		//目标属性不存在异常
+		throw ATTR_NOT_EXIST()
 	}
-	//where条件中的两个数据的类型不匹配，抛出异常
 	else if (attr.attr_type[index] != where.data.attr_type) {
 		//where条件中的两个数据的类型不匹配异常
+		throw WHERE_TYPE_NOT_MATCH();
 	}
 
 	//异常处理完成
@@ -203,7 +211,7 @@ Table RecordManager::selectRecord(std::string tablename, std::string result_tabl
 	Catalog catalog_manager;
 	//检测表是否存在
 	if (!catalog_manager.isTableExist(tmp_name)) {
-		throw table_not_exist();
+		throw TABLE_NOT_EXISTED();
 	}
 	//获取文件所占的块的数量
 	// int blockAccount = getFileSize(tablename) / _PAGESIZE;
@@ -240,9 +248,9 @@ Table RecordManager::selectRecord(std::string tablename, std::string to_attr, Wh
 	std::string tmp_name = tablename;
 	tablename = "./database/data/" + tablename;
 	Catalog catalog_manager;
-	//检测表是否存在
+
 	if (!catalog_manager.isTableExist(tmp_name)) {
-		throw table_not_exist();
+		throw TABLE_NOT_EXISTED();
 	}
 	Attribute attr = catalog_manager.GetTableAttribute(tmp_name);
 	int index = -1;
@@ -256,13 +264,14 @@ Table RecordManager::selectRecord(std::string tablename, std::string to_attr, Wh
 			break;
 		}
 	}
-	//目标属性不存在，抛出异常
+
 	if (index == -1) {
 		//目标属性不存在异常
+		throw ATTR_NOT_EXIST();
 	}
-	//where条件中的两个数据的类型不匹配，抛出异常
 	else if (attr.attr_type[index] != where.data.attr_type) {
 		// where条件中的两个数据的类型不匹配异常
+		throw WHERE_TYPE_NOT_MATCH();
 	}
 
 
@@ -296,6 +305,7 @@ void RecordManager::createIndex(IndexManager & index_manager, std::string tablen
 	Catalog catalog_manager;
 	if (!catalog_manager.isTableExist(tmp_name)) {
 		//表不存在异常
+		throw TABLE_NOT_EXISTED();
 	}
 	Attribute attr = catalog_manager.GetTableAttribute(tmp_name);
 	int index = -1;
@@ -308,6 +318,7 @@ void RecordManager::createIndex(IndexManager & index_manager, std::string tablen
 	}
 	if (index == -1) {
 		//目标属性不存在异常
+		throw ATTR_NOT_EXIST();
 
 	}
 
@@ -358,11 +369,11 @@ void RecordManager::DoInsertOnRecord(char* p, int offset, int len, const std::ve
 	for (int j = 0; j < v.size(); j++) {
 		p[offset++] = ' ';
 		Data d = v[j];
-		if (d.attr_type == 1)
+		if (d.attr_type == INT)
 		{
 			CopyFunc(p, offset, d.datai);
 		}
-		else if (d.attr_type == 0)
+		else if (d.attr_type == FLOAT)
 		{
 			CopyFunc(p, offset, d.dataf);
 		}
@@ -397,12 +408,12 @@ Tuple RecordManager::readTuple(const char* p, Attribute attr) {
 		tmp[j] = '\0';
 		p++;
 		std::string s(tmp);
-		if (data.type == 1)
+		if (data.type == INT)
 		{
 			std::stringstream stream(s);
 			stream >> data.datai;
 		}
-		else if (data.type == 0)
+		else if (data.type == FLOAT)
 		{
 			std::stringstream stream(s);
 			stream >> data.dataf;
@@ -435,12 +446,12 @@ bool RecordManager::isConflict(std::vector<Tuple> & tuples, std::vector<Data> & 
 		if (tuples[i].isDeleted() == true)
 			continue;
 		std::vector<Data> d = tuples[i].getData();
-		if (v[index].type == 1)
+		if (v[index].type == INT)
 		{
 			if (v[index].idata == d[index].idata)
 				return true;
 		}
-		else if (v[index].type == 0)
+		else if (v[index].type == FLOAT)
 		{
 			if (v[index].fdata == d[index].fdata)
 				return true;
@@ -529,14 +540,14 @@ void RecordManager::querySelectInBlock(std::string tablename, int block_id, Attr
 		}
 		std::vector<Data> d = tuple.getData();
 
-		if (attr.attr_type[indxe] == 1)
+		if (attr.attr_type[indxe] == INT)
 		{
 			if (QueryJudge(d[index].datai, where.data.datai, where.relation_character)) 
 			{
 				v.push_back(tuple);
 			}
 		}
-		else if (attr.attr_type[indxe] == 0)
+		else if (attr.attr_type[indxe] == FLOAT)
 		{
 			if (QueryJudge(d[index].dataf, where.data.dataf, where.relation_character)) {
 				v.push_back(tuple);

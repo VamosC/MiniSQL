@@ -12,6 +12,8 @@
 const int _PAGESIZE = 4096;
 const int _MAXFRAMESIZE = 100;
 
+#define INT -1
+#define FLOAT 0
 //数据 
 //一个数据的类型以及数据的存放
 //sdata的长度为 1~255 
@@ -104,9 +106,9 @@ public:
 		std::vector<Data>::iterator it;
 		for( it = data.begin(); it != data.end(); it++ )
 		{
-			if( (*it).type == -1 )
+			if( (*it).type == INT)
 				std::cout << (*it).idata << "\t\t\t";
-			else if( (*it).type == 0 )
+			else if( (*it).type == FLOAT)
 				std::cout << (*it).fdata << "\t\t\t";
 			else
 				std::cout << (*it).sdata << "\t\t\t";

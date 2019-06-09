@@ -75,7 +75,7 @@ else
 
 
 // 删除索引
-index_manager.drop_index("student", "name");
+index_manager.drop_index("student", "name", -1);
 
 
 ```

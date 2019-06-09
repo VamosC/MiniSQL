@@ -21,7 +21,20 @@ struct Data{
 	float fdata;
 	std::string sdata;
 };
-
+//用于where的判断
+typedef enum{
+    LESS,
+    LESS_OR_EQUAL,
+    EQUAL,
+    GREATER_OR_EQUAL,
+    GREATER,
+    NOT_EQUAL
+} WHERE;
+//Where存放一组判断语句
+struct Where {
+	Data data; //数据
+	WHERE relation_character;   //关系
+};
 // 单个属性的查找条件
 // start <(<=) x <(<=) end
 struct condition
@@ -61,6 +74,7 @@ struct Attribute{
 class Tuple{
 private:
 	std::vector<Data> data;
+	bool isDeleted;
 public:
 	Tuple(){};
 	
@@ -78,7 +92,10 @@ public:
 		struct Data tmp = td;
 		data.push_back(tmp);
 	}
-	
+	void addData(Data d)
+	{
+		this->data.push_back(d);
+	}
 	
 	//打印一个元祖的数据
 	//按顺序输出，中间的间隔还需调整 
@@ -95,6 +112,18 @@ public:
 				std::cout << (*it).sdata << "\t\t\t";
 		}
 		std::cout << '\n';
+	}
+	//返回数据
+	std::vector<Data> getData() const
+	{
+		return this->data;
+	}
+	bool Tuple::isDeleted() {
+		return isDeleted_;
+	}
+
+	void Tuple::setDeleted() {
+		isDeleted_ = true;
 	}
 }; 
 

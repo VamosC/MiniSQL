@@ -11,7 +11,13 @@
 #include <vector>
 #include <sstream>
 #include "../base.h" 
+#include "../BufferManager/BufferManager.h"
+#define TABLE_PATH "./database/catalog/CatalogFile"
 using namespace std;
+
+
+extern BufferManager buffer_manager;
+
 
 class Catalog{
 	private:
@@ -21,6 +27,10 @@ class Catalog{
 		
 		//得到存放某表格信息的块数 
 		int GetBlockAmount(string tablename);
+		//返回表在文件中的位置
+		int GetTablePlace(string tablename, int& suitable_block);
+		//返回表名
+		string getTableName(string buffer, int start, int& end);
 		
 	public:
 		//关于表格的操作 

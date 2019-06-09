@@ -82,14 +82,47 @@ int Catolog::CreateTable(string tablename, Attribute attr, Index indices, int pr
 	
 	outputstr += ( " " + Num2String(indices.amount) );
 	for(int i = 0; i < attr.amount; i++)
-		outputstr += ( " " + indices.name[i] + Num2String(indices.whose[i]) );		
+		outputstr += ( " " + indices.attr_name[i] + Num2String(indices.whose[i]) );		
 	outputstr += "\n";
 	
 	//还涉及到存入块的问题??
 		//计算每条信息的长度
 		//计算所用的块数
 		//遍历所有的块寻找合适的位置，如果之前的块不够用，清出一块/新建一块插入 
+	int BlockNum = GetBlockAmount(TABLE_PATH) / _PAGESIZE;
+	if (!BlockNum)
+	{
+		BlockNum = 1;
+	}
+	for (int i = 0; i < BlockNum; i++)
+	{
+		char* buffer = buffer_manager.getPage(TABLE_PATH, i);
+		int PID = buffer_manager.getPageId(TABLE_PATH, i);
 
+		int size;
+		for (size = 0; size < _PAGESIZE && buffer[size] != '\0' && buffer[size] != '#'; size++);
+	
+
+		if (size + outputstr.length() < _PAGESIZE)
+		{
+			if (size != 0 && buffer[size - 1] == '#')
+			{
+				buffer[size - 1] = '\0';
+			}
+			else if (buffer[size] == '#')
+			{
+				buffer[size] = '\0';
+			}
+			strcat(buffer, outputstr.c_str());
+
+			buffer_manager.modifyPage(PID);
+			return 1;
+		}
+	}
+	char* buffer = buffer_manager.getPage(TABLE_PATH, BlockNum);
+	int PID = buffer_manager.getPageId(TABLE_PATH, BlockNum);
+	strcat(buffer, outputstr.c_str());
+	buffer_manager.modifyPage(PID);
 	return 1;
 }
  
@@ -105,9 +138,39 @@ int Catolog::DropTable(string tablename)
 		return 0; 
 	} 
 	//找到相应的块
+	int block;
+	int begin = GetTablePlace(tablename, block);
+
+	char* buffer = buffer_manager.getPage(TABLE_PATH, block);
+	int PID = buffer_manager.getPageId(TABLE_PATH, block);
+
+	string check = buffer;
+
 	//删除对应的信息，包括表的属性和索引信息 
-	//刷新页面 
+	int end = start + String2Num(check.substr(begin, 4);
+	int index = 0;
+	int current_index = 0;
+	if (index < begin || index >= end)
+	{
+		buffer[current_index] = buffer[index];
+		current_index++;
+	}
+	index++;
+	while (buffer[index] != '#')
+	{
+		if (index < begin || index >= end)
+		{
+			buffer[current_index] = buffer[index];
+			current_index++;
+		}
+		index++;
+	}
+	buffer[current_index] = '#';
+	buffer[++current_index] = '\0';
 	
+	//刷新页面 
+	buffer_manager.modifyPage(PID);
+
 	return 1;
 } 
  
@@ -188,7 +251,7 @@ void Catolog::PrintTable(string tablename, Attribute tattr)
 	for( int i = 0; i < tmp_ind.amount; i++ )
 	{
 		//索引名
-		cout << left << setw( namelength + 3 ) << tmp_ind.name[i];
+		cout << left << setw( namelength + 3 ) << tmp_ind.attr_name[i];
 		//索引对应属性
 		cout << tmp_attr.attr_name[tmp_ind.whose[i]] << endl;
 	}
@@ -219,11 +282,21 @@ Attribute Catolog::GetTableAttribute(string tablename)
 {
 	string tattr = "";
 	//找到表格的在那个块中
+	int block;
+	int start = GetTablePlace(tablename, block);
+
+
 	//读取整块信息
+	char* buffer = buffer_manager.getPage(TABLE_PATH, block);
+	string check(buffer);
+	
 	//得到整个表的信息
+	int end = 0;
+	string attr_name = getTableName(check, start, end);
 	//得到attribute部分的信息，存入字符串tattr 
 	
 	Attribute result;
+
 	istringstream instruction = istringstream(tattr);
 	string singleword;
 	//属性数量 
@@ -296,7 +369,7 @@ int Catolog::CreateIndex(string tablename, string tattr, string indexname)
 			cout << "当前属性已存在索引，操作无效" << endl;
 			return 0;			
 		}
-		if( cur_index.name[i] == indexname )
+		if( cur_index.attr_name[i] == indexname )
 		{
 			cout << "当前索引名已被使用，操作无效" << endl;
 			return 0;			
@@ -305,7 +378,7 @@ int Catolog::CreateIndex(string tablename, string tattr, string indexname)
 	
 	//检查无误，正式开始添加索引
 	cur_index.amount++;
-	cur_index.name[amount-1] = indexname;
+	cur_index.attr_name[amount-1] = indexname;
 	cur_index.whose[amount-1] = numberofattr;
 	
 	//由于原来的表已经计入，不能肯定它之后是否有其他信息，所以需要整个表删掉重新添加 
@@ -351,7 +424,7 @@ int Catolog::DropIndex(string tablename, string indexname)
 	cur_index.amount--;
 	if( i != amount )
 	{
-		cur_index.name[i] = cur_index.name[amount];
+		cur_index.attr_name[i] = cur_index.attr_name[amount];
 		cur_index.whose[i] = cur_index.whose[amount];		
 	}
 	
@@ -378,7 +451,7 @@ int Catolog::isIndexExist(string tablename, string indexname)
 	Index cur_index = GetTableIndex(tablename);
 
 	for( int i = 0; i < cur_index.amount; i++ )
-		if( cur_index.name[i] == indexname )
+		if( cur_index.attr_name[i] == indexname )
 			return i; 
 	
 	return 0;

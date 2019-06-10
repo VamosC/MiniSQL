@@ -11,7 +11,7 @@ int API::CreateTable(std::string tablename, Attribute attr)
 
 	if (CL.CreateTable(tablename, attr, tmpindex, attr.primary_key) != 1)
 	{
-		std::cout << "´´½¨±í¸ñµµ°¸Ê§°Ü" << std::endl;
+		std::cout << "åˆ›å»ºè¡¨æ ¼æ¡£æ¡ˆå¤±è´¥" << std::endl;
 		return 0;
 	}
 	RM.createTableFile(tablename);
@@ -24,14 +24,14 @@ int API::DropTable(std::string tablename)
 	Index tmpindex= CL.GetTableIndex(tablename);
 	Attribute tmpattr = CL.GetTableAttribute(tablename);
 
-	//É¾³ıË÷Òı£¿£¿²»ÖªµÀÔÚrecord managerÀï»á²»»áÊµÏÖ
+	//åˆ é™¤ç´¢å¼•
 	for (int i = 0; i < tmpindex.amount; i++)
-		drop_index(tablename, tmpindex.name[i], tmpattr.attr_type[tmpindex.whose[i]]);
+		DropIndex(tablename, tmpindex.name[i]);
 
-	//É¾³ıµµ°¸ĞÅÏ¢
+	//åˆ é™¤æ¡£æ¡ˆä¿¡æ¯
 	if (CL.DropTable(tablename) != 1)
 	{
-		std::cout << "É¾³ı±í¸ñµµ°¸Ê§°Ü" << std::endl;
+		std::cout << "åˆ é™¤è¡¨æ ¼æ¡£æ¡ˆå¤±è´¥" << std::endl;
 		return 0;
 	}
 	RM.dropTableFile(tablename);
@@ -39,8 +39,33 @@ int API::DropTable(std::string tablename)
 	return 1;
 }
 
-int API::CreateIndex(std::string tablename, std::string attr, std::string indexname);
-int API::DropIndex(std::string tablename, std::string indexname);
+int API::CreateIndex(std::string tablename, std::string attr, std::string indexname)
+{
+	Attribute curattr = CL.GetTableAttribute(tablename);
+	int i = CL.isAttributeExist(tablename, attr);
+	IM.create_index(tablename, indexname, curattr.attr_type[i]);
+	CL.CreateIndex(tablename, attr, indexname);
+	RM.createIndex(IM, tablename, attr);
+
+	return 1;
+}
+
+int API::DropIndex(std::string tablename, std::string indexname)
+{
+	Attribute curattr = CL.GetTableAttribute(tablename);
+	Index curindex = CL.GetTableIndex(tablename);
+	int i;
+	for ( i = 0; i < curindex.amount; i++)
+		if (curindex.name[i] == indexname)
+			break;
+
+	std::string attr = curattr.attr_name[curindex.whose[i]];
+	i = CL.isAttributeExist(tablename, attr);
+	IM.drop_index(tablename, indexname, curattr.attr_type[i]);
+	CL.DropIndex(tablename, indexname);
+
+	return 1;
+}
 
 int API::Insert(std::string tablename, std::vector<Data> tuple)
 {
@@ -53,7 +78,7 @@ int API::Insert(std::string tablename, std::vector<Data> tuple)
 }
 
 
-//deleteÖ»ÔÊĞíÒ»ÌõÉ¾³ıÌõ¼ş
+//deleteåªå…è®¸ä¸€æ¡åˆ é™¤æ¡ä»¶
 int API::Delete(std::string tablename, SelectCondition scondition)
 {
 	int result = 0;
@@ -113,7 +138,7 @@ Table API::Select(std::string tablename, std::vector<std::string> attr, SelectCo
 {
 	Table result;
 	Attribute cur_attr = CL.GetTableAttribute(tablename);
-	if (attr.size == cur_attr.amount)//Ñ¡ÔñÕûÕÅ±í
+	if (attr.size == cur_attr.amount)//é€‰æ‹©æ•´å¼ è¡¨
 		return RM.selectRecord(tablename);
 	else
 	{
@@ -248,7 +273,7 @@ Table API::ReMove(Table &table1, std::string tattr, int optype, Data key)
 		if (table1.attr.attr_name[curattr] == tattr)
 			break;
 
-	i = 0;
+	int i = 0;
 	while( i != rtuple.size() )
 	{
 		std::vector<Data> curdata = rtuple[i].getData();
@@ -314,7 +339,7 @@ Table API::ReMove(Table &table1, std::string tattr, int optype, Data key)
 	return result;
 }
 
-//µÚÒ»¸öÊôĞÔ±ØĞëÊÇÖ÷¼ü
+//ç¬¬ä¸€ä¸ªå±æ€§å¿…é¡»æ˜¯ä¸»é”®
 bool Datacompare(const Tuple &tuple1, const Tuple &tuple2)
 {
 	std::vector<Data> data1 = tuple1.getData();

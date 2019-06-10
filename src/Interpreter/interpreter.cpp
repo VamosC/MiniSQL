@@ -4,10 +4,14 @@
 //
 
 #include "interpreter.h"
-std::ifstream file; 
-int readmode = 0;//读取文件模式：0-靠输入读取； 1-从文件中读取 
+#include <iostream>
+#include <iomanip>
 
-Interpreter::Interpreter(string &input)
+Interpreter::Interpreter(API &api, CatalogManager &cm)
+	: api(api), catalog_manager(cm), readmode(0)
+{}
+
+void Interpreter::GetInput(std::string &input)
 {
 	instruction = istringstream(input);
 }
@@ -27,7 +31,7 @@ int Interpreter::GetInstruction()
 	return 1;
 }
 
-string Interpreter::GetWord()
+std::string Interpreter::GetWord()
 {
 	std::string word;
 	instruction >> word;
@@ -36,39 +40,35 @@ string Interpreter::GetWord()
 
 //输入：无
 //输出：1-操作成功，会执行相应的结果； 0-失败； 2-退出 
-int Interpreter::JudgeAndExec()
+bool Interpreter::JudgeAndExec()
 {
-	std::string singleword;
+	std::string singleword = GetWord();
 
-	singleword = GetWord();
-	std::cout << singleword << std::endl;
-
-	if( singleword == "quit" )
-		return 2;
+	if(singleword == "quit")
+		return true;
 	else if (singleword == "create")
 	{
 		singleword = GetWord();
 		if (singleword == "table")//新建表操作
 		{
-			//std::cout << "createtable" << std::endl;
 			if(ExecCreateTable() == 0)
 			{
-				std::cout << "新建表失败" << std::endl;
-				return 0;
+				std::cout << "create table failed!" << std::endl;
 			}
+			return false;
 		}
 		else if (singleword == "index")//新建索引操作
 		{
 			if(ExecCreateIndex() == 0)
 			{
-				std::cout << "新建索引失败" << std::endl;
-				return 0;
+				std::cout << "create index failed!" << std::endl;
 			}
+			return false;
 		}
 		else//输入错误
 		{
-			std::cout << "语法错误，请重新输入" << std::endl; 
-			return 0; 
+			std::cout << "syntax error!" << std::endl; 
+			return false; 
 		}
 	}
 	else if (singleword == "drop")
@@ -78,62 +78,64 @@ int Interpreter::JudgeAndExec()
 		{
 			if(ExecDropTable() == 0)
 			{
-				std::cout << "删除表失败" << std::endl;
-				return 0;
+				std::cout << "delete table failed!" << std::endl;
 			}
+			return false;
 		}
 		else if (singleword == "index")//删除索引操作
 		{
 			if(ExecDropIndex() == 0)
 			{
-				std::cout << "删除索引失败" << std::endl;
-				return 0;
+				std::cout << "delete index failed!" << std::endl;
 			}
+			return false;
 		}
 		else//输入错误
 		{
-			std::cout << "语法错误，请重新输入" << std::endl; 
-			return 0; 			
+			std::cout << "syntax error!" << std::endl; 
 		}
+		return false; 			
 	}
 	else if (singleword == "select")//搜索操作
 	{
 		int result = ExecSelect();
 		if (result == 0)
 		{
-			std::cout << "搜索失败" << std::endl;
-			return 0;
+			std::cout << "select failed!" << std::endl;
 		}
 		else if (result == -1)
-			std::cout << "搜索记录为空" << std::endl;
+		{
+			std::cout << "empty returned record!" << std::endl;
+		}
+		return false;
 	}
 	else if (singleword == "insert")//插入操作
 	{
 		if(ExecInsert() == 0)
 		{
-			std::cout << "插入失败" << std::endl;
-			return 0;
-		}	
+			std::cout << "insert failed!" << std::endl;
+		}
+		return false;
 	}
 	else if (singleword == "delete")//删除元组操作
 	{
 		if(ExecDelete() == 0)
 		{
-			std::cout << "插入失败" << std::endl;
-			return 0;
-		}	
+			std::cout << "delete failed!" << std::endl;
+		}
+		return false;
 	}
 	else if (singleword == "execfile")//执行文件内容操作
 	{
 		ExecFile();
+		return false;
+		// 遇到quit会怎么样
 	}
 	else//输入错误
 	{
-			std::cout << "语法错误，请重新输入" << std::endl; 
-			return 0; 		
+		std::cout << "syntax error!" << std::endl; 
+		return false; 		
 	}
-	
-	return 1;
 }
 
 //具体操作函数 
@@ -146,24 +148,23 @@ int Interpreter::ExecCreateTable()
 	std::string cur_word;
 	Attribute cur_attr;
 	int flag = 0, primarykey;
-	API curapi;
 
 	nameoftable = GetWord();
-	if( curapi.CL.isTableExist(nameoftable) == 1)
+	if(catalog_manager.isTableExist(nameoftable) == 1)
 	{
-		std::cout << "该表已存在，请重新输入" << std::endl;
+		std::cout << "table already exists!" << std::endl;
 		return 0;		
 	}
 	
 	if(GetWord() != "(")
 	{
-		std::cout << "语法错误，请重新输入" << std::endl;
+		std::cout << "syntax error!" << std::endl;
 		return 0;
 	}
 	cur_attr.amount = 0;
 	if (GetInstruction() == 0)
 	{
-		std::cout << "读入错误" << std::endl;
+		std::cout << "read error!" << std::endl;
 		return 0;
 	}
 	cur_word = GetWord();
@@ -177,7 +178,7 @@ int Interpreter::ExecCreateTable()
 				cur_word = GetWord();
 				if (cur_word != "(")
 				{
-					std::cout << "语法错误，请重新输入" << std::endl;
+					std::cout << "syntax error!" << std::endl;
 					return 0;
 				}
 
@@ -192,20 +193,20 @@ int Interpreter::ExecCreateTable()
 					cur_attr.primary_key = i;
 				else
 				{
-					std::cout << "不存在该属性" << std::endl;
+					std::cout << "no such attribute!" << std::endl;
 					return 0;
 				}
 
 				cur_word = GetWord();
 				if (cur_word != ")")
 				{
-					std::cout << "语法错误，请重新输入" << std::endl;
+					std::cout << "syntax error!" << std::endl;
 					return 0;
 				}
 			}
 			else
 			{
-				std::cout << "语法错误，请重新输入" << std::endl;
+				std::cout << "syntax error!" << std::endl;
 				return 0;
 			}
 		}
@@ -223,7 +224,7 @@ int Interpreter::ExecCreateTable()
 				{
 					if (cur_word == "unique" && GetWord() != ",")
 					{
-						std::cout << "语法错误，请重新输入" << std::endl;
+						std::cout << "syntax error!" << std::endl;
 						return 0;
 					}
 
@@ -234,7 +235,7 @@ int Interpreter::ExecCreateTable()
 				}
 				else
 				{
-					std::cout << "语法错误，请重新输入" << std::endl;
+					std::cout << "syntax error!" << std::endl;
 					return 0;
 				}
 			}
@@ -245,7 +246,7 @@ int Interpreter::ExecCreateTable()
 				{
 					if (cur_word == "unique" && GetWord() != ",")
 					{
-						std::cout << "语法错误，请重新输入" << std::endl;
+						std::cout << "syntax error!" << std::endl;
 						return 0;
 					}
 
@@ -256,7 +257,7 @@ int Interpreter::ExecCreateTable()
 				}
 				else
 				{
-					std::cout << "语法错误，请重新输入" << std::endl;
+					std::cout << "syntax error!" << std::endl;
 					return 0;
 				}
 			}
@@ -278,7 +279,7 @@ int Interpreter::ExecCreateTable()
 				{
 					if (cur_word == "unique" && GetWord() != ",")
 					{
-						std::cout << "语法错误，请重新输入" << std::endl;
+						std::cout << "syntax error!" << std::endl;
 						return 0;
 					}
 
@@ -289,20 +290,20 @@ int Interpreter::ExecCreateTable()
 				}
 				else
 				{
-					std::cout << "语法错误，请重新输入" << std::endl;
+					std::cout << "syntax error!" << std::endl;
 					return 0;
 				}
 			}
 			else
 			{
-				std::cout << "语法错误，请重新输入" << std::endl;
+				std::cout << "syntax error!" << std::endl;
 				return 0;
 			}
 
 		}
 		if (GetInstruction() == 0)
 		{
-			std::cout << "读入错误" << std::endl;
+			std::cout << "read error!" << std::endl;
 			return 0;
 		}
 		cur_word = GetWord();
@@ -310,9 +311,9 @@ int Interpreter::ExecCreateTable()
 	}
 	
 	
-	if( curapi.CreateTable(nameoftable, cur_attr) == 1 ) 
+	if( api.CreateTable(nameoftable, cur_attr) == 1 ) 
 	{
-		std::cout << "成功添加表格" << nameoftable << std::endl; 
+		std::cout << "create table success!" << nameoftable << std::endl; 
 		return 1;
 	}
 	else return 0;
@@ -327,10 +328,9 @@ int Interpreter::ExecDropTable()
 	if( nameoftable[ nameoftable.size()-1 ] == ';' )
 		nameoftable.erase(nameoftable.size()-1,1);
 	
-	API curapi;
-	if( curapi.DropTable(nameoftable) == 1 ) 
+	if( api.DropTable(nameoftable) == 1 ) 
 	{
-		std::cout << "成功删除表格" << nameoftable << std::endl; 
+		std::cout << "delete table success!" << nameoftable << std::endl; 
 		return 1;
 	}
 	else return 0;
@@ -344,33 +344,37 @@ int Interpreter::ExecCreateIndex()
 	indexname = GetWord();
 	if( GetWord() != "on" )
 	{
-		std::cout << "语法错误，请重新输入" << std::endl; 
+		std::cout << "syntax error!" << std::endl; 
 		return 0; 
 	}	
 	tablename = GetWord();
 	if( GetWord() != "(" )
 	{
-		std::cout << "语法错误，请重新输入" << std::endl; 
+		std::cout << "syntax error!" << std::endl; 
 		return 0; 
 	}
 	tattr = GetWord();
 	if( GetWord() != ");" )
 	{
-		std::cout << "语法错误，请重新输入" << std::endl; 
+		std::cout << "syntax error!" << std::endl; 
 		return 0; 
 	}
 	
 	//接下来检查该表该属性是否存在
-	Catalog curc;
-	if ( curc.isTableExist(tablename) == 1 && curc.isAttributeExist(tablename, tattr) == true )
+	if ( catalog_manager.isTableExist(tablename) == 1 && catalog_manager.isAttributeExist(tablename, tattr) == true )
 	{
-		API curapi;
-		if( curapi.CreateIndex(tablename, tattr, indexname) == 1 ) 
+		if( api.CreateIndex(tablename, tattr, indexname) == 1 ) 
 		{
-			std::cout << "成功插入索引" << indexname << std::endl; 
+			std::cout << "insert index success!" << indexname << std::endl; 
 			return 1;
 		}
-		else return 0;	
+		else 
+			return 0;	
+	}
+	else
+	{
+		std::cout << "attribute not exists!" << '\n';
+		return 0;
 	}
 	
 }
@@ -383,27 +387,33 @@ int Interpreter::ExecDropIndex()
 	indexname = GetWord();
 	if( GetWord() != "on" )
 	{
-		std::cout << "语法错误，请重新输入" << std::endl; 
+		std::cout << "syntax error!" << std::endl; 
 		return 0; 
 	}	
 	tablename = GetWord();
 
 	if (GetWord() != ";")
 	{
-		std::cout << "语法错误，请重新输入" << std::endl;
+		std::cout << "syntax error!" << std::endl;
 		return 0;
 	}
 	//接下来检查该表该属性是否存在
-	Catalog curc;
-	if ( curc.isTableExist(tablename) == 1 && curc.isIndexExist(tablename, indexname) == true )
+	if ( catalog_manager.isTableExist(tablename) == 1 && catalog_manager.isIndexExist(tablename, indexname) == true )
 	{
-		API curapi;
-		if( curapi.DropIndex(tablename, indexname) == 1 ) 
+		if( api.DropIndex(tablename, indexname) == 1 ) 
 		{
-			std::cout << "成功删除索引" << indexname << std::endl; 
+			std::cout << "delete index success!" << indexname << std::endl; 
 			return 1;
 		}
-		else return 0;	
+		else
+		{
+			return 0;
+		} 	
+	}
+	else
+	{
+		std::cout << "attribute not exists!" << '\n';
+		return 0;
 	}
 }
 
@@ -412,14 +422,12 @@ int Interpreter::ExecSelect()
 {
 	std::string tablename;
 	std::string curword;
-	Catalog curCatalog;
 	std::vector<std::string> targetattr;
 	SelectCondition scondition;
 	Attribute curattr; 
 	int targetan = 0;
 	int isAll = 0; 
 	Table selectresult;	
-	API curapi;
 	int isall = 0;
 
 	scondition.amount = 0;
@@ -441,32 +449,32 @@ int Interpreter::ExecSelect()
 			
 			if( targetan > 30 )
 			{
-				std::cout << "搜索属性数量超标，搜索无效" << std::endl; 
+				std::cout << "too many attributes!" << std::endl; 
 				return 0;	
 			}
 		}
 	}
 	if( curword != "from" )
 	{
-		std::cout << "语法错误，请重新输入" << std::endl; 
+		std::cout << "syntax error!" << std::endl; 
 		return 0;	
 	} 
 	
 	tablename = GetWord();
 	//检验该表是否存在 
-	if(curCatalog.isTableExist(tablename) != 1)
+	if(catalog_manager.isTableExist(tablename) != 1)
 	{
-		std::cout << "不存在该表，输入错误" << std::endl; 
+		std::cout << "table not exists!" << std::endl; 
 		return 0; 		
 	}
 	//同时可以检验原来的那些属性是否存在
 	for( int i = 0; i < targetan; i++ )
-		if(curCatalog.isAttributeExist(tablename, targetattr[targetan]) == -1)
+		if(catalog_manager.isAttributeExist(tablename, targetattr[targetan]) == -1)
 		{
-			std::cout << "查找属性输入错误，搜索无效" << std::endl; 
+			std::cout << "attributes error!" << std::endl; 
 			return 0; 		
 		}
-	curattr = curCatalog.GetTableAttribute(tablename);
+	curattr = catalog_manager.GetTableAttribute(tablename);
 	
 	curword = GetWord();
 	
@@ -477,7 +485,7 @@ int Interpreter::ExecSelect()
 	} 
 	else if( curword != "where" )
 	{
-		std::cout << "语法错误，请重新输入" << std::endl; 
+		std::cout << "syntax error!" << std::endl; 
 		return 0; 
 	}
 	
@@ -491,10 +499,10 @@ int Interpreter::ExecSelect()
 			// 
 			curword =  GetWord();
 			//属性是否存在 
-			position = curCatalog.isAttributeExist(tablename, curword);
+			position = catalog_manager.isAttributeExist(tablename, curword);
 			if( position == -1)
 			{
-				std::cout << "查找属性输入错误，搜索无效" << std::endl; 
+				std::cout << "attributes error!" << std::endl; 
 				return 0; 		
 			}
 			scondition.attr[scondition.amount] = curword;
@@ -517,7 +525,7 @@ int Interpreter::ExecSelect()
 				scondition.operationtype[scondition.amount-1] = 5;
 			else
 			{
-				std::cout << "语法错误，请重新输入" << std::endl; 
+				std::cout << "syntax error!" << std::endl; 
 				return 0;					
 			}
 			
@@ -544,7 +552,7 @@ int Interpreter::ExecSelect()
 			} 
 			else
 			{
-				std::cout << "语法错误，请重新输入" << std::endl; 
+				std::cout << "syntax error!" << std::endl; 
 				return 0;					
 			}			
 			
@@ -552,7 +560,7 @@ int Interpreter::ExecSelect()
 			//连接字符-and
 			if( curword != "and" && curword != ";" )
 			{
-				std::cout << "语法错误，请重新输入" << std::endl; 
+				std::cout << "syntax error!" << std::endl; 
 				return 0;					
 			}						 
 		}	
@@ -562,13 +570,13 @@ int Interpreter::ExecSelect()
 	
 	//正式调用API函数查找
 	if(isall!=1)
-		selectresult = curapi.Select( tablename, targetattr, scondition );
+		selectresult = api.Select( tablename, targetattr, scondition );
 	else//select *
 	{
 		for (int i = 0; i < curattr.amount; i++)
 			targetattr[i] = curattr.attr_name[i];
 
-		selectresult = curapi.Select(tablename, targetattr, scondition );
+		selectresult = api.Select(tablename, targetattr, scondition );
 	}
 	
 	//输出结果 
@@ -585,13 +593,13 @@ int Interpreter::ExecSelect()
 	}
 	
 	for( int i = 0; i < tmp_attr.amount; i++ )
-		std::cout << left << setw( namelength+5 ) << tmp_attr.attr_name[i] << '|';
+		std::cout << left << std::setw( namelength+5 ) << tmp_attr.attr_name[i] << '|';
 	std::cout << std::endl;
 	
 	//元组 
 	std::vector<Tuple>::iterator it;
 	for( it = selectresult.tuples.begin(); it != selectresult.tuples.end(); it++ )
-		it->Printdata(namelength);
+		it->Printdata();
 	
 	return 1;
 } 
@@ -599,42 +607,40 @@ int Interpreter::ExecSelect()
 int Interpreter::ExecInsert()
 {
 	std::vector<Data> tuple;
-	Catalog curcatalog;
 	Attribute curattr;
-	API curapi;
 	std::string tablename, curword;
 	
 	curword = GetWord();
 	if( curword != "into" )
 	{
-		std::cout << "语法错误，请重新输入" << std::endl; 
+		std::cout << "syntax error!" << std::endl; 
 		return 0;
 	}
 	
 	tablename = GetWord();
 	//检验该表是否存在 
-	if(curcatalog.isTableExist(tablename) != 1)
+	if(catalog_manager.isTableExist(tablename) != 1)
 	{
-		std::cout << "不存在该表，输入错误" << std::endl; 
+		std::cout << "table not exists!" << std::endl; 
 		return 0; 		
 	}
 	
 	curword = GetWord();
 	if( curword != "values" )
 	{
-		std::cout << "语法错误，请重新输入" << std::endl; 
+		std::cout << "syntax error!" << std::endl; 
 		return 0;
 	}
 
 	curword = GetWord();
 	if( curword != "(" )
 	{
-		std::cout << "语法错误，请重新输入" << std::endl; 
+		std::cout << "syntax error!" << std::endl; 
 		return 0;
 	}	
 	
 	curword = GetWord();
-	curattr = curcatalog.GetTableAttribute(tablename);
+	curattr = catalog_manager.GetTableAttribute(tablename);
 	int number = 0;
 	while(curword != ")" )
 	{
@@ -643,7 +649,7 @@ int Interpreter::ExecInsert()
 			curword.erase( 0, 1 );
 		else
 		{
-			std::cout << "语法错误，请重新输入" << std::endl; 
+			std::cout << "syntax error!" << std::endl; 
 			return 0;
 		} 
 		
@@ -651,7 +657,7 @@ int Interpreter::ExecInsert()
 			curword.erase( curword.length()-1, 1 );
 		else
 		{
-			std::cout << "语法错误，请重新输入" << std::endl; 
+			std::cout << "syntax error!" << std::endl; 
 			return 0;
 		} 
 		
@@ -664,14 +670,14 @@ int Interpreter::ExecInsert()
 			tmp.sdata = curword;	
 		else
 		{
-			std::cout << "语法错误，请重新输入" << std::endl; 
+			std::cout << "syntax error!" << std::endl; 
 			return 0;					
 		}
 		
 		curword = GetWord();
 		if( curword != "," && curword != ")" )
 		{
-			std::cout << "语法错误，请重新输入" << std::endl; 
+			std::cout << "syntax error!" << std::endl; 
 			return 0;			
 		}
 		else
@@ -684,13 +690,13 @@ int Interpreter::ExecInsert()
 	
 	if( GetWord() != ";" )
 	{
-		std::cout << "语法错误，请重新输入" << std::endl;
+		std::cout << "syntax error!" << std::endl;
 		return 0;
 	}
 	
-	if( curapi.Insert(tablename, tuple) == 1 ) 
+	if( api.Insert(tablename, tuple) == 1 ) 
 	{
-		std::cout << "成功插入元组" << std::endl; 
+		std::cout << "insert table success!" << std::endl; 
 		return 1;
 	}
 	else return 0;	
@@ -701,40 +707,38 @@ int Interpreter::ExecDelete()
 {
 	std::string tablename;
 	std::string curword;
-	Catalog curCatalog;
 	SelectCondition scondition;
 	Attribute curattr; 
 	int targetan = 0;
-	API curapi;
 
 	scondition.amount = 0;
 	curword = GetWord();
 	if( curword != "from" )
 	{
-		std::cout << "语法错误，请重新输入" << std::endl; 
+		std::cout << "syntax error!" << std::endl; 
 		return 0;	
 	} 
 	
 	tablename = GetWord();
 	//检验该表是否存在 
-	if(curCatalog.isTableExist(tablename) != 1)
+	if(catalog_manager.isTableExist(tablename) != 1)
 	{
-		std::cout << "不存在该表，输入错误" << std::endl; 
+		std::cout << "table not exists!" << std::endl; 
 		return 0; 		
 	}
 
-	curattr = curCatalog.GetTableAttribute(tablename);
+	curattr = catalog_manager.GetTableAttribute(tablename);
 	
 	curword = GetWord();
 	if(curword == ";")
 	{
 		//正式调用API函数删除 
 		int deletetuplenum = 0; 
-		deletetuplenum = curapi.Delete( tablename, scondition );
+		deletetuplenum = api.Delete( tablename, scondition );
 
 		if( deletetuplenum != -1 )
 		{
-			std::cout << "成功删除" << deletetuplenum << "元组" << std::endl; 
+			std::cout << "delete " << deletetuplenum << " success" << std::endl; 
 			return 1;
 		}	
 		else
@@ -744,7 +748,7 @@ int Interpreter::ExecDelete()
 	//区分是否有查找条件 
 	if( curword != "where" )
 	{
-		std::cout << "语法错误，请重新输入" << std::endl; 
+		std::cout << "syntax error!" << std::endl; 
 		return 0; 
 	}
 	
@@ -758,10 +762,10 @@ int Interpreter::ExecDelete()
 			// 
 			curword =  GetWord();
 			//属性是否存在 
-			position = curCatalog.isAttributeExist(tablename, curword);
+			position = catalog_manager.isAttributeExist(tablename, curword);
 			if( position == -1)
 			{
-				std::cout << "查找属性输入错误，搜索无效" << std::endl; 
+				std::cout << "attributes error!" << std::endl; 
 				return 0; 		
 			}
 			scondition.attr[scondition.amount] = curword;
@@ -784,7 +788,7 @@ int Interpreter::ExecDelete()
 				scondition.operationtype[scondition.amount-1] = 5;
 			else
 			{
-				std::cout << "语法错误，请重新输入" << std::endl; 
+				std::cout << "syntax error!" << std::endl; 
 				return 0;					
 			}
 			
@@ -811,7 +815,7 @@ int Interpreter::ExecDelete()
 			} 
 			else
 			{
-				std::cout << "语法错误，请重新输入" << std::endl; 
+				std::cout << "syntax error!" << std::endl; 
 				return 0;					
 			}			
 			
@@ -819,7 +823,7 @@ int Interpreter::ExecDelete()
 			//连接字符-and
 			if( curword != "and" && curword != ";" )
 			{
-				std::cout << "语法错误，请重新输入" << std::endl; 
+				std::cout << "syntax error!" << std::endl; 
 				return 0;					
 			}						 
 		}	
@@ -827,11 +831,11 @@ int Interpreter::ExecDelete()
 	
 	//正式调用API函数删除 
 	int deletetuplenum = 0; 
-	deletetuplenum = curapi.Delete( tablename, scondition );
+	deletetuplenum = api.Delete( tablename, scondition );
 	
 	if( deletetuplenum != -1 )
 	{
-		std::cout << "成功删除" << deletetuplenum << "元组" << std::endl; 
+		std::cout << "delete " << deletetuplenum << " success" << std::endl; 
 		return 1;
 	}	
 	else
@@ -845,25 +849,22 @@ void Interpreter::ExecFile()
 
 	if (fileaddress[0] != '\"')
 	{
-		std::cout << "语法错误，请重新输入" << std::endl;
+		std::cout << "syntax error!" << std::endl;
 		return;
 	}
 	fileaddress.erase(0, 1);
 	if (fileaddress[fileaddress.length()-1] != '\"')
 	{
-		std::cout << "语法错误，请重新输入" << std::endl;
+		std::cout << "syntax error!" << std::endl;
 		return;
 	}
 	fileaddress.erase(fileaddress.length() - 1, 1);
 		
-
-	//std::ifstream tmp;
 	file.open(fileaddress.c_str()); 
 
-	//file = tmp;
 	if (!file)
 	{
-		std::cout << "打开文件失败" << std::endl;
+		std::cout << "open file failed!" << std::endl;
 		return;
 	}
 
@@ -876,7 +877,7 @@ void Interpreter::ExecFile()
 	{
 		if (GetInstruction() == 0)
 		{
-			std::cout << "读入错误" << std::endl;
+			std::cout << "read error!" << std::endl;
 			return;
 		}
 		execresult = JudgeAndExec();
@@ -885,14 +886,15 @@ void Interpreter::ExecFile()
 
 	}
 
-	if (!file.eof())	std::cout << "文件执行错误" << std::endl;
+	if (!file.eof())	
+		std::cout << "file exec error!" << std::endl;
 
 	//执行完切换回输入模式 
 	readmode = 0;
 
 	if (fileaddress != ";")
 	{
-		std::cout << "语法错误，请重新输入" << std::endl;
+		std::cout << "syntax error!" << std::endl;
 		return;
 	}
 }

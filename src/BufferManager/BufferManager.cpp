@@ -117,7 +117,7 @@ BufferManager::~BufferManager()
         std::string FileName;
         FileName = Frames[i].getFileName();
         BlockID = Frames[i].getBlockId();
-        if(FileName == "")
+        if(FileName == "" || !Frames[i].getDirty())
             continue;
         if(is_file_exist(FileName))
         {

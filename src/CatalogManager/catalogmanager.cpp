@@ -414,12 +414,12 @@ int Catolog::CreateIndex(std::string tablename, std::string tattr, std::string i
 	if( DropTable(tablename) == 0 )
 	{
 		std::cout << "更新信息失败，无法删除原表，操作无效" << std::endl;
-		return 0		
+		return 0;		
 	}
 	if(CreateTable(tablename, cur_attr, cur_indexs, cur_attr.primary_key) == 0)
 	{
 		std::cout << "更新信息失败，无法插入表，操作无效" << std::endl;
-		return 0		
+		return 0;		
 	}
 	
 	return 1; 
@@ -461,12 +461,12 @@ int Catolog::DropIndex(std::string tablename, std::string indexname)
 	if( DropTable(tablename) == 0 )
 	{
 		std::cout << "删除索引失败，无法删除原表，操作无效" << std::endl;
-		return 0		
+		return 0;		
 	}
 	if(CreateTable(tablename, cur_attr, cur_index, cur_attr.primary_key) == 0)
 	{
 		std::cout << "删除索引失败，无法插入表，操作无效" << std::endl;
-		return 0		
+		return 0;		
 	}
 	
 	return 1; 

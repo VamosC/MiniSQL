@@ -3,8 +3,19 @@
 //	
 
 #include "api.h"
+static bool Datacompare(const Tuple &tuple1, const Tuple &tuple2)
+{
+	std::vector<Data> data1 = tuple1.getData();
+	std::vector<Data> data2 = tuple2.getData();
 
-bool Datacompare(const Tuple &tuple1, const Tuple &tuple2);
+	if (data1[0].type == -1)
+		return data1[0].idata < data2[0].idata;
+	else if(data1[0].type == 0)
+		return data1[0].fdata < data2[0].fdata;
+	else
+		return data1[0].sdata < data2[0].sdata;
+}
+
 int API::CreateTable(std::string tablename, Attribute attr)
 {
 	Index tmpindex;
@@ -336,17 +347,4 @@ Table API::ReMove(Table &table1, std::string tattr, int optype, Data key)
 
 	std::sort(rtuple.begin(), rtuple.end(), Datacompare);
 	return result;
-}
-
-bool Datacompare(const Tuple &tuple1, const Tuple &tuple2)
-{
-	std::vector<Data> data1 = tuple1.getData();
-	std::vector<Data> data2 = tuple2.getData();
-
-	if (data1[0].type == -1)
-		return data1[0].idata < data2[0].idata;
-	else if(data1[0].type == 0)
-		return data1[0].fdata < data2[0].fdata;
-	else
-		return data1[0].sdata < data2[0].sdata;
 }

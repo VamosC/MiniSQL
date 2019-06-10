@@ -30,7 +30,7 @@ std::string CatalogManager::Num2String(int tmp)
 
 //得到存放某表格信息的块数 -----------------------------------------
 //块数至少为0 
-int CatalogManager::GetBlockAmount(const std::string &table_name)
+int CatalogManager::getBlockNum(const std::string &table_name)
 {
 	char* pagecontent;
 	int block_num = -1;
@@ -41,6 +41,55 @@ int CatalogManager::GetBlockAmount(const std::string &table_name)
 	return block_num;
 }
 
+int CatalogManager::GetTablePlace(std::string tablename, int& suitable_block)
+{
+	int block_num = getBlockNum(TABLE_PATH);
+	if (block_num <= 0)
+		block_num = 1;
+	//遍历所有的块
+	for (suitable_block = 0; suitable_block < block_num; suitable_block++) {
+		char* buffer = buffer_manager.getPage(TABLE_PATH, suitable_block);
+		std::string buffer_check(buffer);
+		std::string str_tmp = "";
+		int start = 0, end = 0;
+		do {
+			//如果一开始就是#，则检查下一块
+			if (buffer_check[0] == '#')
+				break;
+			if (getTableName(buffer, start, end) == tablename) {
+				return start;
+			}
+			else {
+				//通过字符串长度来重新确定start
+				start += String2Num(buffer_check.substr(start, 4));
+				if (!start)
+					break;
+			}
+		} while (buffer_check[start] != '#');  //判断是否到头
+	}
+	return -1;
+}
+
+std::string CatalogManager::getTableName(std::string buffer, int start, int& end)
+{
+	std::string str_tmp = "";
+	int rear = 0;
+	if (buffer == "")
+		return buffer;
+	while (buffer[start + rear + 5] != ' ') {
+		rear++;
+	}
+	str_tmp = buffer.substr(start + 5, rear);
+	rear = start + 5 + rear;
+	return str_tmp;
+}
+
+
+//关于表格的操作 
+
+//创建表格
+//输入：表格名称、表格属性、索引对象、主码 
+//输出: 1-成功； 0-失败,包含异常 
 bool CatalogManager::CreateTable(std::string tablename, Attribute attr, Index indices, int primary_key)
 {
 	//检测是否有同名表的存在 
@@ -81,7 +130,7 @@ bool CatalogManager::CreateTable(std::string tablename, Attribute attr, Index in
 		//计算每条信息的长度
 		//计算所用的块数
 		//遍历所有的块寻找合适的位置，如果之前的块不够用，清出一块/新建一块插入
-	int BlockNum = GetBlockAmount(TABLE_PATH) / _PAGESIZE;
+	int BlockNum = getBlockNum(TABLE_PATH) / _PAGESIZE;
 	if (!BlockNum)
 	{
 		BlockNum = 1;
@@ -174,7 +223,7 @@ bool CatalogManager::isTableExist(std::string table_name)
 	//遍历所有的块，通过@@开头分辨表的信息
 		//如果存在相同的表明，就返回true
 
-	int block_num = GetBlockAmount(TABLE_PATH) / _PAGESIZE;
+	int block_num = getBlockNum(TABLE_PATH) / _PAGESIZE;
 	if (block_num <= 0)
 		block_num = 1;
 	//遍历所有的块
@@ -478,7 +527,7 @@ int CatalogManager::isIndexExist(std::string tablename, std::string indexname)
 //得到某表的全部索引,必须在表存在时才可以用 
 //输入：表格名称
 //输出：Index结构数据
-Index GetTableIndex(std::string tablename)
+Index CatalogManager::GetTableIndex(std::string tablename)
 {
 	Index result;
 	std::string sindex;

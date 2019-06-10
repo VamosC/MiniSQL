@@ -23,15 +23,10 @@ class CatalogManager{
 		int String2Num(const std::string &tmp);
 		std::string Num2String(int tmp);
 		
-		//返回表在文件中的位置
-		int GetTablePlace(std::string tablename, int& suitable_block);
-		//返回表名
-		std::string getTableName(std::string buffer, int start, int& end);
-		
 	public:
 		CatalogManager(BufferManager &bm) : buffer_manager(bm){}
 		//得到存放某表格信息的块数 
-		int GetBlockAmount(const std::string &table_name);
+		int getBlockNum(const std::string &table_name);
 		//关于表格的操作 
 		
 		// 创建表格
@@ -84,6 +79,12 @@ class CatalogManager{
 		// 输入：表格名称
 		// 输出：Index结构数据
 		Index GetTableIndex(std::string tablename);
+
+		//返回表在文件中的位置
+		int GetTablePlace(std::string tablename, int& suitable_block);
+		//返回表名
+		std::string getTableName(std::string buffer, int start, int& end);
+
 };
 
 #endif 

@@ -81,7 +81,7 @@ public:
 	Tuple(){};
 	
 	//拷贝函数 
-	Tuple(Tuple &copytuple)
+	Tuple(const Tuple &copytuple)
 	{
 		data = copytuple.data;
 	}

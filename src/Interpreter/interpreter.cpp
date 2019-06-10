@@ -726,7 +726,21 @@ int Interpreter::ExecDelete()
 	curattr = curCatalog.GetTableAttribute(tablename);
 	
 	curword = GetWord();
-	
+	if(curword == ";")
+	{
+		//正式调用API函数删除 
+		int deletetuplenum = 0; 
+		deletetuplenum = curapi.Delete( tablename, scondition );
+
+		if( deletetuplenum != -1 )
+		{
+			std::cout << "成功删除" << deletetuplenum << "元组" << std::endl; 
+			return 1;
+		}	
+		else
+			return 0;		
+	}
+			
 	//区分是否有查找条件 
 	if( curword != "where" )
 	{

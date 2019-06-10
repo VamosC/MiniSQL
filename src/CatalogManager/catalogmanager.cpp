@@ -501,13 +501,3 @@ Index GetTableIndex(std::string tablename)
 
 	return result;
 }
-
-//得到单词
-std::string GetWord(std::string input)
-{
-	std::string word = "";
-	std::istringstream instruction = std::istringstream(input);
-	instruction >> word;
-	return word;
-}
-

@@ -10,16 +10,25 @@
 #include <string>
 #include <vector>
 #include <sstream>
-#include "base.h" 
-#include "catalogmanager.h"
+#include <algorithm>
+#include "../base.h" 
+#include "../CatalogManager/catalogmanager.h"
+#include "../IndexManager/index_manager.h"
+#include "../RecordManager/RecordManager.h"
 
 class API
 {
 	private:
 	public:
+		Catalog CL;
+		RecordManager RM;
+		IndexManager IM;
+
 		API(){};
 		~API(){};
 
+		Table Combine(Table &table1, std::string tattr, int optype, Data key);
+		Table ReMove(Table &table1, std::string tattr, int optype, Data key);
 		int CreateTable(std::string tablename, Attribute attr);
 		int DropTable(std::string tablename);
 		int CreateIndex(std::string tablename, std::string attr, std::string indexname);

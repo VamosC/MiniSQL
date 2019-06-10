@@ -7,12 +7,12 @@ DataBase 期末大程 MiniSQL
 - 创建表
 
   ```sql
-  create table student(
-    sid char(8) unique,                     //char(n)       1 <= n <= 255
-    sname char(20),
-    sage int,
-    scome float,
-    primary key(sid)
+  create table student (
+    sid char(8) unique ,                     //char(n)       1 <= n <= 255
+    sname char(20) ,
+    sage int ,
+    scome float ,
+    primary key (sid)
   );
   // 最多32个属性
   ```
@@ -22,7 +22,7 @@ DataBase 期末大程 MiniSQL
 - 删除表
 
   ```sql
-  drop table student;
+  drop table student ;
   ```
 
   
@@ -30,7 +30,7 @@ DataBase 期末大程 MiniSQL
 - 创建索引
 
   ```sql
-  create index stuname on student(sname);
+  create index stuname on student(sname) ;
   ```
 
   
@@ -38,7 +38,7 @@ DataBase 期末大程 MiniSQL
 - 删除索引
 
   ```sql
-  drop index stuname;
+  drop index stuname ;
   ```
 
   
@@ -46,9 +46,9 @@ DataBase 期末大程 MiniSQL
 - 选择语句
 
   ```sql
-  select * from	student;
-  select * from student where sid = '88888888';
-  select * from student where sage > 20 and scome < 2000;
+  select * from	student ;
+  select * from student where sid = '88888888' ;
+  select * from student where sage > 20 and scome < 2000 ;
   
   // < > <= >= <> = 
   ```
@@ -58,7 +58,7 @@ DataBase 期末大程 MiniSQL
 - 插入语句
 
   ```sql
-  insert into student values('88888888', 'xiaoming', 20, 2000.00);
+  insert into student values ( '88888888', 'xiaoming', 20, 2000.00 ) ;
   ```
 
   
@@ -66,8 +66,8 @@ DataBase 期末大程 MiniSQL
 - 删除语句
 
   ```sql
-  delete from student;
-  delete from student where sid = '88888888';
+  delete from student ;
+  delete from student where sid = '88888888' ;
   ```
 
   
@@ -83,7 +83,7 @@ DataBase 期末大程 MiniSQL
 - 执行脚本
 
   ```sql
-  exec test.txt;
+  execfile "test.txt" ;
   ```
 
   

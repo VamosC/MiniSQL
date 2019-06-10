@@ -33,7 +33,7 @@ void RecordManager::insertRecord(std::string tablename, Tuple& tuple) {
 		if (attr.is_unique[i] == true) {
 			if (isConflict(tuples, v, i) == true)
 				//¥Ê‘⁄unqiue≥ÂÕª“Ï≥£
-				trow UNIQUE_CONFLICT();
+				throw UNIQUE_CONFLICT();
 		}
 	}
 

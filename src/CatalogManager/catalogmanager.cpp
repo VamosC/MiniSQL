@@ -30,17 +30,23 @@ std::string Catolog::Num2String(int tmp)
 //块数至少为0 
 int Catolog::GetBlockAmount(std::string tablename)
 {
-	char *pagecontent;
-	int num = 0;
-	
-	pagecontent = //得到buffer_manager中一块的所有内容,需使用到表名和num？ 
-	while( pagecontent[0] != '\0' )
-	{
-		num++;
-		pagecontent = //得到buffer_manager中一块的所有内容,需使用到表名和num？ 
-	}
-	
-	return num; 
+	//char *pagecontent;
+	//int num = 0;
+	//
+	//pagecontent = //得到buffer_manager中一块的所有内容,需使用到表名和num？ 
+	//while( pagecontent[0] != '\0' )
+	//{
+	//	num++;
+	//	pagecontent = //得到buffer_manager中一块的所有内容,需使用到表名和num？ 
+	//}
+	//
+	char* pagecontent;
+	int block_num = -1;
+	do {
+		pagecontent = buffer_manager.getPage(table_name, block_num + 1);
+		block_num++;
+	} while (pagecontent[0] != '\0');
+	return block_num;
 }
 
 
@@ -85,10 +91,10 @@ int Catolog::CreateTable(std::string tablename, Attribute attr, Index indices, i
 		outputstr += ( " " + indices.name[i] + Num2String(indices.whose[i]) );		
 	outputstr += "\n";
 	
-	//还涉及到存入块的问题??
+	//还涉及到存入块的问题?? 
 		//计算每条信息的长度
 		//计算所用的块数
-		//遍历所有的块寻找合适的位置，如果之前的块不够用，清出一块/新建一块插入 
+		//遍历所有的块寻找合适的位置，如果之前的块不够用，清出一块/新建一块插入
 	int BlockNum = GetBlockAmount(TABLE_PATH) / _PAGESIZE;
 	if (!BlockNum)
 	{

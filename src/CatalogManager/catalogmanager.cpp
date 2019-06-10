@@ -5,13 +5,13 @@
 #include "catalogmanager.h"
 
 //将数字字符串转化为数字 
-int Catolog::String2Num(std::string tmp)
+int CatalogManager::String2Num(std::string tmp)
 {
 	return atoi(tmp.c_str());
 }
 
 //将数字转化为字符串 
-std::string Catolog::Num2String(int tmp)
+std::string CatalogManager::Num2String(int tmp)
 {
 	std::string result = "";
 	if( tmp < 0 )
@@ -28,7 +28,7 @@ std::string Catolog::Num2String(int tmp)
 
 //得到存放某表格信息的块数 -----------------------------------------
 //块数至少为0 
-int Catolog::GetBlockAmount(std::string tablename)
+int CatalogManager::GetBlockAmount(std::string tablename)
 {
 	char *pagecontent;
 	int num = 0;
@@ -49,7 +49,7 @@ int Catolog::GetBlockAmount(std::string tablename)
 //创建表格
 //输入：表格名称、表格属性、索引对象、主码 
 //输出: 1-成功； 0-失败,包含异常 
-int Catolog::CreateTable(std::string tablename, Attribute attr, Index indices, int primary_key)
+int CatalogManager::CreateTable(std::string tablename, Attribute attr, Index indices, int primary_key)
 {
 	//检测是否有同名表的存在 
 	if( isTableExist(tablename) == true )
@@ -130,9 +130,9 @@ int Catolog::CreateTable(std::string tablename, Attribute attr, Index indices, i
 //删除表格
 //输入：表格名称
 //输出：1-成功； 0-失败,包含异常  
-int Catolog::DropTable(std::string tablename)
+int CatalogManager::DropTable(std::string tablename)
 {
-	if( isTableExist(tablename) == false )
+	if(isTableExist(tablename) == false)
 	{
 		std::cout << "不存在该表，输入错误" << std::endl;
 		return 0; 
@@ -172,12 +172,12 @@ int Catolog::DropTable(std::string tablename)
 	buffer_manager.modifyPage(PID);
 
 	return 1;
-} 
+}
  
 //通过表名查看表是否存在	
 //输入：表格名称
 //输出：true-存在； false-不存在
-bool Catolog::isTableExist(std::string tablename)
+bool CatalogManager::isTableExist(std::string tablename)
 {
 	//遍历所有的块，通过@@开头分辨表的信息
 		//如果存在相同的表明，就返回true
@@ -189,7 +189,7 @@ bool Catolog::isTableExist(std::string tablename)
 } 
 
 //打印表格信息  ??待定，不知道查询结果的反馈方式 
-void Catolog::PrintTable(std::string tablename, Attribute tattr)
+void CatalogManager::PrintTable(std::string tablename, Attribute tattr)
 {
 	if( isTableExist( tablename ) == false )
 	{
@@ -278,7 +278,7 @@ int Catolog::isAttributeExist(std::string tablename, std::string tattr)
 //得到某表的全部属性
 //输入：表格名称
 //输出：Attribute结构数据
-Attribute Catolog::GetTableAttribute(std::string tablename)
+Attribute CatalogManager::GetTableAttribute(std::string tablename)
 {
 	std::string tattr = "";
 	//找到表格的在那个块中
@@ -328,7 +328,7 @@ Attribute Catolog::GetTableAttribute(std::string tablename)
 //在指定属性上建立索引
 //输入：表格名称、属性名称、索引名称
 //输出：1-成功； 0-失败,包含异常
-int Catolog::CreateIndex(std::string tablename, std::string tattr, std::string indexname)
+int CatalogManager::CreateIndex(std::string tablename, std::string tattr, std::string indexname)
 {
 	if( isTableExist( tablename ) == false )
 	{
@@ -446,7 +446,7 @@ int Catolog::DropIndex(std::string tablename, std::string indexname)
 //索引是否存在
 //输入：表格名称、索引名称
 //输出：正整数-索引序号； 0-不存在		 
-int Catolog::isIndexExist(std::string tablename, std::string indexname)
+int CatalogManager::isIndexExist(std::string tablename, std::string indexname)
 {
 	Index cur_index = GetTableIndex(tablename);
 

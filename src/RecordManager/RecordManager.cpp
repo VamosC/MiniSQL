@@ -3,7 +3,6 @@
 void RecordManager::insertRecord(std::string tablename, Tuple& tuple) {
 	std::string tmp_tablename = tablename;
 	tablename = "./database/data/" + tablename;
-	Catalog catalog_manager;
 	
 
 	//异常检测
@@ -94,7 +93,6 @@ void RecordManager::insertRecord(std::string tablename, Tuple& tuple) {
 	}
 
 	//更新索引
-	IndexManager index_manager(tmp_tablename);
 	for (int i = 0; i < attr.amount; i++) {
 		if (attr.has_index[i] == true) {
 			std::string attr_name = attr.attr_name[i];
@@ -108,7 +106,6 @@ void RecordManager::insertRecord(std::string tablename, Tuple& tuple) {
 int RecordManager::deleteRecord(std::string tablename) {
 	std::string tmp_name = tablename;
 	tablename = "./database/data/" + tablename;
-	Catalog catalog_manager;
 	//检测表是否存在
 	if (!catalog_manager.isTableExist(tmp_name)) {
 		throw TABLE_NOT_EXISTED();
@@ -153,7 +150,6 @@ int RecordManager::deleteRecord(std::string tablename) {
 int RecordManager::deleteRecord(std::string tablename, std::string to_attr, Where where) {
 	std::string tmp_name = tablename;
 	tablename = "./database/data/" + tablename;
-	Catalog catalog_manager;
 	//检测表是否存在
 	if (!catalog_manager.isTableExist(tmp_name)) {
 		throw TABLE_NOT_EXISTED();
@@ -208,7 +204,6 @@ int RecordManager::deleteRecord(std::string tablename, std::string to_attr, Wher
 Table RecordManager::selectRecord(std::string tablename, std::string result_table_name) {
 	std::string tmp_name = tablename;
 	tablename = "./database/data/" + tablename;
-	Catalog catalog_manager;
 	//检测表是否存在
 	if (!catalog_manager.isTableExist(tmp_name)) {
 		throw TABLE_NOT_EXISTED();
@@ -247,7 +242,6 @@ Table RecordManager::selectRecord(std::string tablename, std::string result_tabl
 Table RecordManager::selectRecord(std::string tablename, std::string to_attr, Where where, std::string result_table_name) {
 	std::string tmp_name = tablename;
 	tablename = "./database/data/" + tablename;
-	Catalog catalog_manager;
 
 	if (!catalog_manager.isTableExist(tmp_name)) {
 		throw TABLE_NOT_EXISTED();
@@ -302,7 +296,6 @@ Table RecordManager::selectRecord(std::string tablename, std::string to_attr, Wh
 void RecordManager::createIndex(IndexManager & index_manager, std::string tablename, std::string to_attr) {
 	std::string tmp_name = tablename;
 	tablename = "./database/data/" + tablename;
-	Catalog catalog_manager;
 	if (!catalog_manager.isTableExist(tmp_name)) {
 		//表不存在异常
 		throw TABLE_NOT_EXISTED();

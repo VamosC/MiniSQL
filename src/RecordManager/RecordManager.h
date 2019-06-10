@@ -8,20 +8,19 @@
 #include <string>
 #include <vector>
 #include <sstream>
-#include "base.h"
+#include "../base.h"
 #include "../CatalogManager/catalogmanager.h"
 #include "../BufferManager/BufferManager.h"
 #include "../ERROR.h"
 
-extern BufferManager buffer_manager;
-
 class RecordManager 
 {
-
 private:
-	
-
+	BufferManager &buffer_manager;
+	CatalogManager &catalog_manager;
+	IndexManager &index_manager;
 public:
+	RecordManager(BufferManager &bm, CatalogManager &cm, IndexManager &im) : buffer_manager(bm), catalog_manager(cm), index_manager(im) {}
 	//返回整张表
 	//输入：表名
 	//输出：Table类型对象

@@ -181,11 +181,34 @@ bool Catolog::isTableExist(std::string tablename)
 {
 	//遍历所有的块，通过@@开头分辨表的信息
 		//如果存在相同的表明，就返回true
-		if( tmp_name = tablename )	return true;
-		//到下一个表的信息去 
-	
-	
-	return false; 
+
+	int block_num = GetBlockAmount(TABLE_PATH) / PAGESIZE;
+	if (block_num <= 0)
+		block_num = 1;
+	//遍历所有的块
+	for (int current_block = 0; current_block < block_num; current_block++) {
+		char* buffer = buffer_manager.getPage(TABLE_PATH, current_block);
+		std::string buffer_check(buffer);
+		std::string str_tmp = "";
+		int start_index = 0, end_index = 0;
+		do {
+			//如果一开始就是#，则检查下一块
+			if (buffer_check[0] == '#')
+				break;
+			//得到table的名字，如果与输入的名字相同，则return true
+			else if (getTableName(buffer, start_index, end_index) == table_name) {
+				return true;
+			}
+			else {
+				//通过字符串长度来重新确定下一个table的位置
+				start_index += String2Num(buffer_check.substr(start_index, 4));
+				//排除空文档的特殊条件
+				if (!start_index)
+					break;
+			}
+		} while (buffer_check[start_index] != '#');  //判断是否到头
+	}
+	return false;
 } 
 
 //打印表格信息  ??待定，不知道查询结果的反馈方式 

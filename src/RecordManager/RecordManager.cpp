@@ -14,7 +14,7 @@ void RecordManager::insertRecord(std::string tablename, Tuple& tuple) {
 	std::vector<Data> v = tuple.getData();
 	
 	for (int i = 0; i < v.size(); i++) {
-		if (v[i].attr_type != attr.attr_type[i])
+		if (v[i].type != attr.attr_type[i])
 		{
 			throw TUPLE_ATTR_NOT_MATCH();
 			//属性不匹配异常
@@ -22,7 +22,7 @@ void RecordManager::insertRecord(std::string tablename, Tuple& tuple) {
 			
 	}
 	Table table = selectRecord(tmp_tablename);
-	std::vector<Tuple>& tuples = table.getTuple();
+	std::vector<Tuple>& tuples = table.GetTuples();
 	if (attr.primary_key >= 0) {
 		if (isConflict(tuples, v, attr.primary_key) == true)
 			//主键冲突异常
@@ -61,7 +61,7 @@ void RecordManager::insertRecord(std::string tablename, Tuple& tuple) {
 		else if (tmp_data.type == FLOAT)
 		{
 			int t = getDataLength(tmp_data.fdata);
-			len += l;
+			len += t;
 		}
 		else
 		{
@@ -115,7 +115,6 @@ int RecordManager::deleteRecord(std::string tablename) {
 	if (blockAccount == 0)
 		return 0;
 	Attribute attr = catalog_manager.GetTableAttribute(tmp_name);
-	IndexManager index_manager(tmp_name);
 	int count = 0;
 	//遍历所有块
 	for (int i = 0; i < blockAccount; i++) {
@@ -291,7 +290,7 @@ Table RecordManager::selectRecord(std::string tablename, std::string to_attr, Wh
 	return table;
 }
 
-void RecordManager::createIndex(IndexManager & index_manager, std::string tablename, std::string to_attr) {
+void RecordManager::createIndex(std::string tablename, std::string to_attr) {
 	std::string tmp_name = tablename;
 	tablename = "./database/data/" + tablename;
 	if (!catalog_manager.isTableExist(tmp_name)) {

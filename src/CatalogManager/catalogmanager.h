@@ -84,7 +84,6 @@ class CatalogManager{
 		int GetTablePlace(std::string tablename, int& suitable_block);
 		//返回表名
 		std::string getTableName(std::string buffer, int start, int& end);
-
 };
 
 #endif 

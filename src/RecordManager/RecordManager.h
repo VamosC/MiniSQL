@@ -53,7 +53,7 @@ public:
 	//对表中存在的记录建立索引
 	//输入：表名，目标属性名
 	//输出：void
-	void createIndex(IndexManager& index_manager, std::string tablename, std::string attr);
+	void createIndex(std::string tablename, std::string attr);
 
 	//获取文件大小
 	int getBlockNum(std::string tablename);

@@ -22,7 +22,6 @@ class API
 	public:
 		Catalog CL;
 		RecordManager RM;
-		IndexManager IM;
 
 		API(){};
 		~API(){};

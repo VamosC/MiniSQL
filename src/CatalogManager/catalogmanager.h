@@ -6,7 +6,7 @@
 #define _CATALOGMANAGER_H_ 1
 
 #include <iostream>
-#include <math>
+#include <cmath>
 #include <string>
 #include <vector>
 #include <sstream>

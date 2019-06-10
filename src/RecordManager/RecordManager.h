@@ -11,6 +11,7 @@
 #include "../base.h"
 #include "../CatalogManager/catalogmanager.h"
 #include "../BufferManager/BufferManager.h"
+#include "../IndexManager/index_manager.h"
 #include "../ERROR.h"
 
 class RecordManager 

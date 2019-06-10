@@ -129,10 +129,10 @@ int RecordManager::deleteRecord(std::string tablename) {
 			for (int j = 0; j < attr.amount; j++) {
 				if (attr.has_index[j] == true) {
 					std::string attr_name = attr.attr_name[i];
-					std::string FilePath = "INDEX_FILE_" + attr_name + "_" + tmp_name;
+					std::string FilePath = "./" + tmp_name + "_" + attr_name;
 					std::vector<Data> d = tuple.getData();
-					
 
+					index_manager.delete_index(file_path, attr_name, d[j]);
 					//在索引上删除，此处没写
 				}
 			}
@@ -209,8 +209,6 @@ Table RecordManager::selectRecord(std::string tablename, std::string result_tabl
 		throw TABLE_NOT_EXISTED();
 	}
 	//获取文件所占的块的数量
-	// int blockAccount = getFileSize(tablename) / _PAGESIZE;
-	// 改为
 	int blockAccount = getBlockNum(tablename);
 	//处理文件大小为0的特殊情况
 	if (blockAccount <= 0)
@@ -459,8 +457,45 @@ bool RecordManager::isConflict(std::vector<Tuple> & tuples, std::vector<Data> & 
 }
 
 //带索引查找
-void RecordManager::searchWithIndex(std::string tablename, std::string to_attr, Where where, std::vector<int> & block_ids) {
-	
+void RecordManager::searchWithIndex(std::string tablename, std::string to_attr, Where where, std::vector<int> & block_ids) 
+{
+	IndexManager index_manager(table_name);
+	Data tmp_data;
+	//std::string file_path = "./" + table_name + "_" + target_attr;
+	if (where.relation_character == LESS || where.relation_character == LESS_OR_EQUAL) {
+		if (where.data.type == INT) {
+			tmp_data.type = INT;
+			tmp_data.datai = -INF;
+		}
+		else if (where.data.type == FLOAT) {
+			tmp_data.type = FLOAT;
+			tmp_data.dataf = -INF;
+		}
+		else {
+			tmp_data.type = 1;
+			tmp_data.datas = "";
+		}
+		index_manager.searchRange(tablename, tmp_data, where.data, block_ids);
+	}
+	else if (where.relation_character == GREATER || where.relation_character == GREATER_OR_EQUAL) {
+		if (where.data.type == INT) {
+			tmp_data.type = INT;
+			tmp_data.datai = INF;
+		}
+		else if (where.data.type == 0) {
+			tmp_data.type = 0;
+			tmp_data.dataf = INF;
+		}
+		else {
+			tmp_data.type = 1;
+			tmp_data.datas = "";
+		}
+		index_manager.searchRange(file_path, where.data, tmp_data, block_ids);
+	}
+	else {
+		index_manager.searchRange(file_path, where.data, where.data, block_ids);
+	}
+
 }
 
 //在块中进行条件删除

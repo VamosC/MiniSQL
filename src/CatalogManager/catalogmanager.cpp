@@ -30,17 +30,23 @@ std::string CatalogManager::Num2String(int tmp)
 //块数至少为0 
 int CatalogManager::GetBlockAmount(std::string tablename)
 {
-	char *pagecontent;
-	int num = 0;
-	
-	pagecontent = //得到buffer_manager中一块的所有内容,需使用到表名和num？ 
-	while( pagecontent[0] != '\0' )
-	{
-		num++;
-		pagecontent = //得到buffer_manager中一块的所有内容,需使用到表名和num？ 
-	}
-	
-	return num; 
+	//char *pagecontent;
+	//int num = 0;
+	//
+	//pagecontent = //得到buffer_manager中一块的所有内容,需使用到表名和num？ 
+	//while( pagecontent[0] != '\0' )
+	//{
+	//	num++;
+	//	pagecontent = //得到buffer_manager中一块的所有内容,需使用到表名和num？ 
+	//}
+	//
+	char* pagecontent;
+	int block_num = -1;
+	do {
+		pagecontent = buffer_manager.getPage(table_name, block_num + 1);
+		block_num++;
+	} while (pagecontent[0] != '\0');
+	return block_num;
 }
 
 
@@ -85,10 +91,10 @@ int CatalogManager::CreateTable(std::string tablename, Attribute attr, Index ind
 		outputstr += ( " " + indices.name[i] + Num2String(indices.whose[i]) );		
 	outputstr += "\n";
 	
-	//还涉及到存入块的问题??
+	//还涉及到存入块的问题?? 
 		//计算每条信息的长度
 		//计算所用的块数
-		//遍历所有的块寻找合适的位置，如果之前的块不够用，清出一块/新建一块插入 
+		//遍历所有的块寻找合适的位置，如果之前的块不够用，清出一块/新建一块插入
 	int BlockNum = GetBlockAmount(TABLE_PATH) / _PAGESIZE;
 	if (!BlockNum)
 	{
@@ -181,11 +187,34 @@ bool CatalogManager::isTableExist(std::string tablename)
 {
 	//遍历所有的块，通过@@开头分辨表的信息
 		//如果存在相同的表明，就返回true
-		if( tmp_name = tablename )	return true;
-		//到下一个表的信息去 
-	
-	
-	return false; 
+
+	int block_num = GetBlockAmount(TABLE_PATH) / PAGESIZE;
+	if (block_num <= 0)
+		block_num = 1;
+	//遍历所有的块
+	for (int current_block = 0; current_block < block_num; current_block++) {
+		char* buffer = buffer_manager.getPage(TABLE_PATH, current_block);
+		std::string buffer_check(buffer);
+		std::string str_tmp = "";
+		int start_index = 0, end_index = 0;
+		do {
+			//如果一开始就是#，则检查下一块
+			if (buffer_check[0] == '#')
+				break;
+			//得到table的名字，如果与输入的名字相同，则return true
+			else if (getTableName(buffer, start_index, end_index) == table_name) {
+				return true;
+			}
+			else {
+				//通过字符串长度来重新确定下一个table的位置
+				start_index += String2Num(buffer_check.substr(start_index, 4));
+				//排除空文档的特殊条件
+				if (!start_index)
+					break;
+			}
+		} while (buffer_check[start_index] != '#');  //判断是否到头
+	}
+	return false;
 } 
 
 //打印表格信息  ??待定，不知道查询结果的反馈方式 

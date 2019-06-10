@@ -25,11 +25,8 @@ int API::DropTable(std::string tablename)
 	Index tmpindex= CL.GetTableIndex(tablename);
 	Attribute tmpattr = CL.GetTableAttribute(tablename);
 
-	//删除索引？？不知道在record manager里会不会实现
 	for (int i = 0; i < tmpindex.amount; i++)
 		IM.drop_index(tablename, tmpindex.name[i], tmpattr.attr_type[tmpindex.whose[i]]);
-
-	//删除档案信息
 	if (CL.DropTable(tablename) != 1)
 	{
 		std::cout << "delete table failed!" << std::endl;
@@ -40,8 +37,34 @@ int API::DropTable(std::string tablename)
 	return 1;
 }
 
-int API::CreateIndex(std::string tablename, std::string attr, std::string indexname){return 0;}
-int API::DropIndex(std::string tablename, std::string indexname){return 0;}
+
+int API::CreateIndex(std::string tablename, std::string attr, std::string indexname)
+{
+	Attribute curattr = CL.GetTableAttribute(tablename);
+	int i = CL.isAttributeExist(tablename, attr);
+	IM.create_index(tablename, indexname, curattr.attr_type[i]);
+	CL.CreateIndex(tablename, attr, indexname);
+	RM.createIndex(IM, tablename, attr);
+
+	return 1;
+}
+
+int API::DropIndex(std::string tablename, std::string indexname)
+{
+	Attribute curattr = CL.GetTableAttribute(tablename);
+	Index curindex = CL.GetTableIndex(tablename);
+	int i;
+	for ( i = 0; i < curindex.amount; i++)
+		if (curindex.name[i] == indexname)
+			break;
+
+	std::string attr = curattr.attr_name[curindex.whose[i]];
+	i = CL.isAttributeExist(tablename, attr);
+	IM.drop_index(tablename, indexname, curattr.attr_type[i]);
+	CL.DropIndex(tablename, indexname);
+
+	return 1;
+}
 
 int API::Insert(std::string tablename, std::vector<Data> tuple)
 {
@@ -54,7 +77,6 @@ int API::Insert(std::string tablename, std::vector<Data> tuple)
 }
 
 
-//delete只允许一条删除条件
 int API::Delete(std::string tablename, SelectCondition scondition)
 {
 	int result = 0;
@@ -110,11 +132,12 @@ int API::Delete(std::string tablename, SelectCondition scondition)
 
 	return result;
 }
+
 Table API::Select(std::string tablename, std::vector<std::string> attr, SelectCondition scondition)
 {
 	Table result;
 	Attribute cur_attr = CL.GetTableAttribute(tablename);
-	if (attr.size() == cur_attr.amount)//选择整张表
+	if (attr.size() == cur_attr.amount)
 		return RM.selectRecord(tablename);
 	else
 	{
@@ -249,7 +272,7 @@ Table API::ReMove(Table &table1, std::string tattr, int optype, Data key)
 		if (table1.attr.attr_name[curattr] == tattr)
 			break;
 
-	auto i = 0;
+	int i = 0;
 	while( i != rtuple.size() )
 	{
 		std::vector<Data> curdata = rtuple[i].getData();
@@ -315,7 +338,6 @@ Table API::ReMove(Table &table1, std::string tattr, int optype, Data key)
 	return result;
 }
 
-//第一个属性必须是主键
 bool Datacompare(const Tuple &tuple1, const Tuple &tuple2)
 {
 	std::vector<Data> data1 = tuple1.getData();

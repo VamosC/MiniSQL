@@ -23,7 +23,6 @@ class API
 		RecordManager &RM;
 		IndexManager &IM;
 	public:
-
 		API(CatalogManager &catalog_manager, RecordManager &record_manager, IndexManager &index_manager) : CL(catalog_manager), RM(record_manager), IM(index_manager){};
 		~API(){};
 

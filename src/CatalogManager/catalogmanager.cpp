@@ -52,7 +52,7 @@ int Catolog::GetBlockAmount(std::string tablename)
 
 //关于表格的操作 
 		
-//创建表格
+//创建表格xxxxxxxxxxxxxxxxxxxxxxxxxxx
 //输入：表格名称、表格属性、索引对象、主码 
 //输出: 1-成功； 0-失败,包含异常 
 int Catolog::CreateTable(std::string tablename, Attribute attr, Index indices, int primary_key)

@@ -326,7 +326,7 @@ void RecordManager::createIndex(IndexManager & index_manager, std::string tablen
 	if (blockAccount == 0)
 		blockAccount = 1;
 	//获取表的属性
-	std::string FilePath = "INDEX_FILE_" + to_attr + "_" + tmp_name;
+	//std::string FilePath = "INDEX_FILE_" + to_attr + "_" + tmp_name;
 	//遍历所有块
 	for (int i = 0; i < blockAccount; i++) {
 		//获取当前块的句柄
@@ -338,7 +338,8 @@ void RecordManager::createIndex(IndexManager & index_manager, std::string tablen
 			Tuple tuple = readTuple(p, attr);
 			if (tuple.isDeleted() == false) {
 				std::vector<Data> v = tuple.getData();
-				index_manager.insertIndex(FilePath, v[index], i);
+				//通过表名，
+				index_manager.insert_index(tmp_name, to_attr,v[index], i);
 			}
 			p = p + getTupleLength(p);
 		}
@@ -470,10 +471,10 @@ void RecordManager::searchWithIndex(std::string tablename, std::string to_attr, 
 	Data tmp_data;
 	//std::string file_path = "./" + table_name + "_" + target_attr;
 	if (where.relation_character == LESS || where.relation_character == LESS_OR_EQUAL) {
-		if (where.data.type == INT) {
+		/*if (where.data.type == INT) {
 			tmp_data.type = INT;
 			tmp_data.datai = -INF;
-		}
+		} 
 		else if (where.data.type == FLOAT) {
 			tmp_data.type = FLOAT;
 			tmp_data.dataf = -INF;
@@ -481,11 +482,24 @@ void RecordManager::searchWithIndex(std::string tablename, std::string to_attr, 
 		else {
 			tmp_data.type = 1;
 			tmp_data.datas = "";
+		}*/
+		condition cond;
+		cond.l_op = -1; // <
+		//cond.start = ; // 18 
+		if (where.relation_character == LESS)
+		{
+			cond.r_op = 2;
 		}
-		index_manager.searchRange(tablename, tmp_data, where.data, block_ids);
+		else
+		{
+			cond.r_op = 4;
+		}
+		cond.end = where.data; // 22
+
+		index_manager.find_range_key(tablename, to_attr , cond, block_ids);
 	}
 	else if (where.relation_character == GREATER || where.relation_character == GREATER_OR_EQUAL) {
-		if (where.data.type == INT) {
+		/*if (where.data.type == INT) {
 			tmp_data.type = INT;
 			tmp_data.datai = INF;
 		}
@@ -496,12 +510,30 @@ void RecordManager::searchWithIndex(std::string tablename, std::string to_attr, 
 		else {
 			tmp_data.type = 1;
 			tmp_data.datas = "";
+		}*/
+
+		condition cond;
+		cond.r_op = -1; // <
+		//cond.start = ; // 18 
+		if (where.relation_character == GREATER)
+		{
+			cond.l_op = 2;
 		}
-		index_manager.searchRange(file_path, where.data, tmp_data, block_ids);
+		else
+		{
+			cond.l_op = 4;
+		}
+		cond.start = where.data; // 22
+
+		index_manager.find_range_key(tablename, to_attr, cond, block_ids);
+		//index_manager.searchRange(tablename, where.data, tmp_data, block_ids);
 	}
-	else {
-		index_manager.searchRange(file_path, where.data, where.data, block_ids);
-	}
+	//else if(Where)
+	//{
+
+	//	index_manager.find_range_key(tablename, to_attr, cond, block_ids);
+	//	//index_manager.searchRange(tablename, where.data, where.data, block_ids);
+	//}
 
 }
 

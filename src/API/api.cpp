@@ -24,7 +24,7 @@ int API::DropTable(std::string tablename)
 	Index tmpindex= CL.GetTableIndex(tablename);
 	Attribute tmpattr = CL.GetTableAttribute(tablename);
 
-	//删除索引
+	//删除索引？？不知道在record manager里会不会实现
 	for (int i = 0; i < tmpindex.amount; i++)
 		DropIndex(tablename, tmpindex.name[i]);
 
@@ -41,6 +41,7 @@ int API::DropTable(std::string tablename)
 
 int API::CreateIndex(std::string tablename, std::string attr, std::string indexname)
 {
+	IndexManager IM(buffer_manager);
 	Attribute curattr = CL.GetTableAttribute(tablename);
 	int i = CL.isAttributeExist(tablename, attr);
 	IM.create_index(tablename, indexname, curattr.attr_type[i]);
@@ -52,6 +53,7 @@ int API::CreateIndex(std::string tablename, std::string attr, std::string indexn
 
 int API::DropIndex(std::string tablename, std::string indexname)
 {
+	IndexManager IM(buffer_manager);
 	Attribute curattr = CL.GetTableAttribute(tablename);
 	Index curindex = CL.GetTableIndex(tablename);
 	int i;

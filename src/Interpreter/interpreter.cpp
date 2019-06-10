@@ -591,7 +591,7 @@ int Interpreter::ExecSelect()
 	//元组 
 	std::vector<Tuple>::iterator it;
 	for( it = selectresult.tuples.begin(); it != selectresult.tuples.end(); it++ )
-		it->Printdata(namelength);
+		it->Printdata();
 	
 	return 1;
 } 

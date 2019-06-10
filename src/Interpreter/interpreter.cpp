@@ -13,21 +13,21 @@ Interpreter::Interpreter(API &api, CatalogManager &cm)
 
 void Interpreter::GetInput(std::string &input)
 {
-	instruction = istringstream(input);
+	instruction = std::istringstream(input);
 }
 
 int Interpreter::GetInstruction()
 {
 	std::string input;
 	if(readmode==0)
-		getline(cin, input);
+		getline(std::cin, input);
 	else
 		if(!file.eof())
 			getline(file, input);
 		else
 			return 0; 
 			
-	instruction = istringstream(input);
+	instruction = std::istringstream(input);
 	return 1;
 }
 
@@ -593,7 +593,7 @@ int Interpreter::ExecSelect()
 	}
 	
 	for( int i = 0; i < tmp_attr.amount; i++ )
-		std::cout << left << std::setw( namelength+5 ) << tmp_attr.attr_name[i] << '|';
+		std::cout << std::left << std::setw( namelength+5 ) << tmp_attr.attr_name[i] << '|';
 	std::cout << std::endl;
 	
 	//元组 

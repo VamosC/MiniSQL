@@ -76,7 +76,7 @@ struct Attribute{
 class Tuple{
 private:
 	std::vector<Data> data;
-	bool isDeleted;
+	bool isDeleted_;
 public:
 	Tuple(){};
 	
@@ -120,11 +120,11 @@ public:
 	{
 		return this->data;
 	}
-	bool Tuple::isDeleted() {
+	bool isDeleted() {
 		return isDeleted_;
 	}
 
-	void Tuple::setDeleted() {
+	void setDeleted() {
 		isDeleted_ = true;
 	}
 }; 

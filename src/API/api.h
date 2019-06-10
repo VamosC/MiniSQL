@@ -19,12 +19,12 @@
 class API
 {
 	private:
+		CatalogManager &CL;
+		RecordManager &RM;
+		IndexManager &IM;
 	public:
-		Catalog CL;
-		RecordManager RM;
-		IndexManager IM;
 
-		API(){};
+		API(CatalogManager &catalog_manager, RecordManager &record_manager, IndexManager &index_manager) : CL(catalog_manager), RM(record_manager), IM(index_manager){};
 		~API(){};
 
 		Table Combine(Table &table1, std::string tattr, int optype, Data key);

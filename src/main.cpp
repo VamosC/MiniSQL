@@ -8,28 +8,34 @@
 #include <string>
 #include <sstream>
 #include <fstream> 
-#include "/Interpreter/interpreter.h"
-#include "base.h"
+#include "BufferManager/BufferManager.h"
+#include "IndexManager/index_manager.h"
+#include "CatalogManager/catalogmanager.h"
+#include "RecordManager/RecordManager.h"
+#include "Interpreter/interpreter.h"
 
 int main()
 {
-	std::cout << "---------------   Welcome to our MiniSQL   ---------------" << endl;
-	//initialization³õÊ¼»¯£¿
+	std::cout << "---------------   Welcome to our MiniSQL   ---------------" << '\n';
+	
+	//initialization
+	BufferManager buffer_manager;
+	IndexManager index_manager(buffer_manager);
+	CatalogManager catalog_manager(buffer_manager);
+	RecordManager record_manager(buffer_manager, catalog_manager, index_manager);
+	API api(catalog_manager, record_manager, index_manager);
+	Interpreter interpreter(api, catalog_manager);
+
 
 	std::string input;
-	getline(std::cin, input);
-	int result = 1;
-	//cout << input; 
-
-	while (result != 2)
+	bool quit_flag = false;
+	
+	while (!quit_flag)
 	{
-		//cout << "1" << endl;
-		Interpreter instru(input);
-		instru.JudgeAndExec();
-
 		getline(std::cin, input);
-		//cout << input; 	
+		interpreter.GetInput(input);
+		quit_flag = interpreter.JudgeAndExec();
 	}
 
-	std::cout << "---------------     See you next time!     ---------------";
+	std::cout << "---------------     See you next time!     ---------------" << '\n';
 }

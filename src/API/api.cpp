@@ -4,6 +4,7 @@
 
 #include "api.h"
 
+bool Datacompare(const Tuple &tuple1, const Tuple &tuple2);
 int API::CreateTable(std::string tablename, Attribute attr)
 {
 	Index tmpindex;
@@ -11,7 +12,7 @@ int API::CreateTable(std::string tablename, Attribute attr)
 
 	if (CL.CreateTable(tablename, attr, tmpindex, attr.primary_key) != 1)
 	{
-		std::cout << "创建表格档案失败" << std::endl;
+		std::cout << "create table failed!" << std::endl;
 		return 0;
 	}
 	RM.createTableFile(tablename);
@@ -26,12 +27,12 @@ int API::DropTable(std::string tablename)
 
 	//删除索引？？不知道在record manager里会不会实现
 	for (int i = 0; i < tmpindex.amount; i++)
-		drop_index(tablename, tmpindex.name[i], tmpattr.attr_type[tmpindex.whose[i]]);
+		IM.drop_index(tablename, tmpindex.name[i], tmpattr.attr_type[tmpindex.whose[i]]);
 
 	//删除档案信息
 	if (CL.DropTable(tablename) != 1)
 	{
-		std::cout << "删除表格档案失败" << std::endl;
+		std::cout << "delete table failed!" << std::endl;
 		return 0;
 	}
 	RM.dropTableFile(tablename);
@@ -39,8 +40,8 @@ int API::DropTable(std::string tablename)
 	return 1;
 }
 
-int API::CreateIndex(std::string tablename, std::string attr, std::string indexname);
-int API::DropIndex(std::string tablename, std::string indexname);
+int API::CreateIndex(std::string tablename, std::string attr, std::string indexname){return 0;}
+int API::DropIndex(std::string tablename, std::string indexname){return 0;}
 
 int API::Insert(std::string tablename, std::vector<Data> tuple)
 {
@@ -113,7 +114,7 @@ Table API::Select(std::string tablename, std::vector<std::string> attr, SelectCo
 {
 	Table result;
 	Attribute cur_attr = CL.GetTableAttribute(tablename);
-	if (attr.size == cur_attr.amount)//选择整张表
+	if (attr.size() == cur_attr.amount)//选择整张表
 		return RM.selectRecord(tablename);
 	else
 	{
@@ -248,7 +249,7 @@ Table API::ReMove(Table &table1, std::string tattr, int optype, Data key)
 		if (table1.attr.attr_name[curattr] == tattr)
 			break;
 
-	i = 0;
+	auto i = 0;
 	while( i != rtuple.size() )
 	{
 		std::vector<Data> curdata = rtuple[i].getData();

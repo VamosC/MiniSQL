@@ -50,6 +50,49 @@ int Catalog::GetBlockAmount(std::string tablename)
 	return block_num;
 }
 
+int Catalog::GetTablePlace(std::string tablename, int& suitable_block)
+{
+	int block_num = getBlockNum(TABLE_PATH);
+	if (block_num <= 0)
+		block_num = 1;
+	//遍历所有的块
+	for (suitable_block = 0; suitable_block < block_num; suitable_block++) {
+		char* buffer = buffer_manager.getPage(TABLE_PATH, suitable_block);
+		std::string buffer_check(buffer);
+		std::string str_tmp = "";
+		int start = 0, end = 0;
+		do {
+			//如果一开始就是#，则检查下一块
+			if (buffer_check[0] == '#')
+				break;
+			if (getTableName(buffer, start, end) == name) {
+				return start;
+			}
+			else {
+				//通过字符串长度来重新确定start
+				start += str2num(buffer_check.substr(start, 4));
+				if (!start)
+					break;
+			}
+		} while (buffer_check[start] != '#');  //判断是否到头
+	}
+	return -1;
+}
+
+std::string Catalog::getTableName(std::string buffer, int start, int& end)
+{
+	std::string str_tmp = "";
+	rear = 0;
+	if (buffer == "")
+		return buffer;
+	while (buffer[start + rear + 5] != ' ') {
+		rear++;
+	}
+	str_tmp = buffer.substr(start + 5, rear);
+	rear = start + 5 + rear;
+	return str_tmp;
+}
+
 
 //关于表格的操作 
 

@@ -25,12 +25,7 @@ class Catalog{
 		int String2Num(std::string tmp);
 		std::string Num2String(int tmp);
 		
-		//得到存放某表格信息的块数 
-		int GetBlockAmount(std::string tablename);
-		//返回表在文件中的位置
-		int GetTablePlace(std::string tablename, int& suitable_block);
-		//返回表名
-		std::string getTableName(std::string buffer, int start, int& end);
+		
 		
 	public:
 		//关于表格的操作 
@@ -85,6 +80,14 @@ class Catalog{
 		//输入：表格名称
 		//输出：Index结构数据
 		Index GetTableIndex(std::string tablename);
+
+		//得到存放某表格信息的块数 
+		int GetBlockAmount(std::string tablename);
+		//返回表在文件中的位置
+		int GetTablePlace(std::string tablename, int& suitable_block);
+		//返回表名
+		std::string getTableName(std::string buffer, int start, int& end);
+
 };
 
 #endif 

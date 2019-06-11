@@ -31,10 +31,10 @@ public:
 	
 	//具体操作函数 
 	//判断语句是否正确，给出错误原因/拆解调用执行函数 
-	int ExecCreateTable();
-	int ExecDropTable();
-	int ExecCreateIndex();
-	int ExecDropIndex();
+	void ExecCreateTable();
+	void ExecDropTable();
+	void ExecCreateIndex();
+	void ExecDropIndex();
 	int ExecSelect();
 	int ExecInsert();
 	int ExecDelete();

@@ -3,6 +3,7 @@
 #include "../base.h"
 #include "bplustree.h"
 #include "../util.h"
+#include "../ERROR.h"
 
 #include <cstdio>
 #include <iostream>

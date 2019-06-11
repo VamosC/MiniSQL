@@ -11,6 +11,7 @@
 #include <vector>
 #include <sstream>
 #include <algorithm>
+#include "../ERROR.h"
 #include "../base.h" 
 #include "../CatalogManager/catalogmanager.h"
 #include "../IndexManager/index_manager.h"
@@ -28,10 +29,10 @@ class API
 
 		Table Combine(Table &table1, std::string tattr, int optype, Data key);
 		Table ReMove(Table &table1, std::string tattr, int optype, Data key);
-		int CreateTable(const std::string &table_name, Attribute attr);
-		int DropTable(const std::string &tablename);
-		int CreateIndex(const std::string &table_name, const std::string &attr, const std::string &index_name);
-		int DropIndex(const std::string &table_name, const std::string &index_name);
+		void CreateTable(const std::string &table_name, const Attribute &attr);
+		void DropTable(const std::string &tablename);
+		void CreateIndex(const std::string &table_name, const std::string &attr, const std::string &index_name);
+		void DropIndex(const std::string &table_name, const std::string &index_name);
 		int Insert(const std::string &table_name, std::vector<Data> tuple);
 		int Delete(const std::string &table_name, SelectCondition scondition);
 		Table Select(const std::string &table_name, std::vector<std::string> attr, SelectCondition scondition);

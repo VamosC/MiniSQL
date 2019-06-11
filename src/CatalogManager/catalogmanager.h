@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include "../ERROR.h"
 #include "../base.h" 
 #include "../BufferManager/BufferManager.h"
 
@@ -32,13 +33,11 @@ class CatalogManager{
 		
 		// 创建表格
 		// 输入：表格名称、表格属性、索引对象、主码 
-		// 输出: true-成功； false-失败,包含异常 
-		bool CreateTable(const std::string &table_name, Attribute attr, Index indices, int primary_key);
+		void CreateTable(const std::string &table_name, Attribute attr, Index indices, int primary_key);
 		
 		// 删除表格
-		// 输入：表格名称
-		// 输出：1-成功； 0-失败,包含异常  
-		bool DropTable(const std::string &table_name);
+		// 输入：表格名称 
+		void DropTable(const std::string &table_name);
 		 
 		// 通过表名查看表是否存在	
 		// 输入：表格名称
@@ -63,13 +62,12 @@ class CatalogManager{
 		
 		// 在指定属性上建立索引
 		// 输入：表格名称、属性名称、索引名称
-		// 输出：1-成功； 0-失败,包含异常
-		bool CreateIndex(const std::string &table_name, const std::string &attr, const std::string &index_name);
+		void CreateIndex(const std::string &table_name, const std::string &attr, const std::string &index_name);
 		
 		// 删除索引
 		// 输入：表格名称、索引名称
 		// 输出：1-成功； 0-失败,包含异常
-		bool DropIndex(const std::string &table_name, const std::string &index_name);
+		void DropIndex(const std::string &table_name, const std::string &index_name);
 		
 		// 索引是否存在
 		// 输入：表格名称、索引名称

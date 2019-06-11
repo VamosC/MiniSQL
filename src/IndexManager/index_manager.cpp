@@ -286,7 +286,7 @@ void IndexManager::drop_index(const std::string &table_name, const std::string &
 	if(is_file_exist(file_name))
 	{
 		if(remove(file_name.c_str()) != 0)
-			throw std::string("Inner Error: remove index file error!");
+			throw minisql_exception("Inner Error: remove index file error!");
 	}
 
 	// 不可能出现, 如果出现则是出现了编程逻辑bug

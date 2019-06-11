@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include "../ERROR.h"
 #include "../base.h"
 #include "../util.h"
 
@@ -144,7 +145,7 @@ class BufferManager {
         int getEmptyPageId();
         // 讲对应文件的对应块载入对应内存页，对于文件不存在返回-1，否则返回0
         
-        int loadDiskBlock(int page_id , std::string file_name , int block_id);
+        int loadDiskBlock(int page_id , const std::string &file_name , int block_id);
 };
 
 #endif

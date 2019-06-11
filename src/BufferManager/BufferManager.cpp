@@ -213,14 +213,14 @@ int BufferManager::getEmptyPageId() {
 }
 
 //内存和磁盘交互的接口。
-int BufferManager::loadDiskBlock(int PageID , std::string FileName , int BlockID) {
+int BufferManager::loadDiskBlock(int PageID , const std::string &file_name , int BlockID) {
     // 初始化一个页
     Frames[PageID].initialize();
     // 打开磁盘文件
-    FILE* f = fopen(FileName.c_str() , "r");
+    FILE* f = fopen(file_name.c_str() , "r");
     // 打开失败返回-1
     if (f == NULL)
-        throw std::string("failed to open file!\n");
+        throw minisql_exception("Failed to open file " + file_name + " !");
     // 将文件指针定位到对应位置
     fseek(f , _PAGESIZE * BlockID , SEEK_SET);
     // 获取页的句柄
@@ -230,7 +230,7 @@ int BufferManager::loadDiskBlock(int PageID , std::string FileName , int BlockID
     // 关闭文件
     fclose(f);
     // 对新载入的页进行相应设置
-    Frames[PageID].setFileName(FileName);
+    Frames[PageID].setFileName(file_name);
     Frames[PageID].setBlockId(BlockID);
     Frames[PageID].setPinCount(1);
     Frames[PageID].setDirty(false);

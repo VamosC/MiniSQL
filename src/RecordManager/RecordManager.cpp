@@ -1,10 +1,8 @@
 #include "RecordManager.h"
 
-void RecordManager::insertRecord(std::string tablename, Tuple& tuple,IndexManager &index_manager) {
+void RecordManager::insertRecord(std::string tablename, Tuple& tuple) {
 	std::string tmp_tablename = tablename;
 	tablename = "./database/data/" + tablename;
-	Catalog catalog_manager;
-	
 
 	//异常检测
 	if (!catalog_manager.isTableExist(tmp_tablename)) {
@@ -24,7 +22,7 @@ void RecordManager::insertRecord(std::string tablename, Tuple& tuple,IndexManage
 	}
 	Table table = selectRecord(tmp_tablename);
 	Index indexs = table.GetIndex();
-	std::vector<Tuple>& tuples = table.getTuple();
+	std::vector<Tuple>& tuples = table.GetTuples();
 	if (attr.primary_key >= 0) {
 		if (isConflict(tuples, v, attr.primary_key) == true)
 			//主键冲突异常
@@ -113,10 +111,9 @@ void RecordManager::insertRecord(std::string tablename, Tuple& tuple,IndexManage
 	}*/
 }
 
-int RecordManager::deleteRecord(std::string tablename, IndexManager& index_manager) {
+int RecordManager::deleteRecord(std::string tablename) {
 	std::string tmp_name = tablename;
 	tablename = "./database/data/" + tablename;
-	Catalog catalog_manager;
 	//检测表是否存在
 	if (!catalog_manager.isTableExist(tmp_name)) {
 		throw TABLE_NOT_EXISTED();
@@ -160,7 +157,6 @@ int RecordManager::deleteRecord(std::string tablename, IndexManager& index_manag
 int RecordManager::deleteRecord(std::string tablename, std::string to_attr, Where where) {
 	std::string tmp_name = tablename;
 	tablename = "./database/data/" + tablename;
-	Catalog catalog_manager;
 	//检测表是否存在
 	if (!catalog_manager.isTableExist(tmp_name)) {
 		throw TABLE_NOT_EXISTED();
@@ -227,7 +223,6 @@ int RecordManager::deleteRecord(std::string tablename, std::string to_attr, Wher
 Table RecordManager::selectRecord(std::string tablename, std::string result_table_name) {
 	std::string tmp_name = tablename;
 	tablename = "./database/data/" + tablename;
-	Catalog catalog_manager;
 	//检测表是否存在
 	if (!catalog_manager.isTableExist(tmp_name)) {
 		throw TABLE_NOT_EXISTED();
@@ -241,7 +236,7 @@ Table RecordManager::selectRecord(std::string tablename, std::string result_tabl
 	Attribute attr = catalog_manager.GetTableAttribute(tmp_name);
 	//构建table类的实例
 	Table table(result_table_name, attr);
-	std::vector<Tuple> & v = table.getTuple();
+	std::vector<Tuple> & v = table.GetTuples();
 	//遍历所有块
 	for (int i = 0; i < blockAccount; i++) {
 		//获取当前块的句柄
@@ -264,7 +259,6 @@ Table RecordManager::selectRecord(std::string tablename, std::string result_tabl
 Table RecordManager::selectRecord(std::string tablename, std::string to_attr, Where where, std::string result_table_name) {
 	std::string tmp_name = tablename;
 	tablename = "./database/data/" + tablename;
-	Catalog catalog_manager;
 
 	if (!catalog_manager.isTableExist(tmp_name)) {
 		throw TABLE_NOT_EXISTED();
@@ -303,8 +297,8 @@ Table RecordManager::selectRecord(std::string tablename, std::string to_attr, Wh
 
 
 	//构建table
-	Table table(result_table_name, attr);
-	std::vector<Tuple>& v = table.getTuple();
+	Table new_table(result_table_name, attr);
+	std::vector<Tuple>& v = new_table.GetTuples();
 	if (flag == true && where.relation_character != NOT_EQUAL) {
 		std::vector<int> block_ids;
 		searchWithIndex(tmp_name, to_attr, where, block_ids);
@@ -322,34 +316,22 @@ Table RecordManager::selectRecord(std::string tablename, std::string to_attr, Wh
 			querySelectInBlock(tmp_name, i, attr, index, where, v);
 		}
 	}
-	return table;
+	return new_table;
 }
 
-void RecordManager::createIndex(IndexManager & index_manager, std::string tablename, std::string to_attr) {
-	std::string tmp_name = tablename;
-	tablename = "./database/data/" + tablename;
-	Catalog catalog_manager;
-	if (!catalog_manager.isTableExist(tmp_name)) {
-		//表不存在异常
-		throw TABLE_NOT_EXISTED();
-	}
-	Attribute attr = catalog_manager.GetTableAttribute(tmp_name);
+void RecordManager::createIndex(const std::string &table_name, const std::string &index_name, const std::string &attr) {
+	auto file_path = "./database/data/" + table_name;
+	Attribute attr_t = catalog_manager.GetTableAttribute(table_name);
 	int index = -1;
 	//获取目标属性的编号
-	for (int i = 0; i < attr.amount; i++) {
-		if (attr.attr_name[i] == to_attr) {
+	for (int i = 0; i < attr_t.amount; i++) {
+		if (attr_t.attr_name[i] == attr) {
 			index = i;
 			break;
 		}
 	}
-	if (index == -1) {
-		//目标属性不存在异常
-		throw ATTR_NOT_EXIST();
-
-	}
-
 	//获取文件所占的块的数量
-	int blockAccount = getBlockNum(tablename);
+	int blockAccount = getBlockNum(file_path);
 	//处理文件大小为0的特殊情况
 	if (blockAccount == 0)
 		blockAccount = 1;
@@ -358,16 +340,16 @@ void RecordManager::createIndex(IndexManager & index_manager, std::string tablen
 	//遍历所有块
 	for (int i = 0; i < blockAccount; i++) {
 		//获取当前块的句柄
-		char* p = buffer_manager.getPage(tablename, i);
+		char* p = buffer_manager.getPage(file_path, i);
 		char* t = p;
 		//遍历块中所有记录
 		while (*p != '\0' && p < t + _PAGESIZE) {
 			//读取记录
-			Tuple tuple = readTuple(p, attr);
+			Tuple tuple = readTuple(p, attr_t);
 			if (tuple.isDeleted() == false) {
 				std::vector<Data> v = tuple.getData();
 				//通过表名，
-				index_manager.insert_index(tmp_name, to_attr,v[index], i);
+				index_manager.insert_index(table_name, index_name, v[index], i);
 			}
 			p = p + getTupleLength(p);
 		}
@@ -493,7 +475,7 @@ bool RecordManager::isConflict(std::vector<Tuple> & tuples, std::vector<Data> & 
 }
 
 //带索引查找
-void RecordManager::searchWithIndex(std::string tablename, std::string to_attr, Where where, std::vector<int> & block_ids,IndexManager &index_manager) 
+void RecordManager::searchWithIndex(std::string tablename, std::string to_attr, Where where, std::vector<int> & block_ids) 
 {
 	Data tmp_data;
 	//std::string file_path = "./" + table_name + "_" + target_attr;
@@ -657,19 +639,19 @@ void RecordManager::querySelectInBlock(std::string tablename, int block_id, Attr
 	}
 }
 
-void RecordManager::createTableFile(std::string tablename) {
-	tablename = "./database/data/" + tablename;
-	FILE* f = fopen(tablename.c_str(), "w");
+void RecordManager::createTableFile(const std::string &table_name) {
+	auto file_path = "./database/data/"+table_name;
+	FILE* f = fopen(file_path.c_str(), "w");
 	if (f == NULL)
 	{
-		cout << "Can not creat the file." << endl;
+		throw minisql_exception("Can not create the table file!");
 	}
 	fclose(f);
 }
 
-void RecordManager::dropTableFile(std::string tablename) {
-	tablename = "./database/data/" + tablename;
-	remove(tablename.c_str());
+void RecordManager::dropTableFile(const std::string &table_name) {
+	auto file_path = "./database/data/" + table_name;
+	remove(file_path.c_str());
 }
 
 

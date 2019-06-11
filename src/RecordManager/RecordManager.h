@@ -33,23 +33,20 @@ public:
 	//建立表文件
 	//输入：表名
 	//输出：void
-	void createTableFile(std::string tablename);
+	void createTableFile(const std::string &table_name);
 	//功能：删除表
 	//输入：表名
 	//输出：void
-	void dropTableFile(std::string tablename);
+	void dropTableFile(const std::string &table_name);
 	//向对应表中插入一条记录
 	//输入：表名，一个元组
 	//输出：void
 	void insertRecord(std::string tablename, Tuple& tuple);
-	void insertRecord(std::string tablename, Tuple& tuple, IndexManager& index_manager);
-
 
 	//删除对应表中记录（不删除表文件）
 	//输入：表名
 	//输出：删除的记录数
 	int deleteRecord(std::string tablename);
-	int deleteRecord(std::string tablename, IndexManager& index_manager);
 
 
 	//删除对应表中所有目标属性值满足Where条件的记录
@@ -59,7 +56,7 @@ public:
 	//对表中存在的记录建立索引
 	//输入：表名，目标属性名
 	//输出：void
-	void createIndex(std::string tablename, std::string attr);
+	void createIndex(const std::string &table_name, const std::string &index_name, const std::string &attr);
 
 	//获取文件大小
 	int getBlockNum(std::string tablename);
@@ -81,7 +78,6 @@ public:
 
 	//带索引查找
 	void searchWithIndex(std::string tablename, std::string attr, Where where, std::vector<int>& block_ids);
-	void searchWithIndex(std::string tablename, std::string attr, Where where, std::vector<int>& block_ids, IndexManager& index_manager);
 
 	//在块中进行条件删除
 	int queryDeleteInBlock(std::string tablename, int block_id, Attribute attr, int index, Where where);

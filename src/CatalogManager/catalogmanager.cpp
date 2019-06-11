@@ -60,13 +60,17 @@ std::string CatalogManager::getTableName(char* buffer, int start, int end)
 
 //创建表格
 //输入：表格名称、表格属性、索引对象、主码 
-bool CatalogManager::CreateTable(const std::string &table_name, Attribute attr, Index indices, int primary_key)
+void CatalogManager::CreateTable(const std::string &table_name, Attribute attr, Index indices, int primary_key)
 {
-	// 检测是否有同名表的存在 
-	if (isTableExist(table_name))
+	if(!is_file_exist(TABLE_PATH))
 	{
-		std::cout << "table already exists!" << std::endl;
-		return false;
+		std::fstream file;
+		file.open(TABLE_PATH, std::ios::out);
+	}
+	// 检测是否有同名表的存在 
+	if(isTableExist(table_name))
+	{
+		throw minisql_exception("Table " + table_name + " already exists!");
 	}
 	//把所有信息保存到字符串中用于输出到文件中
 	//格式,由于用流可以一个单词一个单词的读入，所有这里一般信息用空格隔开 
@@ -116,7 +120,7 @@ bool CatalogManager::CreateTable(const std::string &table_name, Attribute attr, 
 					{
 						memcpy(buffer+start, outputstr.c_str(), outputstr.size());
 						buffer_manager.modifyPage(PID);
-						return true;
+						return;
 					}
 				}
 				else
@@ -129,7 +133,7 @@ bool CatalogManager::CreateTable(const std::string &table_name, Attribute attr, 
 						{
 							memcpy(buffer+start, outputstr.c_str(), outputstr.size());
 							buffer_manager.modifyPage(PID);
-							return true;
+							return;
 						}
 					}
 				}
@@ -157,7 +161,7 @@ bool CatalogManager::CreateTable(const std::string &table_name, Attribute attr, 
 	int PID = buffer_manager.getPageId(TABLE_PATH, BlockNum);
 	strcat(buffer, outputstr.c_str());
 	buffer_manager.modifyPage(PID);
-	return true;
+	return;
 }
 
 bool CatalogManager::GetTablePlace(const std::string &table_name, int &block_id, int& start, int& end)
@@ -194,15 +198,13 @@ bool CatalogManager::GetTablePlace(const std::string &table_name, int &block_id,
 }
 
 //删除表格
-//输入：表格名称
-//输出：1-成功； 0-失败,包含异常  
-bool CatalogManager::DropTable(const std::string &table_name)
+//输入：表格名称 
+void CatalogManager::DropTable(const std::string &table_name)
 {
 	auto block_id = 0, start = 0, end = 0;
 	if(!GetTablePlace(table_name, block_id, start, end))
 	{
-		std::cout << "table not exists!" << '\n';
-		return false;
+		throw minisql_exception("Table " + table_name + " not exists!");
 	}
 	//刷新页面 
 	char* buffer = buffer_manager.getPage(TABLE_PATH, block_id);
@@ -218,7 +220,6 @@ bool CatalogManager::DropTable(const std::string &table_name)
 		}
 	}
 	buffer_manager.modifyPage(PID);
-	return true;
 }
 
 //通过表名查看表是否存在	
@@ -236,8 +237,7 @@ Attribute CatalogManager::GetTableAttribute(const std::string &table_name)
 	auto block_id = 0, start = 0, end = 0;
 	if(!GetTablePlace(table_name, block_id, start, end))
 	{
-		std::cout << "table not exists!" << '\n';
-		return result;
+		throw minisql_exception("Table " + table_name + " not exists!");
 	}
 	char* buffer = buffer_manager.getPage(TABLE_PATH, block_id);
 	std::string attr(buffer+start+2, end - start - 3);
@@ -292,7 +292,7 @@ void CatalogManager::PrintTable(const std::string &table_name)
 {
 	if(!isTableExist(table_name))
 	{
-		std::cout << "table not exists!" << std::endl;
+		throw minisql_exception("Table " + table_name + " not exists!");
 		return;
 	}
 
@@ -365,36 +365,23 @@ void CatalogManager::PrintTable(const std::string &table_name)
 
 //在指定属性上建立索引
 //输入：表格名称、属性名称、索引名称
-bool CatalogManager::CreateIndex(const std::string &table_name, const std::string &attr, const std::string &index_name)
+void CatalogManager::CreateIndex(const std::string &table_name, const std::string &attr, const std::string &index_name)
 {
 	auto attr_pos = isAttributeExist(table_name, attr);
-	if (attr_pos== -1)
-	{
-		std::cout << "attribute not exists!" << '\n';
-		return false;
-	}
-
-	if(isIndexExist(table_name, index_name) != -1)
-	{
-		std::cout << "index already exists!" << '\n';
-	}
-
 	Index cur_index = GetTableIndex(table_name);
 	Attribute cur_attr = GetTableAttribute(table_name);
 
 	// 超过10个
 	if(cur_index.amount == 10)
 	{
-		std::cout << "too many attributes!" << std::endl;
-		return false;
+		throw minisql_exception("Too many index on table " + table_name);
 	}
 
 	for(auto i = 0; i < cur_index.amount; i++)
 	{
 		if(cur_index.whose[i] == attr_pos)
 		{
-			std::cout << "attribute already has index!" << '\n';
-			return false;
+			throw minisql_exception("Attribute " + attr + " on table " + table_name + " already has index!");
 		}
 	}
 
@@ -404,35 +391,25 @@ bool CatalogManager::CreateIndex(const std::string &table_name, const std::strin
 	cur_index.whose[cur_index.amount - 1] = attr_pos;
 
 	//由于原来的表已经计入，不能肯定它之后是否有其他信息，所以需要整个表删掉重新添加 
-	if (!DropTable(table_name))
+	try
 	{
-		std::cout << "Create Index: drop table failed!" << '\n';
-		return false;
+		DropTable(table_name);
+		CreateTable(table_name, cur_attr, cur_index, cur_attr.primary_key);
 	}
-	if (!CreateTable(table_name, cur_attr, cur_index, cur_attr.primary_key))
+	catch(minisql_exception &e)
 	{
-		std::cout << "insert error!" << std::endl;
-		return false;
+		e.add_msg("Create index " + index_name + " error!");
+		throw e;
 	}
-
-	return true;
 }
 
 //删除索引
 //输入：表格名称、索引名称
-bool CatalogManager::DropIndex(const std::string &table_name, const std::string &index_name)
+void CatalogManager::DropIndex(const std::string &table_name, const std::string &index_name)
 {
-	//类似于插入索引操作就几个细节改一下 
-	auto index_pos = isIndexExist(table_name, index_name);
-	if (index_pos == -1)
-	{
-		std::cout << "index not exists!" << '\n';
-		return false;
-	}
-
 	Index cur_index = GetTableIndex(table_name);
 	Attribute cur_attr = GetTableAttribute(table_name);
-
+	auto index_pos = isIndexExist(table_name, index_name);
 	//检查无误，正式开始删除索引
 	if(index_pos != cur_index.amount-1)
 	{
@@ -442,18 +419,16 @@ bool CatalogManager::DropIndex(const std::string &table_name, const std::string 
 	cur_index.amount--;
 
 	//由于原来的表已经计入，不能肯定它之后是否有其他信息，所以需要整个表删掉重新添加 
-	if (!DropTable(table_name))
+	try
 	{
-		std::cout << "delete index failed!" << std::endl;
-		return false;
+		DropTable(table_name);
+		CreateTable(table_name, cur_attr, cur_index, cur_attr.primary_key);
 	}
-	if (!CreateTable(table_name, cur_attr, cur_index, cur_attr.primary_key))
+	catch(minisql_exception &e)
 	{
-		std::cout << "delete index failed!" << std::endl;
-		return false;
+		e.add_msg("Delete index " + index_name + " error!");
+		throw e;
 	}
-
-	return true;
 }
 
 //索引是否存在
@@ -480,8 +455,7 @@ Index CatalogManager::GetTableIndex(const std::string &table_name)
 	auto block_id = 0, start = 0, end = 0;
 	if(!GetTablePlace(table_name, block_id, start, end))
 	{
-		std::cout << "table not exists!" << '\n';
-		return result;
+		throw minisql_exception("Table " + table_name + " not exists!");
 	}
 	char* buffer = buffer_manager.getPage(TABLE_PATH, block_id);
 	std::string attr(buffer+start+2, end - start - 3);
@@ -519,44 +493,3 @@ Index CatalogManager::GetTableIndex(const std::string &table_name)
 	return result;
 }
 
-int main(int argc, char const *argv[])
-{
-	BufferManager bm;
-	CatalogManager cm(bm);
-	Attribute attr;
-	attr.amount = 2;
-	attr.attr_name[0] = "name";
-	attr.attr_name[1] = "age";
-	attr.attr_type[0] = 2;
-	attr.attr_type[1] = -1;
-	attr.is_unique[0] = true;
-	attr.is_unique[1] = true;
-	attr.primary_key = 0;
-	Index index;
-	index.amount = 0;
-	cm.DropTable("student");
-	cm.DropTable("teacher");
-	cm.PrintTable("student");
-	cm.CreateTable("student", attr, index, 0);
-	cm.CreateTable("teacher", attr, index, 0);
-	cm.CreateIndex("student", "name", "index_name");
-	// Attribute result = cm.GetTableAttribute("student");
-	// std::cout << result.amount << '\n';
-	// for(auto i = 0; i < result.amount; i++)
-	// {
-	// 	std::cout << result.attr_name[i] << '\n';
-	// 	std::cout << result.attr_type[i] << '\n';
-	// 	std::cout << result.is_unique[i] << '\n';
-	// }
-	// std::cout << result.primary_key << '\n';
-	// Index indice = cm.GetTableIndex("student");
-	// std::cout << indice.amount << '\n';
-	// for(auto i = 0; i < indice.amount; i++)
-	// {
-	// 	std::cout << indice.name[i] << '\n';
-	// 	std::cout << indice.whose[i] << '\n';
-	// }
-	// cm.DropTable("student");
-	cm.PrintTable("student");
-	return 0;
-}

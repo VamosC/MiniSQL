@@ -51,18 +51,12 @@ bool Interpreter::JudgeAndExec()
 		singleword = GetWord();
 		if (singleword == "table")//新建表操作
 		{
-			if(ExecCreateTable() == 0)
-			{
-				std::cout << "create table failed!" << std::endl;
-			}
+			ExecCreateTable();
 			return false;
 		}
 		else if (singleword == "index")//新建索引操作
 		{
-			if(ExecCreateIndex() == 0)
-			{
-				std::cout << "create index failed!" << std::endl;
-			}
+			ExecCreateIndex();
 			return false;
 		}
 		else//输入错误
@@ -76,25 +70,19 @@ bool Interpreter::JudgeAndExec()
 		singleword = GetWord();
 		if (singleword == "table")//删除表操作
 		{
-			if(ExecDropTable() == 0)
-			{
-				std::cout << "delete table failed!" << std::endl;
-			}
+			ExecDropTable();
 			return false;
 		}
 		else if (singleword == "index")//删除索引操作
 		{
-			if(ExecDropIndex() == 0)
-			{
-				std::cout << "delete index failed!" << std::endl;
-			}
+			ExecDropIndex();
 			return false;
 		}
 		else//输入错误
 		{
 			std::cout << "syntax error!" << std::endl; 
-		}
-		return false; 			
+			return false;
+		}	
 	}
 	else if (singleword == "select")//搜索操作
 	{
@@ -102,6 +90,7 @@ bool Interpreter::JudgeAndExec()
 		if (result == 0)
 		{
 			std::cout << "select failed!" << std::endl;
+			return false;
 		}
 		else if (result == -1)
 		{
@@ -129,7 +118,6 @@ bool Interpreter::JudgeAndExec()
 	{
 		ExecFile();
 		return false;
-		// 遇到quit会怎么样
 	}
 	else//输入错误
 	{
@@ -142,7 +130,7 @@ bool Interpreter::JudgeAndExec()
 //判断语句是否正确，给出错误原因/拆解调用执行函数
 
 //此时从create table后面开始读 
-int Interpreter::ExecCreateTable()
+void Interpreter::ExecCreateTable()
 {
 	std::string nameoftable;
 	std::string cur_word;
@@ -150,22 +138,15 @@ int Interpreter::ExecCreateTable()
 	int flag = 0, primarykey;
 
 	nameoftable = GetWord();
-	if(catalog_manager.isTableExist(nameoftable) == 1)
-	{
-		std::cout << "table already exists!" << std::endl;
-		return 0;		
-	}
 	
 	if(GetWord() != "(")
 	{
 		std::cout << "syntax error!" << std::endl;
-		return 0;
 	}
 	cur_attr.amount = 0;
 	if (GetInstruction() == 0)
 	{
 		std::cout << "read error!" << std::endl;
-		return 0;
 	}
 	cur_word = GetWord();
 	while (cur_word != ");")
@@ -179,7 +160,7 @@ int Interpreter::ExecCreateTable()
 				if (cur_word != "(")
 				{
 					std::cout << "syntax error!" << std::endl;
-					return 0;
+					return;
 				}
 
 				cur_word = GetWord();
@@ -194,20 +175,20 @@ int Interpreter::ExecCreateTable()
 				else
 				{
 					std::cout << "no such attribute!" << std::endl;
-					return 0;
+					return;
 				}
 
 				cur_word = GetWord();
 				if (cur_word != ")")
 				{
 					std::cout << "syntax error!" << std::endl;
-					return 0;
+					return;
 				}
 			}
 			else
 			{
 				std::cout << "syntax error!" << std::endl;
-				return 0;
+				return;
 			}
 		}
 		else
@@ -225,18 +206,20 @@ int Interpreter::ExecCreateTable()
 					if (cur_word == "unique" && GetWord() != ",")
 					{
 						std::cout << "syntax error!" << std::endl;
-						return 0;
 					}
 
 					cur_attr.attr_name[cur_attr.amount] = attrname;
 					cur_attr.attr_type[cur_attr.amount] = -1;
-					if (cur_word == "unique")	cur_attr.is_unique[cur_attr.amount] = true;
+					if (cur_word == "unique")
+						cur_attr.is_unique[cur_attr.amount] = true;
+					else
+						cur_attr.is_unique[cur_attr.amount] = false;
 					cur_attr.amount++;
 				}
 				else
 				{
 					std::cout << "syntax error!" << std::endl;
-					return 0;
+					return;
 				}
 			}
 			else if (attrtype == "float")
@@ -247,18 +230,20 @@ int Interpreter::ExecCreateTable()
 					if (cur_word == "unique" && GetWord() != ",")
 					{
 						std::cout << "syntax error!" << std::endl;
-						return 0;
 					}
 
 					cur_attr.attr_name[cur_attr.amount] = attrname;
 					cur_attr.attr_type[cur_attr.amount] = 0;
-					if (cur_word == "unique")	cur_attr.is_unique[cur_attr.amount] = true;
+					if (cur_word == "unique")
+						cur_attr.is_unique[cur_attr.amount] = true;
+					else
+						cur_attr.is_unique[cur_attr.amount] = false;
 					cur_attr.amount++;
 				}
 				else
 				{
 					std::cout << "syntax error!" << std::endl;
-					return 0;
+					return;
 				}
 			}
 			else if (attrtype.substr(0, 4) == "char")
@@ -270,7 +255,7 @@ int Interpreter::ExecCreateTable()
 					{
 						len = 10 * len + attrtype[pos] - '0';
 						if (len > 255 || len == 0 || pos >= 4)
-							return 0;
+							return;
 						pos++;
 					}
 
@@ -280,64 +265,57 @@ int Interpreter::ExecCreateTable()
 					if (cur_word == "unique" && GetWord() != ",")
 					{
 						std::cout << "syntax error!" << std::endl;
-						return 0;
+						return;
 					}
 
 					cur_attr.attr_name[cur_attr.amount] = attrname;
 					cur_attr.attr_type[cur_attr.amount] = len;
-					if (cur_word == "unique")	cur_attr.is_unique[cur_attr.amount] = true;
+					if (cur_word == "unique")
+						cur_attr.is_unique[cur_attr.amount] = true;
+					else
+						cur_attr.is_unique[cur_attr.amount] = false;
 					cur_attr.amount++;
 				}
 				else
 				{
 					std::cout << "syntax error!" << std::endl;
-					return 0;
+					return;
 				}
 			}
 			else
 			{
 				std::cout << "syntax error!" << std::endl;
-				return 0;
+				return;
 			}
 
 		}
 		if (GetInstruction() == 0)
 		{
 			std::cout << "read error!" << std::endl;
-			return 0;
+			return;
 		}
 		cur_word = GetWord();
 		flag = 1;
 	}
-	
-	
-	if( api.CreateTable(nameoftable, cur_attr) == 1 ) 
-	{
-		std::cout << "create table success!" << nameoftable << std::endl; 
-		return 1;
-	}
-	else return 0;
+
+
+	api.CreateTable(nameoftable, cur_attr);
 }
 
 //此时从drop table后面开始读 
-int Interpreter::ExecDropTable()
+void Interpreter::ExecDropTable()
 {
 	std::string nameoftable;	
 	std::string cur_word;
 	nameoftable	= GetWord();
 	if( nameoftable[ nameoftable.size()-1 ] == ';' )
 		nameoftable.erase(nameoftable.size()-1,1);
-	
-	if( api.DropTable(nameoftable) == 1 ) 
-	{
-		std::cout << "delete table success!" << nameoftable << std::endl; 
-		return 1;
-	}
-	else return 0;
+
+	api.DropTable(nameoftable);
 }
 
 //此时从create index后面开始读 
-int Interpreter::ExecCreateIndex()
+void Interpreter::ExecCreateIndex()
 {
 	std::string indexname, tablename, tattr;
 
@@ -345,42 +323,26 @@ int Interpreter::ExecCreateIndex()
 	if( GetWord() != "on" )
 	{
 		std::cout << "syntax error!" << std::endl; 
-		return 0; 
+		return; 
 	}	
 	tablename = GetWord();
 	if( GetWord() != "(" )
 	{
 		std::cout << "syntax error!" << std::endl; 
-		return 0; 
+		return;
 	}
 	tattr = GetWord();
 	if( GetWord() != ");" )
 	{
 		std::cout << "syntax error!" << std::endl; 
-		return 0; 
+		return; 
 	}
-	
-	//接下来检查该表该属性是否存在
-	if ( catalog_manager.isTableExist(tablename) == 1 && catalog_manager.isAttributeExist(tablename, tattr) == true )
-	{
-		if( api.CreateIndex(tablename, tattr, indexname) == 1 ) 
-		{
-			std::cout << "insert index success!" << indexname << std::endl; 
-			return 1;
-		}
-		else 
-			return 0;	
-	}
-	else
-	{
-		std::cout << "attribute not exists!" << '\n';
-		return 0;
-	}
-	
+
+	api.CreateIndex(tablename, tattr, indexname);
 }
 
 //语法有所修改，示例：drop index xxxx on tablename ; 
-int Interpreter::ExecDropIndex()
+void Interpreter::ExecDropIndex()
 {
 	std::string indexname, tablename, tattr;
 
@@ -388,33 +350,16 @@ int Interpreter::ExecDropIndex()
 	if( GetWord() != "on" )
 	{
 		std::cout << "syntax error!" << std::endl; 
-		return 0; 
+		return;
 	}	
 	tablename = GetWord();
 
 	if (GetWord() != ";")
 	{
 		std::cout << "syntax error!" << std::endl;
-		return 0;
+		return;
 	}
-	//接下来检查该表该属性是否存在
-	if ( catalog_manager.isTableExist(tablename) == 1 && catalog_manager.isIndexExist(tablename, indexname) == true )
-	{
-		if( api.DropIndex(tablename, indexname) == 1 ) 
-		{
-			std::cout << "delete index success!" << indexname << std::endl; 
-			return 1;
-		}
-		else
-		{
-			return 0;
-		} 	
-	}
-	else
-	{
-		std::cout << "attribute not exists!" << '\n';
-		return 0;
-	}
+	api.DropIndex(tablename, indexname);
 }
 
 //operation here: 0- =	1- <>	2- <	3- >	4- <=	5- >=

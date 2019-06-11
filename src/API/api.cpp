@@ -16,73 +16,141 @@ static bool Datacompare(const Tuple &tuple1, const Tuple &tuple2)
 		return data1[0].sdata < data2[0].sdata;
 }
 
-int API::CreateTable(const std::string &table_name, Attribute attr)
+void API::CreateTable(const std::string &table_name, const Attribute &attr)
 {
-	Index tmpindex;
-	tmpindex.amount = 0;
+	Index tmp_index;
+	tmp_index.amount = 0;
 
-	if (!CL.CreateTable(table_name, attr, tmpindex, attr.primary_key))
+	// 检查属性是否重复
+	for(auto i = 0; i < attr.amount; i++)
 	{
-		std::cout << "create table failed!" << std::endl;
-		return 0;
+		for(auto j = i+1; j < attr.amount; j++)
+			if(attr.attr_name[i] == attr.attr_name[j])
+			{
+				std::cout << "Create table " << table_name << " error!" <<":Duplicated attribute names are not allowed!" << '\n';
+				return;
+			}
 	}
-	RM.createTableFile(table_name);
 
-	return 1;
+	// 检查primary key是否unique
+	if(!attr.is_unique[attr.primary_key])
+	{
+		std::cout << "Create table " << table_name << " error!" << ":Primary key must be unique" << '\n';
+		return;
+	}
+
+	try
+	{
+		CL.CreateTable(table_name, attr, tmp_index, attr.primary_key);
+		RM.createTableFile(table_name);
+		std::cout << "Create table " << table_name << " success!" << '\n';
+	}
+	catch(minisql_exception &e)
+	{
+		e.add_msg("Create table failed!");
+		e.print();
+	}
 }
 
-int API::DropTable(const std::string &table_name)
+void API::DropTable(const std::string &table_name)
 {
-	Index tmpindex= CL.GetTableIndex(table_name);
-	Attribute tmpattr = CL.GetTableAttribute(table_name);
-
-	for (int i = 0; i < tmpindex.amount; i++)
-		IM.drop_index(table_name, tmpindex.name[i], tmpattr.attr_type[tmpindex.whose[i]]);
-	if (!CL.DropTable(table_name))
+	if(!CL.isTableExist(table_name))
 	{
-		std::cout << "delete table failed!" << std::endl;
-		return 0;
+		std::cout << ("Table " + table_name + " not exists!") << '\n';
 	}
-	RM.dropTableFile(table_name);
-
-	return 1;
+	else
+	{
+		try
+		{
+			Index tmp_index= CL.GetTableIndex(table_name);
+			Attribute tmp_attr = CL.GetTableAttribute(table_name);
+			for (int i = 0; i < tmp_index.amount; i++)
+				IM.drop_index(table_name, tmp_index.name[i], tmp_attr.attr_type[tmp_index.whose[i]]);
+			CL.DropTable(table_name);
+			RM.dropTableFile(table_name);\
+			std::cout << ("Delete table " + table_name + " success!") << '\n';
+		}
+		catch(minisql_exception &e)
+		{
+			e.add_msg("Delete table " + table_name + " error!");
+			e.print();
+		}
+	}
 }
 
 
-int API::CreateIndex(const std::string &table_name, const std::string &attr, const std::string &index_name)
+void API::CreateIndex(const std::string &table_name, const std::string &attr, const std::string &index_name)
 {
-	Attribute curattr = CL.GetTableAttribute(table_name);
-	Index curindex = CL.GetTableIndex(table_name);
-	int i = CL.isAttributeExist(table_name, attr);
-	int j = CL.isIndexExist(table_name, index_name);
-
-	if (j != -1)
+	if(!CL.isTableExist(table_name))
 	{
-		std::cout << "index exists!" << std::endl;
-		return 0;
+		std::cout << ("Table " + table_name + " not exists!") << '\n';
 	}
-	IM.create_index(table_name, index_name, curattr.attr_type[i]);
-	CL.CreateIndex(table_name, attr, index_name);
-	RM.createIndex(table_name, attr);
+	else
+	{
+		try
+		{
+			auto i = CL.isAttributeExist(table_name, attr);
+			auto j = CL.isIndexExist(table_name, index_name);
+			Attribute curattr = CL.GetTableAttribute(table_name);
+			Index curindex = CL.GetTableIndex(table_name);
+			if(i == -1)
+			{
+				std::cout << "Create index " + index_name + " on " + table_name + " error!" << (":Attribute " + attr + " on " + table_name + " not exists!") << '\n';
+				return;
+			}
 
-	return 1;
+			if(!curattr.is_unique[i])
+			{
+				std::cout << "Create index " + index_name + " on " + table_name + " error!" << ":Attribute as index must be unique!" << '\n';
+				return;
+			}
+
+			if (j != -1)
+			{
+				std::cout << "Create index " + index_name + " on " + table_name + " error!" << ("Index " + index_name + " on " + table_name + " exists!") << '\n';
+				return;
+			}
+			CL.CreateIndex(table_name, attr, index_name);
+			IM.create_index(table_name, index_name, curattr.attr_type[i]);
+			RM.createIndex(table_name, index_name, attr);
+			std::cout << "Create index " + index_name + " on " + table_name + " success!" << '\n';
+		}
+		catch(minisql_exception &e)
+		{
+			e.add_msg("Create index " + index_name + " on " + table_name + " error!");
+			e.print();
+		}
+	}
 }
 
-int API::DropIndex(const std::string &table_name, const std::string &index_name)
+void API::DropIndex(const std::string &table_name, const std::string &index_name)
 {
-	Attribute curattr = CL.GetTableAttribute(table_name);
-	Index curindex = CL.GetTableIndex(table_name);
-	int i;
-	for ( i = 0; i < curindex.amount; i++)
-		if (curindex.name[i] == index_name)
-			break;
-
-	std::string attr = curattr.attr_name[curindex.whose[i]];
-	i = CL.isAttributeExist(table_name, attr);
-	IM.drop_index(table_name, index_name, curattr.attr_type[i]);
-	CL.DropIndex(table_name, index_name);
-
-	return 1;
+	if(!CL.isTableExist(table_name))
+	{
+		std::cout << ("Table " + table_name + " not exists!") << '\n';
+	}
+	else
+	{
+		auto index_pos = CL.isIndexExist(table_name, index_name);
+		if (index_pos == -1)
+		{
+			std::cout << ("Index " + index_name + " on " + table_name + " not exists!") << '\n';
+			return;
+		}
+		try
+		{
+			auto cur_index = CL.GetTableIndex(table_name);
+			auto cur_attr = CL.GetTableAttribute(table_name);
+			IM.drop_index(table_name, index_name, cur_attr.attr_type[cur_index.whose[index_pos]]);
+			CL.DropIndex(table_name, index_name);
+			std::cout << "Drop index " + index_name + " on table " + table_name + " success!" << '\n';
+		}
+		catch(minisql_exception &e)
+		{
+			e.add_msg("Drop index " + index_name + " on table " + table_name + " error!");
+			e.print();
+		}
+	}
 }
 
 int API::Insert(const std::string &table_name, std::vector<Data> tuple)

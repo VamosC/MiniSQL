@@ -1,8 +1,9 @@
 #include "RecordManager.h"
 
-void RecordManager::insertRecord(std::string tablename, Tuple& tuple) {
+void RecordManager::insertRecord(std::string tablename, Tuple& tuple,IndexManager &index_manager) {
 	std::string tmp_tablename = tablename;
 	tablename = "./database/data/" + tablename;
+	Catalog catalog_manager;
 	
 
 	//异常检测
@@ -22,7 +23,8 @@ void RecordManager::insertRecord(std::string tablename, Tuple& tuple) {
 			
 	}
 	Table table = selectRecord(tmp_tablename);
-	std::vector<Tuple>& tuples = table.GetTuples();
+	Index indexs = table.GetIndex();
+	std::vector<Tuple>& tuples = table.getTuple();
 	if (attr.primary_key >= 0) {
 		if (isConflict(tuples, v, attr.primary_key) == true)
 			//主键冲突异常
@@ -60,8 +62,8 @@ void RecordManager::insertRecord(std::string tablename, Tuple& tuple) {
 		}
 		else if (tmp_data.type == FLOAT)
 		{
-			int t = getDataLength(tmp_data.fdata);
-			len += t;
+			int l = getDataLength(tmp_data.fdata);
+			len += l;
 		}
 		else
 		{
@@ -92,20 +94,29 @@ void RecordManager::insertRecord(std::string tablename, Tuple& tuple) {
 		buffer_manager.modifyPage(PID);
 	}
 
+
+
 	//更新索引
-	for (int i = 0; i < attr.amount; i++) {
+	for (int i = 0; i < indexs.amount; i++)
+	{
+		std::vector<Data> tmp_data = tuple.getData();
+		index_manager.insert_index(tablename, indexs.name[i], tmp_data[i], block_offset);
+	}
+	
+	/*for (int i = 0; i < attr.amount; i++) {
 		if (attr.has_index[i] == true) {
 			std::string attr_name = attr.attr_name[i];
 			std::string FilePath = "INDEX_FILE_" + attr_name + "_" + tmp_tablename;
 			std::vector<Data> tmp_data = tuple.getData();
 			index_manager.insertIndex(FilePath, tmp_data[i], block_offset);
 		}
-	}
+	}*/
 }
 
-int RecordManager::deleteRecord(std::string tablename) {
+int RecordManager::deleteRecord(std::string tablename, IndexManager& index_manager) {
 	std::string tmp_name = tablename;
 	tablename = "./database/data/" + tablename;
+	Catalog catalog_manager;
 	//检测表是否存在
 	if (!catalog_manager.isTableExist(tmp_name)) {
 		throw TABLE_NOT_EXISTED();
@@ -115,6 +126,10 @@ int RecordManager::deleteRecord(std::string tablename) {
 	if (blockAccount == 0)
 		return 0;
 	Attribute attr = catalog_manager.GetTableAttribute(tmp_name);
+
+
+	Table table = selectRecord(tmp_name);
+	Index indexs = table.GetIndex();
 	int count = 0;
 	//遍历所有块
 	for (int i = 0; i < blockAccount; i++) {
@@ -125,16 +140,12 @@ int RecordManager::deleteRecord(std::string tablename) {
 		while (*p != '\0' && p < t + _PAGESIZE) {
 			//更新索引
 			Tuple tuple = readTuple(p, attr);
-			for (int j = 0; j < attr.amount; j++) {
-				if (attr.has_index[j] == true) {
-					std::string attr_name = attr.attr_name[i];
-					std::string FilePath = "./" + tmp_name + "_" + attr_name;
-					std::vector<Data> d = tuple.getData();
-
-					index_manager.delete_index(file_path, attr_name, d[j]);
-					//在索引上删除，此处没写
-				}
+			for (int j = 0; i < indexs.amount; i++)
+			{
+				std::vector<Data> tmp_data = tuple.getData();
+				index_manager.delete_index(tablename, indexs.name[i], tmp_data[j]);
 			}
+			
 			//删除记录
 			p = SetDeleteOnRecord(p);
 			count++;
@@ -149,6 +160,7 @@ int RecordManager::deleteRecord(std::string tablename) {
 int RecordManager::deleteRecord(std::string tablename, std::string to_attr, Where where) {
 	std::string tmp_name = tablename;
 	tablename = "./database/data/" + tablename;
+	Catalog catalog_manager;
 	//检测表是否存在
 	if (!catalog_manager.isTableExist(tmp_name)) {
 		throw TABLE_NOT_EXISTED();
@@ -156,21 +168,33 @@ int RecordManager::deleteRecord(std::string tablename, std::string to_attr, Wher
 	Attribute attr = catalog_manager.GetTableAttribute(tmp_name);
 	int index = -1;
 	bool flag = false;
+	Table table = selectRecord(tmp_name);
+	Index indexs = table.GetIndex();
 	//获取目标属性对应的编号
-	for (int i = 0; i < attr.amount; i++) {
-		if (attr.attr_name[i] == attr) {
+	for (int i = 0; i < attr.amount; i++) 
+	{
+		if (attr.attr_name[i] == to_attr) 
+		{
 			index = i;
-			if (attr.has_index[i] == true)
-				flag = true;
 			break;
 		}
 	}
+	for (int i = 0; i < indexs.amount;i++)
+	{
+		if (attr.attr_name[index] == indexs.name[i])
+		{
+			flag = true;
+			break;
+		}
+	}
+
+
 	//目标属性不存在，抛出异常
 	if (index == -1) {
 		//目标属性不存在异常
-		throw ATTR_NOT_EXIST()
+		throw ATTR_NOT_EXIST();
 	}
-	else if (attr.attr_type[index] != where.data.attr_type) {
+	else if (attr.attr_type[index] !=where.data.type) {
 		//where条件中的两个数据的类型不匹配异常
 		throw WHERE_TYPE_NOT_MATCH();
 	}
@@ -182,7 +206,7 @@ int RecordManager::deleteRecord(std::string tablename, std::string to_attr, Wher
 	if (flag == true && where.relation_character != NOT_EQUAL) {
 		std::vector<int> block_ids;
 		//通过索引获取满足条件的记录所在的块号
-		searchWithIndex(tmp_name, attr, where, block_ids);
+		searchWithIndex(tmp_name, attr.attr_name[index], where, block_ids);
 		for (int i = 0; i < block_ids.size(); i++) {
 			count += queryDeleteInBlock(tmp_name, block_ids[i], attr, index, where);
 		}
@@ -203,6 +227,7 @@ int RecordManager::deleteRecord(std::string tablename, std::string to_attr, Wher
 Table RecordManager::selectRecord(std::string tablename, std::string result_table_name) {
 	std::string tmp_name = tablename;
 	tablename = "./database/data/" + tablename;
+	Catalog catalog_manager;
 	//检测表是否存在
 	if (!catalog_manager.isTableExist(tmp_name)) {
 		throw TABLE_NOT_EXISTED();
@@ -239,6 +264,7 @@ Table RecordManager::selectRecord(std::string tablename, std::string result_tabl
 Table RecordManager::selectRecord(std::string tablename, std::string to_attr, Where where, std::string result_table_name) {
 	std::string tmp_name = tablename;
 	tablename = "./database/data/" + tablename;
+	Catalog catalog_manager;
 
 	if (!catalog_manager.isTableExist(tmp_name)) {
 		throw TABLE_NOT_EXISTED();
@@ -247,20 +273,29 @@ Table RecordManager::selectRecord(std::string tablename, std::string to_attr, Wh
 	int index = -1;
 	bool flag = false;
 	//获取目标属性的编号
+	Table table = selectRecord(tmp_name);
+	Index indexs = table.GetIndex();
+
+
 	for (int i = 0; i < attr.amount; i++) {
 		if (attr.attr_name[i] == to_attr) {
 			index = i;
-			if (attr.has_index[i] == true)
-				flag = true;
 			break;
 		}
 	}
-
+	for (int i = 0; i < indexs.amount; i++)
+	{
+		if (attr.attr_name[index] == indexs.name[i])
+		{
+			flag = true;
+			break;
+		}
+	}
 	if (index == -1) {
 		//目标属性不存在异常
 		throw ATTR_NOT_EXIST();
 	}
-	else if (attr.attr_type[index] != where.data.attr_type) {
+	else if (attr.attr_type[index] != where.data.type) {
 		// where条件中的两个数据的类型不匹配异常
 		throw WHERE_TYPE_NOT_MATCH();
 	}
@@ -290,9 +325,10 @@ Table RecordManager::selectRecord(std::string tablename, std::string to_attr, Wh
 	return table;
 }
 
-void RecordManager::createIndex(std::string tablename, std::string to_attr) {
+void RecordManager::createIndex(IndexManager & index_manager, std::string tablename, std::string to_attr) {
 	std::string tmp_name = tablename;
 	tablename = "./database/data/" + tablename;
+	Catalog catalog_manager;
 	if (!catalog_manager.isTableExist(tmp_name)) {
 		//表不存在异常
 		throw TABLE_NOT_EXISTED();
@@ -360,17 +396,17 @@ void RecordManager::DoInsertOnRecord(char* p, int offset, int len, const std::ve
 	for (int j = 0; j < v.size(); j++) {
 		p[offset++] = ' ';
 		Data d = v[j];
-		if (d.attr_type == INT)
+		if (d.type == INT)
 		{
-			CopyFunc(p, offset, d.datai);
+			CopyFunc(p, offset, d.idata);
 		}
-		else if (d.attr_type == FLOAT)
+		else if (d.type == FLOAT)
 		{
-			CopyFunc(p, offset, d.dataf);
+			CopyFunc(p, offset, d.fdata);
 		}
 		else
 		{
-			CopyFunc(p, offset, d.datas);
+			CopyFunc(p, offset, d.sdata);
 		}
 	}
 	p[offset] = ' ';
@@ -390,7 +426,7 @@ Tuple RecordManager::readTuple(const char* p, Attribute attr) {
 	p = p + 5;
 	for (int i = 0; i < attr.amount; i++) {
 		Data data;
-		data.attr_type = attr.attr_type[i];
+		data.type = attr.attr_type[i];
 		char tmp[100];
 		int j;
 		for (j = 0; *p != ' '; j++, p++) {
@@ -402,12 +438,12 @@ Tuple RecordManager::readTuple(const char* p, Attribute attr) {
 		if (data.type == INT)
 		{
 			std::stringstream stream(s);
-			stream >> data.datai;
+			stream >> data.idata;
 		}
 		else if (data.type == FLOAT)
 		{
 			std::stringstream stream(s);
-			stream >> data.dataf;
+			stream >> data.fdata;
 		}
 		else
 		{
@@ -449,7 +485,7 @@ bool RecordManager::isConflict(std::vector<Tuple> & tuples, std::vector<Data> & 
 		}
 		else
 		{
-			if (v[index].sdata == f[index].sdata)
+			if (v[index].sdata == d[index].sdata)
 				return true;
 		}
 	}
@@ -457,23 +493,22 @@ bool RecordManager::isConflict(std::vector<Tuple> & tuples, std::vector<Data> & 
 }
 
 //带索引查找
-void RecordManager::searchWithIndex(std::string tablename, std::string to_attr, Where where, std::vector<int> & block_ids) 
+void RecordManager::searchWithIndex(std::string tablename, std::string to_attr, Where where, std::vector<int> & block_ids,IndexManager &index_manager) 
 {
-	IndexManager index_manager(table_name);
 	Data tmp_data;
 	//std::string file_path = "./" + table_name + "_" + target_attr;
 	if (where.relation_character == LESS || where.relation_character == LESS_OR_EQUAL) {
 		/*if (where.data.type == INT) {
 			tmp_data.type = INT;
-			tmp_data.datai = -INF;
+			tmp_data.idata = -INF;
 		} 
 		else if (where.data.type == FLOAT) {
 			tmp_data.type = FLOAT;
-			tmp_data.dataf = -INF;
+			tmp_data.fdata = -INF;
 		}
 		else {
 			tmp_data.type = 1;
-			tmp_data.datas = "";
+			tmp_data.sdata = "";
 		}*/
 		condition cond;
 		cond.l_op = -1; // <
@@ -493,15 +528,15 @@ void RecordManager::searchWithIndex(std::string tablename, std::string to_attr, 
 	else if (where.relation_character == GREATER || where.relation_character == GREATER_OR_EQUAL) {
 		/*if (where.data.type == INT) {
 			tmp_data.type = INT;
-			tmp_data.datai = INF;
+			tmp_data.idata = INF;
 		}
 		else if (where.data.type == 0) {
 			tmp_data.type = 0;
-			tmp_data.dataf = INF;
+			tmp_data.fdata = INF;
 		}
 		else {
 			tmp_data.type = 1;
-			tmp_data.datas = "";
+			tmp_data.sdata = "";
 		}*/
 
 		condition cond;
@@ -544,7 +579,7 @@ int RecordManager::queryDeleteInBlock(std::string tablename, int block_id, Attri
 		//根据属性类型执行操作
 		if (attr.attr_type[index] == 0)
 		{
-			if (QueryJudge(d[index].datai, where.data.datai, where.relation_character))
+			if (QueryJudge(d[index].idata, where.data.idata, where.relation_character))
 			{
 				//将记录删除
 				p = SetDeleteOnRecord(p);
@@ -557,7 +592,7 @@ int RecordManager::queryDeleteInBlock(std::string tablename, int block_id, Attri
 		}
 		else if (attr.attr_type[index] == 0)
 		{
-			if (QueryJudge(d[index].dataf, where.data.dataf, where.relation_character)) {
+			if (QueryJudge(d[index].fdata, where.data.fdata, where.relation_character)) {
 				p = SetDeleteOnRecord(p);
 				count++;
 			}
@@ -567,7 +602,7 @@ int RecordManager::queryDeleteInBlock(std::string tablename, int block_id, Attri
 		}
 		else
 		{
-			if (QueryJudge(d[index].datas, where.data.datas, where.relation_character)) {
+			if (QueryJudge(d[index].sdata, where.data.sdata, where.relation_character)) {
 				p = SetDeleteOnRecord(p);
 				count++;
 			}
@@ -599,22 +634,22 @@ void RecordManager::querySelectInBlock(std::string tablename, int block_id, Attr
 		}
 		std::vector<Data> d = tuple.getData();
 
-		if (attr.attr_type[indxe] == INT)
+		if (attr.attr_type[index] == INT)
 		{
-			if (QueryJudge(d[index].datai, where.data.datai, where.relation_character)) 
+			if (QueryJudge(d[index].idata, where.data.idata, where.relation_character)) 
 			{
 				v.push_back(tuple);
 			}
 		}
-		else if (attr.attr_type[indxe] == FLOAT)
+		else if (attr.attr_type[index] == FLOAT)
 		{
-			if (QueryJudge(d[index].dataf, where.data.dataf, where.relation_character)) {
+			if (QueryJudge(d[index].fdata, where.data.fdata, where.relation_character)) {
 				v.push_back(tuple);
 			}
 		}
 		else
 		{
-			if (QueryJudge(d[index].datas, where.data.datas, where.relation_character)) {
+			if (QueryJudge(d[index].sdata, where.data.sdata, where.relation_character)) {
 				v.push_back(tuple);
 			}
 		}

@@ -14,7 +14,7 @@
 int main()
 {
 	std::cout << "---------------   Welcome to our MiniSQL   ---------------" << endl;
-	//initialization初始化？
+	//初始化？
 
 	std::string input;
 	getline(std::cin, input);

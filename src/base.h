@@ -76,12 +76,12 @@ struct Attribute{
 class Tuple{
 private:
 	std::vector<Data> data;
-	bool _isDeleted;
+	bool isDeleted_;
 public:
 	Tuple(){};
 	
 	//拷贝函数 
-	Tuple(Tuple &copytuple)
+	Tuple(const Tuple &copytuple)
 	{
 		data = copytuple.data;
 	}
@@ -120,12 +120,12 @@ public:
 	{
 		return this->data;
 	}
-	bool Tuple::isDeleted() {
-		return _isDeleted;
+	bool isDeleted() {
+		return isDeleted_;
 	}
 
-	void Tuple::setDeleted() {
-		_isDeleted = true;
+	void setDeleted() {
+		isDeleted_ = true;
 	}
 }; 
 
@@ -176,9 +176,6 @@ public:
 	{
 		return indices;
 	} 
-	std::vector<Tuple>& Table::getTuple() {
-		return tuples;
-	}
 };
 
 #endif

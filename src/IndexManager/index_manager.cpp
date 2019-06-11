@@ -12,7 +12,7 @@ IndexManager::~IndexManager()
 
 void IndexManager::create_index(const std::string &table_name, const std::string &index_name, int type)
 {
-	auto file_name = "./"+table_name+"_"+index_name;
+	auto file_name = "./database/index/"+table_name+"_"+index_name;
 	if(is_file_exist(file_name))
 	{
 		// 不应该出现这个情况
@@ -57,7 +57,7 @@ void IndexManager::create_index(const std::string &table_name, const std::string
 
 bool IndexManager::find_key(const std::string &table_name, const std::string &index_name, Data data, std::vector<int> &block_id)
 {
-	auto file_name = "./" + table_name + "_" + index_name;
+	auto file_name = "./database/index/" + table_name + "_" + index_name;
 	
 	// 首先查看内存中是否存在b+tree索引
 	// 不存在就需要先从硬盘中加载
@@ -114,7 +114,7 @@ bool IndexManager::find_key(const std::string &table_name, const std::string &in
 
 bool IndexManager::find_range_key(const std::string &table_name, const std::string &index_name, const condition &cond, std::vector<int> &block_ids)
 {
-	auto file_name = "./" + table_name + "_" + index_name;
+	auto file_name = "./database/index/" + table_name + "_" + index_name;
 	int type;
 	if(cond.l_op != -1)
 	{
@@ -203,7 +203,7 @@ bool IndexManager::find_range_key(const std::string &table_name, const std::stri
 
 bool IndexManager::insert_index(const std::string &table_name, const std::string &index_name, Data data, int block_id)
 {
-	auto file_name = "./" + table_name + "_" + index_name;
+	auto file_name = "./database/index/" + table_name + "_" + index_name;
 	
 	// 首先查看内存中是否存在b+tree索引
 	// 不存在就需要先从硬盘中加载
@@ -234,7 +234,7 @@ bool IndexManager::insert_index(const std::string &table_name, const std::string
 
 bool IndexManager::delete_index(const std::string &table_name, const std::string &index_name, Data data)
 {
-	auto file_name = "./" + table_name + "_" + index_name;
+	auto file_name = "./database/index/" + table_name + "_" + index_name;
 	
 	// 首先查看内存中是否存在b+tree索引
 	// 不存在就需要先从硬盘中加载
@@ -261,7 +261,7 @@ bool IndexManager::delete_index(const std::string &table_name, const std::string
 // 删除索引
 void IndexManager::drop_index(const std::string &table_name, const std::string &index_name, int type)
 {
-	auto file_name = "./" + table_name + "_" + index_name;
+	auto file_name = "./database/index/" + table_name + "_" + index_name;
 
 	// 删除内存中的b+tree
 	if(is_BPTree_exist(file_name, type))

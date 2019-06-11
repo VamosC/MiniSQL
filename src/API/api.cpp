@@ -3,6 +3,18 @@
 //	
 
 #include "api.h"
+static bool Datacompare(const Tuple &tuple1, const Tuple &tuple2)
+{
+	std::vector<Data> data1 = tuple1.getData();
+	std::vector<Data> data2 = tuple2.getData();
+
+	if (data1[0].type == -1)
+		return data1[0].idata < data2[0].idata;
+	else if(data1[0].type == 0)
+		return data1[0].fdata < data2[0].fdata;
+	else
+		return data1[0].sdata < data2[0].sdata;
+}
 
 int API::CreateTable(std::string tablename, Attribute attr)
 {
@@ -11,7 +23,7 @@ int API::CreateTable(std::string tablename, Attribute attr)
 
 	if (CL.CreateTable(tablename, attr, tmpindex, attr.primary_key) != 1)
 	{
-		std::cout << "创建表格档案失败" << std::endl;
+		std::cout << "create table failed!" << std::endl;
 		return 0;
 	}
 	RM.createTableFile(tablename);
@@ -24,14 +36,11 @@ int API::DropTable(std::string tablename)
 	Index tmpindex= CL.GetTableIndex(tablename);
 	Attribute tmpattr = CL.GetTableAttribute(tablename);
 
-	//删除索引？？不知道在record manager里会不会实现
 	for (int i = 0; i < tmpindex.amount; i++)
-		DropIndex(tablename, tmpindex.name[i]);
-
-	//删除档案信息
+		IM.drop_index(tablename, tmpindex.name[i], tmpattr.attr_type[tmpindex.whose[i]]);
 	if (CL.DropTable(tablename) != 1)
 	{
-		std::cout << "删除表格档案失败" << std::endl;
+		std::cout << "delete table failed!" << std::endl;
 		return 0;
 	}
 	RM.dropTableFile(tablename);
@@ -39,11 +48,20 @@ int API::DropTable(std::string tablename)
 	return 1;
 }
 
+
 int API::CreateIndex(std::string tablename, std::string attr, std::string indexname)
 {
 	IndexManager IM(buffer_manager);
 	Attribute curattr = CL.GetTableAttribute(tablename);
+	Index curindex = CL.GetTableIndex();
 	int i = CL.isAttributeExist(tablename, attr);
+	int j = CL.isIndexExist(tablename, indexname);
+
+	if (j >= curindex.amount)
+	{
+		std::cout << "已存在该索引，操作无效" << std::endl;
+		return 0;
+	}
 	IM.create_index(tablename, indexname, curattr.attr_type[i]);
 	CL.CreateIndex(tablename, attr, indexname);
 	RM.createIndex(IM, tablename, attr);
@@ -53,7 +71,6 @@ int API::CreateIndex(std::string tablename, std::string attr, std::string indexn
 
 int API::DropIndex(std::string tablename, std::string indexname)
 {
-	IndexManager IM(buffer_manager);
 	Attribute curattr = CL.GetTableAttribute(tablename);
 	Index curindex = CL.GetTableIndex(tablename);
 	int i;
@@ -80,7 +97,6 @@ int API::Insert(std::string tablename, std::vector<Data> tuple)
 }
 
 
-//delete只允许一条删除条件
 int API::Delete(std::string tablename, SelectCondition scondition)
 {
 	int result = 0;
@@ -136,11 +152,12 @@ int API::Delete(std::string tablename, SelectCondition scondition)
 
 	return result;
 }
+
 Table API::Select(std::string tablename, std::vector<std::string> attr, SelectCondition scondition)
 {
 	Table result;
 	Attribute cur_attr = CL.GetTableAttribute(tablename);
-	if (attr.size == cur_attr.amount)//选择整张表
+	if (attr.size() == cur_attr.amount)
 		return RM.selectRecord(tablename);
 	else
 	{
@@ -339,18 +356,4 @@ Table API::ReMove(Table &table1, std::string tattr, int optype, Data key)
 
 	std::sort(rtuple.begin(), rtuple.end(), Datacompare);
 	return result;
-}
-
-//第一个属性必须是主键
-bool Datacompare(const Tuple &tuple1, const Tuple &tuple2)
-{
-	std::vector<Data> data1 = tuple1.getData();
-	std::vector<Data> data2 = tuple2.getData();
-
-	if (data1[0].type == -1)
-		return data1[0].idata < data2[0].idata;
-	else if(data1[0].type == 0)
-		return data1[0].fdata < data2[0].fdata;
-	else
-		return data1[0].sdata < data2[0].sdata;
 }

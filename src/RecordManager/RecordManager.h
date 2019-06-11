@@ -8,21 +8,20 @@
 #include <string>
 #include <vector>
 #include <sstream>
-#include "base.h"
+#include "../base.h"
 #include "../CatalogManager/catalogmanager.h"
 #include "../BufferManager/BufferManager.h"
 #include "../IndexManager/index_manager.h"
 #include "../ERROR.h"
 
-extern BufferManager buffer_manager;
-
 class RecordManager 
 {
-
 private:
-	
-
+	BufferManager &buffer_manager;
+	CatalogManager &catalog_manager;
+	IndexManager &index_manager;
 public:
+	RecordManager(BufferManager &bm, CatalogManager &cm, IndexManager &im) : buffer_manager(bm), catalog_manager(cm), index_manager(im) {}
 	//返回整张表
 	//输入：表名
 	//输出：Table类型对象
@@ -60,7 +59,7 @@ public:
 	//对表中存在的记录建立索引
 	//输入：表名，目标属性名
 	//输出：void
-	void createIndex(IndexManager& index_manager, std::string tablename, std::string attr);
+	void createIndex(std::string tablename, std::string attr);
 
 	//获取文件大小
 	int getBlockNum(std::string tablename);

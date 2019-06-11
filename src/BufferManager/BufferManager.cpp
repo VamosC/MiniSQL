@@ -32,7 +32,7 @@ inline std::string Page::getFileName()
 
 inline void Page::setBlockId(int BlockID) 
 {
-    BlockID = BlockID;
+    this->BlockID = BlockID;
 }
 
 inline int Page::getBlockId() 
@@ -220,7 +220,7 @@ int BufferManager::loadDiskBlock(int PageID , std::string FileName , int BlockID
     FILE* f = fopen(FileName.c_str() , "r");
     // 打开失败返回-1
     if (f == NULL)
-        return -1;
+        throw std::string("failed to open file!\n");
     // 将文件指针定位到对应位置
     fseek(f , _PAGESIZE * BlockID , SEEK_SET);
     // 获取页的句柄

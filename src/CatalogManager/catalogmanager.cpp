@@ -4,7 +4,9 @@
 
 
 #include "catalogmanager.h"
+#include <cassert>
 
+std::string CatalogManager::TABLE_PATH = "./database/catalog/CatalogFile";
 
 //将数字字符串转化为数字 
 int CatalogManager::String2Num(const std::string &tmp)
@@ -29,7 +31,7 @@ std::string CatalogManager::Num2String(int tmp)
 }
 
 //得到存放某表格信息的块数 -----------------------------------------
-//块数至少为0 
+//块数至少为1 
 int CatalogManager::getBlockNum(const std::string &table_name)
 {
 	char* pagecontent;
@@ -41,47 +43,16 @@ int CatalogManager::getBlockNum(const std::string &table_name)
 	return block_num;
 }
 
-int CatalogManager::GetTablePlace(std::string tablename, int& suitable_block)
+std::string CatalogManager::getTableName(char* buffer, int start, int end)
 {
-	int block_num = getBlockNum(TABLE_PATH);
-	if (block_num <= 0)
-		block_num = 1;
-	//遍历所有的块
-	for (suitable_block = 0; suitable_block < block_num; suitable_block++) {
-		char* buffer = buffer_manager.getPage(TABLE_PATH, suitable_block);
-		std::string buffer_check(buffer);
-		std::string str_tmp = "";
-		int start = 0, end = 0;
-		do {
-			//如果一开始就是#，则检查下一块
-			if (buffer_check[0] == '#')
-				break;
-			if (getTableName(buffer, start, end) == tablename) {
-				return start;
-			}
-			else {
-				//通过字符串长度来重新确定start
-				start += String2Num(buffer_check.substr(start, 4));
-				if (!start)
-					break;
-			}
-		} while (buffer_check[start] != '#');  //判断是否到头
-	}
-	return -1;
-}
-
-std::string CatalogManager::getTableName(std::string buffer, int start, int& end)
-{
-	std::string str_tmp = "";
-	int rear = 0;
-	if (buffer == "")
-		return buffer;
-	while (buffer[start + rear + 5] != ' ') {
-		rear++;
-	}
-	str_tmp = buffer.substr(start + 5, rear);
-	rear = start + 5 + rear;
-	return str_tmp;
+	int tmp;
+	while(start <= end && buffer[start] != ' ')
+		start++;
+	tmp = start+1;
+	while(tmp <= end && buffer[tmp] != ' ')
+		tmp++;
+	assert(start < tmp);
+	return std::string(buffer+start+1, tmp-start-1);
 }
 
 
@@ -89,452 +60,503 @@ std::string CatalogManager::getTableName(std::string buffer, int start, int& end
 
 //创建表格
 //输入：表格名称、表格属性、索引对象、主码 
-//输出: 1-成功； 0-失败,包含异常 
-bool CatalogManager::CreateTable(std::string tablename, Attribute attr, Index indices, int primary_key)
+bool CatalogManager::CreateTable(const std::string &table_name, Attribute attr, Index indices, int primary_key)
 {
-	//检测是否有同名表的存在 
-	if (isTableExist(tablename) == true)
+	// 检测是否有同名表的存在 
+	if (isTableExist(table_name))
 	{
 		std::cout << "table already exists!" << std::endl;
-		return 0;
+		return false;
 	}
-
 	//把所有信息保存到字符串中用于输出到文件中
 	//格式,由于用流可以一个单词一个单词的读入，所有这里一般信息用空格隔开 
 	//@@ tablename attribute_number attrbute_name type is_unique(按顺序) primarykeynumber
-	// index_number index_name towhatattribute
-	//\n
-	std::string outputstr = "@@ ";
-	outputstr += tablename;
+	// index_number index_name towhatattribute#
+	std::string outputstr = "@ ";
+	outputstr += table_name;
 	outputstr += (" " + Num2String(attr.amount));
 
 	std::string TorF;
 	for (int i = 0; i < attr.amount; i++)
 	{
 		if (attr.is_unique[i])
-			TorF = "true";
+			TorF = " true";
 		else
-			TorF = "false";
+			TorF = " false";
 
-		outputstr += (" " + attr.attr_name[i] + Num2String(attr.attr_type[i]) + TorF);
+		outputstr += (" " + attr.attr_name[i] + " " + Num2String(attr.attr_type[i]) + TorF);
 	}
 
 	outputstr += (" " + Num2String(attr.primary_key));
 
 	outputstr += (" " + Num2String(indices.amount));
-	for (int i = 0; i < attr.amount; i++)
-		outputstr += (" " + indices.name[i] + Num2String(indices.whose[i]));
-	outputstr += "\n";
-
+	for (int i = 0; i < indices.amount; i++)
+		outputstr += (" " + indices.name[i] + " " + Num2String(indices.whose[i]));
+	outputstr += " #";
 	//还涉及到存入块的问题?? 
 		//计算每条信息的长度
 		//计算所用的块数
 		//遍历所有的块寻找合适的位置，如果之前的块不够用，清出一块/新建一块插入
-	int BlockNum = getBlockNum(TABLE_PATH) / _PAGESIZE;
-	if (!BlockNum)
-	{
-		BlockNum = 1;
-	}
+	int BlockNum = getBlockNum(TABLE_PATH);
 	for (int i = 0; i < BlockNum; i++)
 	{
 		char* buffer = buffer_manager.getPage(TABLE_PATH, i);
 		int PID = buffer_manager.getPageId(TABLE_PATH, i);
-
-		int size;
-		for (size = 0; size < _PAGESIZE && buffer[size] != '\0' && buffer[size] != '#'; size++);
-
-
-		if (size + outputstr.length() < _PAGESIZE)
+		bool flag = false;
+		auto start = 0;
+		auto size = 0;
+		for(auto j = 0; j < _PAGESIZE; j++)
 		{
-			if (size != 0 && buffer[size - 1] == '#')
+			if(flag)
 			{
-				buffer[size - 1] = '\0';
+				if(buffer[j] == '@')
+				{
+					flag = false;
+					if(size >= outputstr.size())
+					{
+						memcpy(buffer+start, outputstr.c_str(), outputstr.size());
+						buffer_manager.modifyPage(PID);
+						return true;
+					}
+				}
+				else
+				{
+					size++;
+					if(j+1 >= _PAGESIZE)
+					{
+						flag = false;
+						if(size >= outputstr.size())
+						{
+							memcpy(buffer+start, outputstr.c_str(), outputstr.size());
+							buffer_manager.modifyPage(PID);
+							return true;
+						}
+					}
+				}
 			}
-			else if (buffer[size] == '#')
+			else
 			{
-				buffer[size] = '\0';
+				if(buffer[j] == '#')
+				{
+					flag = true;
+					size = 0;
+					if(j == 0)
+					{
+						start = j;
+						size++;
+					}
+					else
+					{
+						start = j+1;
+					}
+				}
 			}
-			strcat(buffer, outputstr.c_str());
-
-			buffer_manager.modifyPage(PID);
-			return 1;
 		}
 	}
 	char* buffer = buffer_manager.getPage(TABLE_PATH, BlockNum);
 	int PID = buffer_manager.getPageId(TABLE_PATH, BlockNum);
 	strcat(buffer, outputstr.c_str());
 	buffer_manager.modifyPage(PID);
-	return 1;
+	return true;
 }
 
+bool CatalogManager::GetTablePlace(const std::string &table_name, int &block_id, int& start, int& end)
+{
+	int block_num = getBlockNum(TABLE_PATH);
+	//遍历所有的块
+	for (int current_block = 0; current_block < block_num; current_block++) {
+		char* buffer = buffer_manager.getPage(TABLE_PATH, current_block);
+
+		auto pos_start = 0;
+		auto pos_end = 0;
+		do {
+			while(pos_start < _PAGESIZE && buffer[pos_start] != '@')
+				pos_start++;
+			if(pos_start >= _PAGESIZE)
+				break;
+			pos_end = pos_start+1;
+			while(pos_end < _PAGESIZE && buffer[pos_end] != '#')
+				pos_end++;
+			if(pos_end >= _PAGESIZE)
+				break;
+			//得到table的名字，如果与输入的名字相同，则return true
+			if (getTableName(buffer, pos_start+1, pos_end) == table_name)
+			{
+				start = pos_start;
+				end = pos_end;
+				block_id = current_block;
+				return true;
+			}
+			pos_start = pos_end;
+		} while (pos_start < _PAGESIZE);  //判断是否到头
+	}
+	return false;
+}
 
 //删除表格
 //输入：表格名称
 //输出：1-成功； 0-失败,包含异常  
-int CatalogManager::DropTable(std::string tablename)
+bool CatalogManager::DropTable(const std::string &table_name)
 {
-	if (isTableExist(tablename) == false)
+	auto block_id = 0, start = 0, end = 0;
+	if(!GetTablePlace(table_name, block_id, start, end))
 	{
-		std::cout << "table not exists!" << std::endl;
-		return 0;
+		std::cout << "table not exists!" << '\n';
+		return false;
 	}
-	//找到相应的块
-	int block;
-	int begin = GetTablePlace(tablename, block);
-
-	char* buffer = buffer_manager.getPage(TABLE_PATH, block);
-	int PID = buffer_manager.getPageId(TABLE_PATH, block);
-
-	std::string check = buffer;
-
-	//删除对应的信息，包括表的属性和索引信息 
-	int end = begin + String2Num(check.substr(begin, 4));
-	int index = 0;
-	int current_index = 0;
-	if (index < begin || index >= end)
-	{
-		buffer[current_index] = buffer[index];
-		current_index++;
-	}
-	index++;
-	while (buffer[index] != '#')
-	{
-		if (index < begin || index >= end)
-		{
-			buffer[current_index] = buffer[index];
-			current_index++;
-		}
-		index++;
-	}
-	buffer[current_index] = '#';
-	buffer[++current_index] = '\0';
-
 	//刷新页面 
+	char* buffer = buffer_manager.getPage(TABLE_PATH, block_id);
+	auto PID = buffer_manager.getPageId(TABLE_PATH, block_id);
+	//抹掉数据
+	for(auto i = start; i <= end; i++)
+	{
+		if(i ==0)
+			buffer[i] = '#';
+		else
+		{
+			buffer[i] = '\0';
+		}
+	}
 	buffer_manager.modifyPage(PID);
-
-	return 1;
+	return true;
 }
 
 //通过表名查看表是否存在	
 //输入：表格名称
 //输出：true-存在； false-不存在
-bool CatalogManager::isTableExist(std::string table_name)
+bool CatalogManager::isTableExist(const std::string &table_name)
 {
-	//遍历所有的块，通过@@开头分辨表的信息
-		//如果存在相同的表明，就返回true
-
-	int block_num = getBlockNum(TABLE_PATH) / _PAGESIZE;
-	if (block_num <= 0)
-		block_num = 1;
-	//遍历所有的块
-	for (int current_block = 0; current_block < block_num; current_block++) {
-		char* buffer = buffer_manager.getPage(TABLE_PATH, current_block);
-		std::string buffer_check(buffer);
-		std::string str_tmp = "";
-		int start_index = 0, end_index = 0;
-		do {
-			//如果一开始就是#，则检查下一块
-			if (buffer_check[0] == '#')
-				break;
-			//得到table的名字，如果与输入的名字相同，则return true
-			else if (getTableName(buffer, start_index, end_index) == table_name) {
-				return true;
-			}
-			else {
-				//通过字符串长度来重新确定下一个table的位置
-				start_index += String2Num(buffer_check.substr(start_index, 4));
-				//排除空文档的特殊条件
-				if (!start_index)
-					break;
-			}
-		} while (buffer_check[start_index] != '#');  //判断是否到头
-	}
-	return false;
+	int start = 0, end = 0, block_id = 0;
+	return GetTablePlace(table_name, block_id, start, end);
 }
 
-//打印表格信息  ??待定，不知道查询结果的反馈方式 
-void CatalogManager::PrintTable(std::string tablename, Attribute tattr)
+Attribute CatalogManager::GetTableAttribute(const std::string &table_name)
 {
-	if (isTableExist(tablename) == false)
-	{
-		std::cout << "table not exists!" << std::endl;
-		return;
-	}
-
-	//打印表的信息
-	std::cout << "------------------" << tablename << "------------------" << std::endl;
-	//打印属性信息
-	int namelength = 0;
-	Attribute tmp_attr = GetTableAttribute(tablename);
-	std::cout << ">>>Primary key:  ";
-
-	for (int i = 0; i < tmp_attr.amount; i++)
-	{
-		if (tmp_attr.attr_name[i].length() > namelength)
-			namelength = tmp_attr.attr_name[i].length();
-		if (i == tmp_attr.primary_key)
-			std::cout << tmp_attr.attr_name[i] << std::endl;
-	}
-
-	std::cout << ">>>Attribute   " << "number:" << tmp_attr.amount << std::endl;
-	std::cout << std::left << std::setw(namelength + 3) << "Name" << std::left << std::setw(12) << "| Type" << "| is unique?" << std::endl;
-	for (int i = 0; i < tmp_attr.amount; i++)
-	{
-		//属性名
-		std::cout << std::left << std::setw(namelength + 3) << tmp_attr.attr_name[i];
-		//属性类型
-		switch (tmp_attr.attr_type[i])
-		{
-		case 0:
-		{
-			std::cout << std::left << std::setw(10) << "float";
-			break;
-		}
-		case -1:
-		{
-			std::cout << std::left << std::setw(10) << "int";
-			break;
-		}
-		default:
-		{
-			std::cout << "char(" << std::left << std::setw(3) << tmp_attr.attr_type[i] << ")";
-			break;
-		}
-		}
-		//是否唯一 
-		if (tmp_attr.is_unique[i] == true)
-			std::cout << " T" << std::endl;
-		else
-			std::cout << " F" << std::endl;
-	}
-
-	//打印索引
-	Index tmp_ind = GetTableIndex(tablename);
-	std::cout << ">>>Index   number:" << tmp_ind.amount << std::endl;
-	std::cout << std::left << std::setw(namelength + 3) << "Name" << "| Attribute" << std::endl;
-	for (int i = 0; i < tmp_ind.amount; i++)
-	{
-		//索引名
-		std::cout << std::left << std::setw(namelength + 3) << tmp_ind.name[i];
-		//索引对应属性
-		std::cout << tmp_attr.attr_name[tmp_ind.whose[i]] << std::endl;
-	}
-}
-
-
-
-//关于属性和索引
-
-//某一属性是否存在,必须在表存在时才能使用 
-//输入：表格名称、属性名称
-//输出：位置-存在； -1 - 不存在	 
-int CatalogManager::isAttributeExist(std::string tablename, std::string tattr)
-{
-	Attribute tmp_attr = GetTableAttribute(tablename);
-	for (int i = 0; i < tmp_attr.amount; i++)
-	{
-		if (tmp_attr.attr_name[i] == tattr)
-			return i;
-	}
-	return -1;
-}
-
-//得到某表的全部属性
-//输入：表格名称
-//输出：Attribute结构数据
-
-Attribute CatalogManager::GetTableAttribute(std::string tablename)
-{
-	std::string tattr = "";
-	//找到表格的在那个块中
-	int block;
-	int start = GetTablePlace(tablename, block);
-
-
-	//读取整块信息
-	char* buffer = buffer_manager.getPage(TABLE_PATH, block);
-	std::string check(buffer);
-
-	//得到整个表的信息
-	int end = 0;
-	std::string attr_name = getTableName(check, start, end);
-	//得到attribute部分的信息，存入字符串tattr 
-
 	Attribute result;
-
-	std::istringstream instruction = std::istringstream(tattr);
+	auto block_id = 0, start = 0, end = 0;
+	if(!GetTablePlace(table_name, block_id, start, end))
+	{
+		std::cout << "table not exists!" << '\n';
+		return result;
+	}
+	char* buffer = buffer_manager.getPage(TABLE_PATH, block_id);
+	std::string attr(buffer+start+2, end - start - 3);
+	std::istringstream info = std::istringstream(attr);
+	std::string table;
+	info >> table;
 	std::string singleword;
 	//属性数量 
-	instruction >> singleword;
+	info >> singleword;
 	result.amount = String2Num(singleword);
 	//各属性信息
 	for (int i = 0; i < result.amount; i++)
 	{
 		//属性
-		instruction >> singleword;
+		info >> singleword;
 		result.attr_name[i] = std::string(singleword);
 		//类型
-		instruction >> singleword;
+		info >> singleword;
 		result.attr_type[i] = String2Num(singleword);
 		//是否唯一
-		instruction >> singleword;
+		info >> singleword;
 		if (singleword == "true")
 			result.is_unique[i] = true;
 		else
 			result.is_unique[i] = false;
 	}
 	//主码 
-	instruction >> singleword;
+	info >> singleword;
 	result.primary_key = String2Num(singleword);
 
 	return result;
 }
 
-//在指定属性上建立索引
-//输入：表格名称、属性名称、索引名称
-//输出：1-成功； 0-失败,包含异常
-int CatalogManager::CreateIndex(std::string tablename, std::string tattr, std::string indexname)
+//关于属性和索引
+
+//某一属性是否存在,必须在表存在时才能使用 
+//输入：表格名称、属性名称
+//输出：位置-存在； -1 - 不存在	 
+int CatalogManager::isAttributeExist(const std::string &table_name, const std::string &attr)
 {
-	if (isTableExist(tablename) == false)
+	Attribute tmp_attr = GetTableAttribute(table_name);
+	for (int i = 0; i < tmp_attr.amount; i++)
+	{
+		if (tmp_attr.attr_name[i] == attr)
+			return i;
+	}
+	return -1;
+}
+
+//打印表格信息  ??待定，不知道查询结果的反馈方式 
+void CatalogManager::PrintTable(const std::string &table_name)
+{
+	if(!isTableExist(table_name))
 	{
 		std::cout << "table not exists!" << std::endl;
-		return 0;
+		return;
 	}
-	if (isAttributeExist(tablename, tattr) == -1)
+
+	//打印表的信息
+	std::cout << "------------------" << table_name << "------------------" << std::endl;
+	// //打印属性信息
+	int namelength = 0;
+	Attribute tmp_attr = GetTableAttribute(table_name);
+	std::cout << ">>>Primary key:  ";
+	for (int i = 0; i < tmp_attr.amount; i++)
 	{
-		std::cout << "attribute not exists!" << std::endl;
-		return 0;
+		if (tmp_attr.attr_name[i].size() > namelength)
+			namelength = tmp_attr.attr_name[i].size();
+		if (i == tmp_attr.primary_key)
+			std::cout << tmp_attr.attr_name[i] << std::endl;
 	}
 
-	//判断是否越界或者重复 
-	Index cur_index = GetTableIndex(tablename);
-	Attribute cur_attr = GetTableAttribute(tablename);
-	int numberofattr = 0;
+	std::cout << ">>>Attribute   " << "number:" << tmp_attr.amount << '\n';
+	std::cout << std::left << std::setw(namelength+3) << "Name" << std::left << std::setw(12) << "| Type" << "| is unique?" << std::endl;
+	for (int i = 0; i < tmp_attr.amount; i++)
+	{
+		//属性名
+		std::string type;
+		std::cout << std::left << std::setw(namelength+3) << tmp_attr.attr_name[i];
+		//属性类型
+		switch (tmp_attr.attr_type[i])
+		{
+			case 0:
+			{
+				std::cout << std::left << std::setw(15) << "float";
+				break;
+			}
+			case -1:
+			{
+				std::cout << std::left << std::setw(15) << "int";
+				break;
+			}
+			default:
+			{
+				type = "char(";
+				type.append(Num2String(tmp_attr.attr_type[i]));
+				type.append(")");
+				std::cout << std::left << std::setw(15) << type;
+				break;
+			}
+		}
+		//是否唯一 
+		if (tmp_attr.is_unique[i])
+		{
+			std::cout << "T" << std::endl;
+		}
+		else
+		{
+			std::cout << "F" << std::endl;
+		}
+	}
 
-	if (cur_index.amount == 10)
+	//打印索引
+	Index tmp_ind = GetTableIndex(table_name);
+	std::cout << ">>>Index   number:" << tmp_ind.amount << std::endl;
+	std::cout << std::left << std::setw(namelength + 3) << "Name" << std::left << std::setw(10) << "| Attribute" << std::endl;
+	for (int i = 0; i < tmp_ind.amount; i++)
+	{
+		//索引名
+		std::cout << std::left << std::setw(namelength + 3) << tmp_ind.name[i] << '\t';
+		//索引对应属性
+		std::cout << std::left << std::setw(10) << tmp_attr.attr_name[tmp_ind.whose[i]] << std::endl;
+	}
+}
+
+//在指定属性上建立索引
+//输入：表格名称、属性名称、索引名称
+bool CatalogManager::CreateIndex(const std::string &table_name, const std::string &attr, const std::string &index_name)
+{
+	auto attr_pos = isAttributeExist(table_name, attr);
+	if (attr_pos== -1)
+	{
+		std::cout << "attribute not exists!" << '\n';
+		return false;
+	}
+
+	if(isIndexExist(table_name, index_name) != -1)
+	{
+		std::cout << "index already exists!" << '\n';
+	}
+
+	Index cur_index = GetTableIndex(table_name);
+	Attribute cur_attr = GetTableAttribute(table_name);
+
+	// 超过10个
+	if(cur_index.amount == 10)
 	{
 		std::cout << "too many attributes!" << std::endl;
-		return 0;
+		return false;
 	}
 
-	int flag = 0;
-	for (int i = 0; i < cur_attr.amount; i++)
+	for(auto i = 0; i < cur_index.amount; i++)
 	{
-		if (cur_attr.attr_name[i] == tattr)
+		if(cur_index.whose[i] == attr_pos)
 		{
-			numberofattr = i;
-			break;
-		}
-	}
-
-	for (int i = 0; i < cur_index.amount; i++)
-	{
-		if (cur_index.whose[i] == numberofattr)
-		{
-			std::cout << "attributes already exists!" << std::endl;
-			return 0;
-		}
-		if (cur_index.name[i] == indexname)
-		{
-			std::cout << "attributes already exists!" << std::endl;
-			return 0;
+			std::cout << "attribute already has index!" << '\n';
+			return false;
 		}
 	}
 
 	//检查无误，正式开始添加索引
 	cur_index.amount++;
-	cur_index.name[cur_index.amount - 1] = indexname;
-	cur_index.whose[cur_index.amount - 1] = numberofattr;
+	cur_index.name[cur_index.amount - 1] = index_name;
+	cur_index.whose[cur_index.amount - 1] = attr_pos;
 
 	//由于原来的表已经计入，不能肯定它之后是否有其他信息，所以需要整个表删掉重新添加 
-	if (DropTable(tablename) == 0)
+	if (!DropTable(table_name))
 	{
-		std::cout << "insert error!" << std::endl;
-		return 0;
+		std::cout << "Create Index: drop table failed!" << '\n';
+		return false;
 	}
-	if (CreateTable(tablename, cur_attr, cur_index, cur_attr.primary_key) == 0)
+	if (!CreateTable(table_name, cur_attr, cur_index, cur_attr.primary_key))
 	{
 		std::cout << "insert error!" << std::endl;
-		return 0;
+		return false;
 	}
 
-	return 1;
+	return true;
 }
 
 //删除索引
 //输入：表格名称、索引名称
-//输出：1-成功； 0-失败,包含异常
-
-int CatalogManager::DropIndex(std::string tablename, std::string indexname)
+bool CatalogManager::DropIndex(const std::string &table_name, const std::string &index_name)
 {
 	//类似于插入索引操作就几个细节改一下 
-	if (isTableExist(tablename) == false)
+	auto index_pos = isIndexExist(table_name, index_name);
+	if (index_pos == -1)
 	{
-		std::cout << "table not exists!" << std::endl;
-		return 0;
+		std::cout << "index not exists!" << '\n';
+		return false;
 	}
 
-	//判断是否越界或者重复 
-	Index cur_index = GetTableIndex(tablename);
-	Attribute cur_attr = GetTableAttribute(tablename);
-	int numberofindex = 0;
-
-	numberofindex = isIndexExist(tablename, indexname);
-	if (numberofindex == 0)
-	{
-		std::cout << "index not exists!" << std::endl;
-		return 0;
-	}
+	Index cur_index = GetTableIndex(table_name);
+	Attribute cur_attr = GetTableAttribute(table_name);
 
 	//检查无误，正式开始删除索引
-	cur_index.amount--;
-	if (numberofindex != cur_index.amount)
+	if(index_pos != cur_index.amount-1)
 	{
-		cur_index.name[numberofindex] = cur_index.name[cur_index.amount];
-		cur_index.whose[numberofindex] = cur_index.whose[cur_index.amount];
+		cur_index.name[index_pos] = cur_index.name[cur_index.amount-1];
+		cur_index.whose[index_pos] = cur_index.whose[cur_index.amount-1];
 	}
+	cur_index.amount--;
 
 	//由于原来的表已经计入，不能肯定它之后是否有其他信息，所以需要整个表删掉重新添加 
-	if (DropTable(tablename) == 0)
+	if (!DropTable(table_name))
 	{
 		std::cout << "delete index failed!" << std::endl;
-		return 0;
+		return false;
 	}
-	if (CreateTable(tablename, cur_attr, cur_index, cur_attr.primary_key) == 0)
+	if (!CreateTable(table_name, cur_attr, cur_index, cur_attr.primary_key))
 	{
 		std::cout << "delete index failed!" << std::endl;
-		return 0;
+		return false;
 	}
 
-	return 1;
+	return true;
 }
 
 //索引是否存在
 //输入：表格名称、索引名称
-//输出：正整数-索引序号； 0-不存在		 
+//输出：正整数-索引序号； -1-不存在		 
 
-int CatalogManager::isIndexExist(std::string tablename, std::string indexname)
+int CatalogManager::isIndexExist(const std::string &table_name, const std::string &index_name)
 {
-	Index cur_index = GetTableIndex(tablename);
+	Index cur_index = GetTableIndex(table_name);
 
 	for (int i = 0; i < cur_index.amount; i++)
-		if (cur_index.name[i] == indexname)
+		if (cur_index.name[i] == index_name)
 			return i;
 
-	return 0;
+	return -1;
 }
 
 //得到某表的全部索引,必须在表存在时才可以用 
 //输入：表格名称
 //输出：Index结构数据
-Index CatalogManager::GetTableIndex(std::string tablename)
+Index CatalogManager::GetTableIndex(const std::string &table_name)
 {
 	Index result;
-	std::string sindex;
-	//得到索引所在表的位置
-	//得到索引信息
-	//把信息一个一个录入结构中
-
-
+	auto block_id = 0, start = 0, end = 0;
+	if(!GetTablePlace(table_name, block_id, start, end))
+	{
+		std::cout << "table not exists!" << '\n';
+		return result;
+	}
+	char* buffer = buffer_manager.getPage(TABLE_PATH, block_id);
+	std::string attr(buffer+start+2, end - start - 3);
+	std::istringstream info = std::istringstream(attr);
+	std::string table;
+	info >> table;
+	std::string singleword;
+	//属性数量 
+	info >> singleword;
+	auto amount = String2Num(singleword);
+	//各属性信息
+	for (auto i = 0; i < amount; i++)
+	{
+		//属性
+		info >> singleword;
+		//类型
+		info >> singleword;
+		//是否唯一
+		info >> singleword;
+	}
+	//主码 
+	info >> singleword;
+	// index数量
+	info >> singleword;
+	result.amount = String2Num(singleword);
+	for(auto i = 0; i < result.amount; i++)
+	{
+		// 索引名字
+		info >> singleword;
+		result.name[i] = std::string(singleword);
+		// 索引对应属性
+		info >> singleword;
+		result.whose[i] = String2Num(singleword);
+	}
 	return result;
+}
+
+int main(int argc, char const *argv[])
+{
+	BufferManager bm;
+	CatalogManager cm(bm);
+	Attribute attr;
+	attr.amount = 2;
+	attr.attr_name[0] = "name";
+	attr.attr_name[1] = "age";
+	attr.attr_type[0] = 2;
+	attr.attr_type[1] = -1;
+	attr.is_unique[0] = true;
+	attr.is_unique[1] = true;
+	attr.primary_key = 0;
+	Index index;
+	index.amount = 0;
+	cm.DropTable("student");
+	cm.DropTable("teacher");
+	cm.PrintTable("student");
+	cm.CreateTable("student", attr, index, 0);
+	cm.CreateTable("teacher", attr, index, 0);
+	cm.CreateIndex("student", "name", "index_name");
+	// Attribute result = cm.GetTableAttribute("student");
+	// std::cout << result.amount << '\n';
+	// for(auto i = 0; i < result.amount; i++)
+	// {
+	// 	std::cout << result.attr_name[i] << '\n';
+	// 	std::cout << result.attr_type[i] << '\n';
+	// 	std::cout << result.is_unique[i] << '\n';
+	// }
+	// std::cout << result.primary_key << '\n';
+	// Index indice = cm.GetTableIndex("student");
+	// std::cout << indice.amount << '\n';
+	// for(auto i = 0; i < indice.amount; i++)
+	// {
+	// 	std::cout << indice.name[i] << '\n';
+	// 	std::cout << indice.whose[i] << '\n';
+	// }
+	// cm.DropTable("student");
+	cm.PrintTable("student");
+	return 0;
 }

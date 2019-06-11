@@ -136,7 +136,6 @@ struct Index{
 	int amount;
 	std::string name[10]; 
 	int whose[10];			//索引及对应的属性 
-	//file where[10];
 }; 
 
 //表格

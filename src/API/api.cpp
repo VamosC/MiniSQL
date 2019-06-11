@@ -51,8 +51,17 @@ int API::DropTable(std::string tablename)
 
 int API::CreateIndex(std::string tablename, std::string attr, std::string indexname)
 {
+	IndexManager IM(buffer_manager);
 	Attribute curattr = CL.GetTableAttribute(tablename);
+	Index curindex = CL.GetTableIndex();
 	int i = CL.isAttributeExist(tablename, attr);
+	int j = CL.isIndexExist(tablename, indexname);
+
+	if (j >= curindex.amount)
+	{
+		std::cout << "已存在该索引，操作无效" << std::endl;
+		return 0;
+	}
 	IM.create_index(tablename, indexname, curattr.attr_type[i]);
 	CL.CreateIndex(tablename, attr, indexname);
 	RM.createIndex(IM, tablename, attr);

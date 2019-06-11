@@ -28,13 +28,13 @@ class API
 
 		Table Combine(Table &table1, std::string tattr, int optype, Data key);
 		Table ReMove(Table &table1, std::string tattr, int optype, Data key);
-		int CreateTable(std::string tablename, Attribute attr);
-		int DropTable(std::string tablename);
-		int CreateIndex(std::string tablename, std::string attr, std::string indexname);
-		int DropIndex(std::string tablename, std::string indexname);
-		int Insert(std::string tablename, std::vector<Data> tuple);
-		int Delete(std::string tablename, SelectCondition scondition);
-		Table Select(std::string tablename, std::vector<std::string> attr, SelectCondition scondition);
+		int CreateTable(const std::string &table_name, Attribute attr);
+		int DropTable(const std::string &tablename);
+		int CreateIndex(const std::string &table_name, const std::string &attr, const std::string &index_name);
+		int DropIndex(const std::string &table_name, const std::string &index_name);
+		int Insert(const std::string &table_name, std::vector<Data> tuple);
+		int Delete(const std::string &table_name, SelectCondition scondition);
+		Table Select(const std::string &table_name, std::vector<std::string> attr, SelectCondition scondition);
 };
 
 #endif

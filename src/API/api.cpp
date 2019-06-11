@@ -16,94 +16,93 @@ static bool Datacompare(const Tuple &tuple1, const Tuple &tuple2)
 		return data1[0].sdata < data2[0].sdata;
 }
 
-int API::CreateTable(std::string tablename, Attribute attr)
+int API::CreateTable(const std::string &table_name, Attribute attr)
 {
 	Index tmpindex;
 	tmpindex.amount = 0;
 
-	if (CL.CreateTable(tablename, attr, tmpindex, attr.primary_key) != 1)
+	if (!CL.CreateTable(table_name, attr, tmpindex, attr.primary_key))
 	{
 		std::cout << "create table failed!" << std::endl;
 		return 0;
 	}
-	RM.createTableFile(tablename);
+	RM.createTableFile(table_name);
 
 	return 1;
 }
 
-int API::DropTable(std::string tablename)
+int API::DropTable(const std::string &table_name)
 {
-	Index tmpindex= CL.GetTableIndex(tablename);
-	Attribute tmpattr = CL.GetTableAttribute(tablename);
+	Index tmpindex= CL.GetTableIndex(table_name);
+	Attribute tmpattr = CL.GetTableAttribute(table_name);
 
 	for (int i = 0; i < tmpindex.amount; i++)
-		IM.drop_index(tablename, tmpindex.name[i], tmpattr.attr_type[tmpindex.whose[i]]);
-	if (CL.DropTable(tablename) != 1)
+		IM.drop_index(table_name, tmpindex.name[i], tmpattr.attr_type[tmpindex.whose[i]]);
+	if (!CL.DropTable(table_name))
 	{
 		std::cout << "delete table failed!" << std::endl;
 		return 0;
 	}
-	RM.dropTableFile(tablename);
+	RM.dropTableFile(table_name);
 
 	return 1;
 }
 
 
-int API::CreateIndex(std::string tablename, std::string attr, std::string indexname)
+int API::CreateIndex(const std::string &table_name, const std::string &attr, const std::string &index_name)
 {
-	IndexManager IM(buffer_manager);
-	Attribute curattr = CL.GetTableAttribute(tablename);
-	Index curindex = CL.GetTableIndex();
-	int i = CL.isAttributeExist(tablename, attr);
-	int j = CL.isIndexExist(tablename, indexname);
+	Attribute curattr = CL.GetTableAttribute(table_name);
+	Index curindex = CL.GetTableIndex(table_name);
+	int i = CL.isAttributeExist(table_name, attr);
+	int j = CL.isIndexExist(table_name, index_name);
 
-	if (j >= curindex.amount)
+	if (j != -1)
 	{
-		std::cout << "已存在该索引，操作无效" << std::endl;
+		std::cout << "index exists!" << std::endl;
 		return 0;
 	}
-	IM.create_index(tablename, indexname, curattr.attr_type[i]);
-	CL.CreateIndex(tablename, attr, indexname);
-	RM.createIndex(IM, tablename, attr);
+	IM.create_index(table_name, index_name, curattr.attr_type[i]);
+	CL.CreateIndex(table_name, attr, index_name);
+	RM.createIndex(table_name, attr);
 
 	return 1;
 }
 
-int API::DropIndex(std::string tablename, std::string indexname)
+int API::DropIndex(const std::string &table_name, const std::string &index_name)
 {
-	Attribute curattr = CL.GetTableAttribute(tablename);
-	Index curindex = CL.GetTableIndex(tablename);
+	Attribute curattr = CL.GetTableAttribute(table_name);
+	Index curindex = CL.GetTableIndex(table_name);
 	int i;
 	for ( i = 0; i < curindex.amount; i++)
-		if (curindex.name[i] == indexname)
+		if (curindex.name[i] == index_name)
 			break;
 
 	std::string attr = curattr.attr_name[curindex.whose[i]];
-	i = CL.isAttributeExist(tablename, attr);
-	IM.drop_index(tablename, indexname, curattr.attr_type[i]);
-	CL.DropIndex(tablename, indexname);
+	i = CL.isAttributeExist(table_name, attr);
+	IM.drop_index(table_name, index_name, curattr.attr_type[i]);
+	CL.DropIndex(table_name, index_name);
 
 	return 1;
 }
 
-int API::Insert(std::string tablename, std::vector<Data> tuple)
+int API::Insert(const std::string &table_name, std::vector<Data> tuple)
 {
 	Tuple tmp;
 	for (int i = 0; i < tuple.size(); i++ )
 		tmp.addData(tuple[i]);
 
-	RM.insertRecord( tablename, tmp);
+	RM.insertRecord( table_name, tmp);
 	return 1;
 }
 
 
-int API::Delete(std::string tablename, SelectCondition scondition)
+int API::Delete(const std::string &table_name, SelectCondition scondition)
 {
 	int result = 0;
 	Table re;
 
 	if (scondition.amount == 0)
-		result = RM.deleteRecord(tablename);
+		result = RM.deleteRecord(table_name);
 	else
 	{
 		Where curwhere;
@@ -143,7 +142,7 @@ int API::Delete(std::string tablename, SelectCondition scondition)
 			default: break;
 		}
 
-		result = RM.deleteRecord(tablename, scondition.attr[0], curwhere);
+		result = RM.deleteRecord(table_name, scondition.attr[0], curwhere);
 
 		//for (int i = 1; i < scondition.amount; i++)
 			//re = ReMove(result, scondition.attr[i], scondition.operationtype[i], scondition.key[i]);
@@ -153,12 +152,12 @@ int API::Delete(std::string tablename, SelectCondition scondition)
 	return result;
 }
 
-Table API::Select(std::string tablename, std::vector<std::string> attr, SelectCondition scondition)
+Table API::Select(const std::string &table_name, std::vector<std::string> attr, SelectCondition scondition)
 {
 	Table result;
-	Attribute cur_attr = CL.GetTableAttribute(tablename);
+	Attribute cur_attr = CL.GetTableAttribute(table_name);
 	if (attr.size() == cur_attr.amount)
-		return RM.selectRecord(tablename);
+		return RM.selectRecord(table_name);
 	else
 	{
 		Where curwhere;
@@ -198,7 +197,7 @@ Table API::Select(std::string tablename, std::vector<std::string> attr, SelectCo
 			default: break;
 		}
 
-		result = RM.selectRecord( tablename, scondition.attr[0], curwhere );
+		result = RM.selectRecord( table_name, scondition.attr[0], curwhere );
 
 		for (int i = 1; i < scondition.amount; i++)
 			result = Combine(result, scondition.attr[i], scondition.operationtype[i], scondition.key[i]);

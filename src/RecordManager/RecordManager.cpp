@@ -1,4 +1,5 @@
 #include "RecordManager.h"
+#include <cassert>
 
 void RecordManager::insertRecord(std::string tablename, Tuple& tuple) {
 	std::string tmp_tablename = tablename;
@@ -475,26 +476,11 @@ bool RecordManager::isConflict(std::vector<Tuple> & tuples, std::vector<Data> & 
 }
 
 //带索引查找
-void RecordManager::searchWithIndex(std::string tablename, std::string to_attr, Where where, std::vector<int> & block_ids) 
+void RecordManager::searchWithIndex(const std::string &table_name, const std::string &index_name, Where where, std::vector<int> &block_ids) 
 {
-	Data tmp_data;
-	//std::string file_path = "./" + table_name + "_" + target_attr;
-	if (where.relation_character == LESS || where.relation_character == LESS_OR_EQUAL) {
-		/*if (where.data.type == INT) {
-			tmp_data.type = INT;
-			tmp_data.idata = -INF;
-		} 
-		else if (where.data.type == FLOAT) {
-			tmp_data.type = FLOAT;
-			tmp_data.fdata = -INF;
-		}
-		else {
-			tmp_data.type = 1;
-			tmp_data.sdata = "";
-		}*/
+	if(where.relation_character == LESS || where.relation_character == LESS_OR_EQUAL) {
 		condition cond;
 		cond.l_op = -1; // <
-		//cond.start = ; // 18 
 		if (where.relation_character == LESS)
 		{
 			cond.r_op = 2;
@@ -505,25 +491,11 @@ void RecordManager::searchWithIndex(std::string tablename, std::string to_attr, 
 		}
 		cond.end = where.data; // 22
 
-		index_manager.find_range_key(tablename, to_attr , cond, block_ids);
+		index_manager.find_range_key(table_name, index_name, cond, block_ids);
 	}
-	else if (where.relation_character == GREATER || where.relation_character == GREATER_OR_EQUAL) {
-		/*if (where.data.type == INT) {
-			tmp_data.type = INT;
-			tmp_data.idata = INF;
-		}
-		else if (where.data.type == 0) {
-			tmp_data.type = 0;
-			tmp_data.fdata = INF;
-		}
-		else {
-			tmp_data.type = 1;
-			tmp_data.sdata = "";
-		}*/
-
+	else if(where.relation_character == GREATER || where.relation_character == GREATER_OR_EQUAL) {
 		condition cond;
-		cond.r_op = -1; // <
-		//cond.start = ; // 18 
+		cond.r_op = -1;
 		if (where.relation_character == GREATER)
 		{
 			cond.l_op = 2;
@@ -533,17 +505,18 @@ void RecordManager::searchWithIndex(std::string tablename, std::string to_attr, 
 			cond.l_op = 4;
 		}
 		cond.start = where.data; // 22
-
-		index_manager.find_range_key(tablename, to_attr, cond, block_ids);
-		//index_manager.searchRange(tablename, where.data, tmp_data, block_ids);
+		index_manager.find_range_key(table_name, index_name, cond, block_ids);
 	}
-	//else if(Where)
-	//{
-
-	//	index_manager.find_range_key(tablename, to_attr, cond, block_ids);
-	//	//index_manager.searchRange(tablename, where.data, where.data, block_ids);
-	//}
-
+	else if(where.relation_character == EQUAL)
+	{
+		index_manager.find_key(table_name, index_name, where.data, block_ids);
+	}
+	else
+	{
+		// 不可能出现这种情况
+		// 若出现一定是编程出错了
+		assert(false);
+	}
 }
 
 //在块中进行条件删除

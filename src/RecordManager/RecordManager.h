@@ -77,7 +77,7 @@ public:
 	bool isConflict(std::vector<Tuple>& tuples, std::vector<Data>& v, int index);
 
 	//带索引查找
-	void searchWithIndex(std::string tablename, std::string attr, Where where, std::vector<int>& block_ids);
+	void searchWithIndex(const std::string &table_name, const std::string &index_name, Where where, std::vector<int>& block_ids);
 
 	//在块中进行条件删除
 	int queryDeleteInBlock(std::string tablename, int block_id, Attribute attr, int index, Where where);

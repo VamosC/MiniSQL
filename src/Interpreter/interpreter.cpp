@@ -136,13 +136,15 @@ void Interpreter::ExecCreateTable()
 	std::string cur_word;
 	Attribute cur_attr;
 	int flag = 0, primarykey;
+	int isend = 0;
 
 	nameoftable = GetWord();
 	
-	if(GetWord() != "(")
-	{
+	if (nameoftable[nameoftable.size() - 1] == '(')
+		nameoftable.erase(nameoftable.size() - 1, 1);
+	else if(GetWord() != "(")
 		std::cout << "syntax error!" << std::endl;
-	}
+
 	cur_attr.amount = 0;
 	if (GetInstruction() == 0)
 	{
@@ -157,14 +159,24 @@ void Interpreter::ExecCreateTable()
 			if (cur_word == "key")
 			{
 				cur_word = GetWord();
-				if (cur_word != "(")
+				if (cur_word[0] != '(')
 				{
 					std::cout << "syntax error!" << std::endl;
 					return;
 				}
 
-				cur_word = GetWord();
-				int i;
+				if (cur_word.size() != 1)
+					cur_word = cur_word.erase(0, 1);
+				else
+					cur_word = GetWord();
+
+				if (cur_word[cur_word.size() - 1] == ')')
+				{
+					cur_word = cur_word.erase(cur_word.size() - 1, 1);
+					isend = 1;
+				}
+				
+				/*int i;
 				for (i = 0; i < cur_attr.amount; i++)
 				{
 					if (cur_word == cur_attr.attr_name[i])
@@ -177,9 +189,9 @@ void Interpreter::ExecCreateTable()
 					std::cout << "no such attribute!" << std::endl;
 					return;
 				}
-
+				*/
 				cur_word = GetWord();
-				if (cur_word != ")")
+				if( (isend == 1 && cur_word != "" ) || (isend == 0 && cur_word != ")") )
 				{
 					std::cout << "syntax error!" << std::endl;
 					return;
@@ -196,54 +208,88 @@ void Interpreter::ExecCreateTable()
 			std::string attrname, attrtype;
 			attrname = cur_word;
 			attrtype = GetWord();
+			int isattrend = 0;
 
-
-			if (attrtype == "int")
+			if (attrtype.substr(0,3) == "int")
 			{
-				cur_word = GetWord();
-				if (cur_word == "unique" || cur_word == ",")
+				if (attrtype.size() == 4)
 				{
-					if (cur_word == "unique" && GetWord() != ",")
+					if(attrtype[3] == ',')
+						isattrend = 1;
+					else
 					{
 						std::cout << "syntax error!" << std::endl;
+						return;
 					}
+				}
 
-					cur_attr.attr_name[cur_attr.amount] = attrname;
-					cur_attr.attr_type[cur_attr.amount] = -1;
-					if (cur_word == "unique")
-						cur_attr.is_unique[cur_attr.amount] = true;
-					else
-						cur_attr.is_unique[cur_attr.amount] = false;
-					cur_attr.amount++;
-				}
-				else
+				cur_word = GetWord();
+				if (isattrend == 0)
 				{
-					std::cout << "syntax error!" << std::endl;
-					return;
+					if (cur_word.substr(0,6) == "unique" || cur_word == ",")
+					{
+						if (cur_word == "unique," || (cur_word == "unique" && GetWord() == ",") || cur_word == ",")
+							isattrend = 1;
+						else
+						{
+							std::cout << "syntax error!" << std::endl;
+							return;
+						}
+
+						cur_attr.attr_name[cur_attr.amount] = attrname;
+						cur_attr.attr_type[cur_attr.amount] = -1;
+						if (cur_word.substr(0, 6) == "unique")
+							cur_attr.is_unique[cur_attr.amount] = true;
+						else
+							cur_attr.is_unique[cur_attr.amount] = false;
+						cur_attr.amount++;
+					}
+					else
+					{
+						std::cout << "syntax error!" << std::endl;
+						return;
+					}
 				}
+				
 			}
-			else if (attrtype == "float")
+			else if (attrtype.substr(0, 5) == "float")
 			{
-				cur_word = GetWord();
-				if (cur_word == "unique" || cur_word == ",")
+				if (attrtype.size() == 6)
 				{
-					if (cur_word == "unique" && GetWord() != ",")
+					if (attrtype[5] == ',')
+						isattrend = 1;
+					else
 					{
 						std::cout << "syntax error!" << std::endl;
+						return;
 					}
-
-					cur_attr.attr_name[cur_attr.amount] = attrname;
-					cur_attr.attr_type[cur_attr.amount] = 0;
-					if (cur_word == "unique")
-						cur_attr.is_unique[cur_attr.amount] = true;
-					else
-						cur_attr.is_unique[cur_attr.amount] = false;
-					cur_attr.amount++;
 				}
-				else
+				cur_word = GetWord();
+				if (isattrend == 0)
 				{
-					std::cout << "syntax error!" << std::endl;
-					return;
+					if (cur_word.substr(0, 6) == "unique" || cur_word == ",")
+					{
+						if (cur_word == "unique," || (cur_word == "unique" && GetWord() == ",") || cur_word == "," )
+							isattrend = 1;
+						else
+						{
+							std::cout << "syntax error!" << std::endl;
+							return;
+						}
+
+						cur_attr.attr_name[cur_attr.amount] = attrname;
+						cur_attr.attr_type[cur_attr.amount] = 0;
+						if (cur_word.substr(0, 6) == "unique")
+							cur_attr.is_unique[cur_attr.amount] = true;
+						else
+							cur_attr.is_unique[cur_attr.amount] = false;
+						cur_attr.amount++;
+					}
+					else
+					{
+						std::cout << "syntax error!" << std::endl;
+						return;
+					}
 				}
 			}
 			else if (attrtype.substr(0, 4) == "char")
@@ -260,26 +306,31 @@ void Interpreter::ExecCreateTable()
 					}
 
 				cur_word = GetWord();
-				if (cur_word == "unique" || cur_word == ",")
+				if (isattrend == 0)
 				{
-					if (cur_word == "unique" && GetWord() != ",")
+					if (cur_word.substr(0, 6) == "unique" || cur_word == ",")
+					{
+						if (cur_word == "unique," || (cur_word == "unique" && GetWord() == ",") || cur_word == ",")
+							isattrend = 1;
+						else
+						{
+							std::cout << "syntax error!" << std::endl;
+							return;
+						}
+
+						cur_attr.attr_name[cur_attr.amount] = attrname;
+						cur_attr.attr_type[cur_attr.amount] = len;
+						if (cur_word.substr(0, 6) == "unique")
+							cur_attr.is_unique[cur_attr.amount] = true;
+						else
+							cur_attr.is_unique[cur_attr.amount] = false;
+						cur_attr.amount++;
+					}
+					else
 					{
 						std::cout << "syntax error!" << std::endl;
 						return;
 					}
-
-					cur_attr.attr_name[cur_attr.amount] = attrname;
-					cur_attr.attr_type[cur_attr.amount] = len;
-					if (cur_word == "unique")
-						cur_attr.is_unique[cur_attr.amount] = true;
-					else
-						cur_attr.is_unique[cur_attr.amount] = false;
-					cur_attr.amount++;
-				}
-				else
-				{
-					std::cout << "syntax error!" << std::endl;
-					return;
 				}
 			}
 			else
@@ -308,8 +359,20 @@ void Interpreter::ExecDropTable()
 	std::string nameoftable;	
 	std::string cur_word;
 	nameoftable	= GetWord();
-	if( nameoftable[ nameoftable.size()-1 ] == ';' )
-		nameoftable.erase(nameoftable.size()-1,1);
+	if (nameoftable[nameoftable.size() - 1] == ';')
+	{
+		nameoftable.erase(nameoftable.size() - 1, 1);
+		if(GetWord()!="")
+		{
+			std::cout << "syntax error!" << std::endl;
+			return;
+		}
+	}
+	else if (GetWord() != ";")
+	{
+		std::cout << "syntax error!" << std::endl;
+		return;
+	}
 
 	api.DropTable(nameoftable);
 }
@@ -320,22 +383,56 @@ void Interpreter::ExecCreateIndex()
 	std::string indexname, tablename, tattr;
 
 	indexname = GetWord();
-	if( GetWord() != "on" )
+	if (GetWord() != "on")
 	{
-		std::cout << "syntax error!" << std::endl; 
-		return; 
-	}	
-	tablename = GetWord();
-	if( GetWord() != "(" )
-	{
-		std::cout << "syntax error!" << std::endl; 
+		std::cout << "syntax error!" << std::endl;
 		return;
 	}
+	tablename = GetWord();
 	tattr = GetWord();
-	if( GetWord() != ");" )
+	int isend = 0;
+
+	if (tattr[0] == '(')
 	{
-		std::cout << "syntax error!" << std::endl; 
-		return; 
+		if (tattr.size() == 1)
+			tattr = GetWord();
+		else
+			tattr.erase(0, 1);
+
+		if (tattr[tattr.size() - 1] == ')')
+		{
+			tattr.erase(tattr.size() - 1, 1);
+			isend = -1;
+		}
+		else if (tattr.substr(tattr.size() - 2, 2) == ");")
+		{
+			tattr.erase(tattr.size() - 2, 2);
+			isend = 1;
+		}
+	}
+	else
+	{
+		std::cout << "syntax error!" << std::endl;
+		return;
+	}
+
+	if (isend == 0 && tattr == "" )  tattr = GetWord(); //只有(
+	if ((isend == 1 && GetWord() != "") || (isend == -1 && GetWord() != ";") )
+	{
+		std::cout << "syntax error!" << std::endl;
+		return;
+	}
+	else if (isend == 0 && tattr == ")")
+	{	if (GetWord() != ";")
+		{
+			std::cout << "syntax error!" << std::endl;
+			return;
+		}
+	}
+	else if (isend == 0 && tattr != ");")
+	{
+		std::cout << "syntax error!" << std::endl;
+		return;
 	}
 
 	api.CreateIndex(tablename, tattr, indexname);
@@ -347,6 +444,7 @@ void Interpreter::ExecDropIndex()
 	std::string indexname, tablename, tattr;
 
 	indexname = GetWord();
+
 	if( GetWord() != "on" )
 	{
 		std::cout << "syntax error!" << std::endl; 
@@ -354,7 +452,16 @@ void Interpreter::ExecDropIndex()
 	}	
 	tablename = GetWord();
 
-	if (GetWord() != ";")
+	if (tablename[tablename.size() - 1] == ';')
+	{
+		tablename.erase(tablename.size() - 1, 1);
+		if (GetWord() != "")
+		{
+			std::cout << "syntax error!" << std::endl;
+			return;
+		}
+	}
+	else if (GetWord() != ";")
 	{
 		std::cout << "syntax error!" << std::endl;
 		return;
@@ -374,6 +481,7 @@ int Interpreter::ExecSelect()
 	int isAll = 0; 
 	Table selectresult;	
 	int isall = 0;
+	int isend = 0;
 
 	scondition.amount = 0;
 	curword = GetWord();
@@ -406,6 +514,7 @@ int Interpreter::ExecSelect()
 	} 
 	
 	tablename = GetWord();
+	/*
 	//检验该表是否存在 
 	if(catalog_manager.isTableExist(tablename) != 1)
 	{
@@ -419,16 +528,23 @@ int Interpreter::ExecSelect()
 			std::cout << "attributes error!" << std::endl; 
 			return 0; 		
 		}
+	*/
+	if (tablename[tablename.size() - 1] == ';')
+	{
+		tablename.erase(tablename.size() - 1, 1);
+		isend = 1;
+	}
+
 	curattr = catalog_manager.GetTableAttribute(tablename);
 	
 	curword = GetWord();
 	
 	//区分是否有查找条件 
-	if( curword == ";" )
+	if( (isend == 1 && curword == "") || (isend == 0 && curword == ";") )
 	{
 		isAll = 1;//表示选择全部信息 
 	} 
-	else if( curword != "where" )
+	else if( isend == 0 && curword != "where" )
 	{
 		std::cout << "syntax error!" << std::endl; 
 		return 0; 
@@ -437,46 +553,54 @@ int Interpreter::ExecSelect()
 	//开始添加查找条件 
 	if( curword == "where" )
 	{
-		while( curword != ";" )
+		while (curword != ";")
 		{
 			int position;
 			//属性
 			// 
-			curword =  GetWord();
+			curword = GetWord();
 			//属性是否存在 
+			/*
 			position = catalog_manager.isAttributeExist(tablename, curword);
 			if( position == -1)
 			{
-				std::cout << "attributes error!" << std::endl; 
-				return 0; 		
+				std::cout << "attributes error!" << std::endl;
+				return 0;
 			}
+			*/
 			scondition.attr[scondition.amount] = curword;
-			scondition.amount ++; 
-			
+			scondition.amount++;
+
 			//条件
 			//
-			curword =  GetWord();
-			if( curword == "=" )
-				scondition.operationtype[scondition.amount-1] = 0;
-			else if( curword == "<>" )
-				scondition.operationtype[scondition.amount-1] = 1;
-			else if( curword == "<" )
-				scondition.operationtype[scondition.amount-1] = 2;
-			else if( curword == ">" )
-				scondition.operationtype[scondition.amount-1] = 3;
-			else if( curword == "<=" )
-				scondition.operationtype[scondition.amount-1] = 4;
-			else if( curword == ">=" )
-				scondition.operationtype[scondition.amount-1] = 5;
+			curword = GetWord();
+			if (curword == "=")
+				scondition.operationtype[scondition.amount - 1] = 0;
+			else if (curword == "<>")
+				scondition.operationtype[scondition.amount - 1] = 1;
+			else if (curword == "<")
+				scondition.operationtype[scondition.amount - 1] = 2;
+			else if (curword == ">")
+				scondition.operationtype[scondition.amount - 1] = 3;
+			else if (curword == "<=")
+				scondition.operationtype[scondition.amount - 1] = 4;
+			else if (curword == ">=")
+				scondition.operationtype[scondition.amount - 1] = 5;
 			else
 			{
-				std::cout << "syntax error!" << std::endl; 
-				return 0;					
+				std::cout << "syntax error!" << std::endl;
+				return 0;
 			}
-			
+
 			//关键值 
 			// 
-			curword =  GetWord();
+			curword = GetWord();
+			if (curword[curword.size() - 1] == ';')
+			{
+				curword.erase(curword.size() - 1, 1);
+				isend = 1;
+			}
+
 			int type = curattr.attr_type[position];
 			if( type == -1 )//int
 			{
@@ -503,7 +627,16 @@ int Interpreter::ExecSelect()
 			
 			curword =  GetWord();
 			//连接字符-and
-			if( curword != "and" && curword != ";" )
+			if (isend == 1)
+			{
+				if (curword == "")	break;
+				else
+				{
+					std::cout << "syntax error!" << std::endl;
+					return 0;
+				}
+			}
+			else if( curword != "and" && curword != ";" )
 			{
 				std::cout << "syntax error!" << std::endl; 
 				return 0;					
@@ -549,6 +682,8 @@ int Interpreter::ExecSelect()
 	return 1;
 } 
 
+//insert into s values ( 'sss', 'aaa' ); 
+//对于结尾的判断：...' - 1; ...') - 2; ...'); -3 ...', -4
 int Interpreter::ExecInsert()
 {
 	std::vector<Data> tuple;
@@ -578,18 +713,27 @@ int Interpreter::ExecInsert()
 	}
 
 	curword = GetWord();
-	if( curword != "(" )
+	if (curword[0] != '(')
 	{
-		std::cout << "syntax error!" << std::endl; 
+		std::cout << "syntax error!" << std::endl;
 		return 0;
-	}	
+	}
+	else
+		curword.erase(0, 1);
 	
-	curword = GetWord();
+	//处理第一个值
+	if(curword == "")  curword = GetWord();
 	curattr = catalog_manager.GetTableAttribute(tablename);
 	int number = 0;
-	while(curword != ")" )
+	int isend = 0;
+	int endtype = 4;
+	int curpos = 0;
+
+	while( endtype == 4 )
 	{
 		Data tmp;
+		int isavalueend = 0;
+		
 		if( curword[0] == '\'' )
 			curword.erase( 0, 1 );
 		else
@@ -597,14 +741,39 @@ int Interpreter::ExecInsert()
 			std::cout << "syntax error!" << std::endl; 
 			return 0;
 		} 
-		
-		if( curword[curword.length()-1] == '\'' )
-			curword.erase( curword.length()-1, 1 );
-		else
+
+		//对于结尾的判断：...' - 1; ...') - 2; ...'); -3 ...', -4
+		if (curword[curword.length() - 1] == ';')//...');
 		{
-			std::cout << "syntax error!" << std::endl; 
+			if (curword[curword.length() - 3] != '\'' || curword[curword.length() - 2] != ')')
+			{
+				std::cout << "syntax error!" << std::endl;
+				return 0;
+			}
+			endtype == 3;
+			curword.erase(curword.length() - 3, 3);
+		}
+
+		if (curword[curword.length() - 1] == ')')//...')  已读掉；
+		{
+			if (curword[curword.length() - 2] != '\'' || GetWord() != ";" )
+			{
+				std::cout << "syntax error!" << std::endl;
+				return 0;
+			}
+			endtype == 2;
+			curword.erase(curword.length() - 2, 2);
+		}
+
+		if (curword[curword.length() - 1] == ',')//...',  需要继续读
+			curword.erase(curword.length() - 1, 1);
+
+		if (curword[curword.length() - 1] != '\'')
+		{
+			std::cout << "syntax error!" << std::endl;
 			return 0;
-		} 
+		}
+		curword.erase( curword.length()-1, 1 );
 		
 		tmp.type = curattr.attr_type[number];
 		if( tmp.type == -1 )//int
@@ -619,21 +788,28 @@ int Interpreter::ExecInsert()
 			return 0;					
 		}
 		
+		tuple.push_back(tmp);
+		number++;	
+		if (endtype == 3 || endtype == 2)	break;
+		
 		curword = GetWord();
-		if( curword != "," && curword != ")" )
+		if (curword == ")")
 		{
-			std::cout << "syntax error!" << std::endl; 
-			return 0;			
+			if (GetWord() == ";")
+				break;
+			else
+			{
+				std::cout << "syntax error!" << std::endl;
+				return 0;
+			}
 		}
-		else
-		{
-			tuple.push_back(tmp);
-			number++;	
-			if( curword != ")" )	curword = GetWord();
-		}
+		else if (curword == ");")
+			break;
+
+		endtype = 4;
 	}
 	
-	if( GetWord() != ";" )
+	if( GetWord() != "" )
 	{
 		std::cout << "syntax error!" << std::endl;
 		return 0;
@@ -655,6 +831,7 @@ int Interpreter::ExecDelete()
 	SelectCondition scondition;
 	Attribute curattr; 
 	int targetan = 0;
+	int isend = 0;
 
 	scondition.amount = 0;
 	curword = GetWord();
@@ -665,17 +842,23 @@ int Interpreter::ExecDelete()
 	} 
 	
 	tablename = GetWord();
+	if (tablename[tablename.size() - 1] == ';')
+	{
+		isend == 1;
+		tablename.erase(tablename.size() - 1, 1);
+	}
+	/*
 	//检验该表是否存在 
 	if(catalog_manager.isTableExist(tablename) != 1)
 	{
 		std::cout << "table not exists!" << std::endl; 
 		return 0; 		
 	}
-
+	*/
 	curattr = catalog_manager.GetTableAttribute(tablename);
 	
 	curword = GetWord();
-	if(curword == ";")
+	if( (isend == 0 && curword == ";") || (isend == 1 && curword == ""))
 	{
 		//正式调用API函数删除 
 		int deletetuplenum = 0; 
@@ -691,7 +874,7 @@ int Interpreter::ExecDelete()
 	}
 			
 	//区分是否有查找条件 
-	if( curword != "where" )
+	if( isend == 1 || curword != "where" )
 	{
 		std::cout << "syntax error!" << std::endl; 
 		return 0; 
@@ -739,38 +922,53 @@ int Interpreter::ExecDelete()
 			
 			//关键值 
 			// 
-			curword =  GetWord();
+			curword = GetWord();
+			if (curword[curword.size() - 1] == ';')
+			{
+				curword.erase(curword.size() - 1, 1);
+				isend = 1;
+			}
+
 			int type = curattr.attr_type[position];
-			if( type == -1 )//int
+			if (type == -1)//int
 			{
-				scondition.key[scondition.amount-1].type = -1;
-				scondition.key[scondition.amount-1].idata = atoi(curword.c_str());
+				scondition.key[scondition.amount - 1].type = -1;
+				scondition.key[scondition.amount - 1].idata = atoi(curword.c_str());
 			}
-			else if( type == 0 )//float
+			else if (type == 0)//float
 			{
-				scondition.key[scondition.amount-1].type = 0;
-				scondition.key[scondition.amount-1].fdata = atoi(curword.c_str());
+				scondition.key[scondition.amount - 1].type = 0;
+				scondition.key[scondition.amount - 1].fdata = atoi(curword.c_str());
 			}
-			else if( type > 0 )//string
+			else if (type > 0)//string
 			{
-				scondition.key[scondition.amount-1].type = type;
-				curword = curword.erase(0,1);
-				curword = curword.erase(curword.length()-1,1);
-				scondition.key[scondition.amount-1].sdata = curword;	
-			} 
+				scondition.key[scondition.amount - 1].type = type;
+				curword = curword.erase(0, 1);
+				curword = curword.erase(curword.length() - 1, 1);
+				scondition.key[scondition.amount - 1].sdata = curword;
+			}
 			else
 			{
-				std::cout << "syntax error!" << std::endl; 
-				return 0;					
-			}			
-			
-			curword =  GetWord();
+				std::cout << "syntax error!" << std::endl;
+				return 0;
+			}
+
+			curword = GetWord();
 			//连接字符-and
-			if( curword != "and" && curword != ";" )
+			if (isend == 1)
 			{
-				std::cout << "syntax error!" << std::endl; 
-				return 0;					
-			}						 
+				if (curword == "")	break;
+				else
+				{
+					std::cout << "syntax error!" << std::endl;
+					return 0;
+				}
+			}
+			else if (curword != "and" && curword != ";")
+			{
+				std::cout << "syntax error!" << std::endl;
+				return 0;
+			}
 		}	
 	}
 	

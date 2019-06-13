@@ -36,7 +36,7 @@ public:
 	void ExecCreateIndex();
 	void ExecDropIndex();
 	int ExecSelect();
-	int ExecInsert();
+	void ExecInsert();
 	int ExecDelete();
 	void ExecFile(); 
 	

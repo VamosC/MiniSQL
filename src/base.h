@@ -85,7 +85,14 @@ public:
 	{
 		data = copytuple.data;
 	}
-	
+
+	Tuple(const std::vector<Data> &tuples)
+	{
+		for(auto it : tuples)
+		{
+			addData(it);
+		}
+	}
 	
 	//输入元组
 	//初步设想是在insert操作时按顺序一个一个把data导进来 
@@ -94,7 +101,7 @@ public:
 		struct Data tmp = td;
 		data.push_back(tmp);
 	}
-	void addData(Data d)
+	void addData(const Data &d)
 	{
 		this->data.push_back(d);
 	}
@@ -103,8 +110,7 @@ public:
 	//按顺序输出，中间的间隔还需调整 
 	void Printdata()
 	{
-		std::vector<Data>::iterator it;
-		for( it = data.begin(); it != data.end(); it++ )
+		for(auto it = data.begin(); it != data.end(); it++ )
 		{
 			if( (*it).type == INT)
 				std::cout << (*it).idata << "\t\t\t";

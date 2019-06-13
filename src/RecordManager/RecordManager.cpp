@@ -1,27 +1,29 @@
 #include "RecordManager.h"
 #include <cassert>
 
-void RecordManager::insertRecord(std::string tablename, Tuple& tuple) {
-	std::string tmp_tablename = tablename;
-	tablename = "./database/data/" + tablename;
+void RecordManager::insertRecord(const std::string &table_name, Tuple& tuple) {
+	auto file_path = "./database/data/" + table_name;
 
-	//异常检测
-	if (!catalog_manager.isTableExist(tmp_tablename)) {
-		throw TABLE_NOT_EXISTED();
-		//表不存在异常
-	}
-	Attribute attr = catalog_manager.GetTableAttribute(tmp_tablename);
+	// 表一定存在
+	// Interpreter检查过
+
+	Attribute attr = catalog_manager.GetTableAttribute(table_name);
 	std::vector<Data> v = tuple.getData();
-	
+
+	if(v.size() != attr.amount)
+	{
+		throw minisql_exception("Attribute number not match!");
+	}
+
 	for (int i = 0; i < v.size(); i++) {
 		if (v[i].type != attr.attr_type[i])
 		{
-			throw TUPLE_ATTR_NOT_MATCH();
 			//属性不匹配异常
+			throw minisql_exception("Attribute type not match!");
 		}
 			
 	}
-	Table table = selectRecord(tmp_tablename);
+	Table table = selectRecord(table_name);
 	Index indexs = table.GetIndex();
 	std::vector<Tuple>& tuples = table.GetTuples();
 	if (attr.primary_key >= 0) {
@@ -39,12 +41,12 @@ void RecordManager::insertRecord(std::string tablename, Tuple& tuple) {
 
 
 	//获取表所占的块的数量
-	int blockAccount = getBlockNum(tablename);
+	int blockAccount = getBlockNum(file_path);
 
 	if (blockAccount == 0)
 		blockAccount = 1;
 	
-	char* p = buffer_manager.getPage(tablename, blockAccount - 1);
+	char* p = buffer_manager.getPage(file_path, blockAccount - 1);
 	int i,j;
 
 	for (i = 0; p[i] != '\0' && i < _PAGESIZE; i++);
@@ -78,18 +80,18 @@ void RecordManager::insertRecord(std::string tablename, Tuple& tuple) {
 		//插入该元组
 		DoInsertOnRecord(p, i, len, v);
 		//写回表文件
-		PID = buffer_manager.getPageId(tablename, blockAccount - 1);
+		PID = buffer_manager.getPageId(file_path, blockAccount - 1);
 		buffer_manager.modifyPage(PID);
 	}
 	//如果剩余的空间不够
 	else {
 		block_offset = blockAccount;
 		//新增一个块
-		char* p = buffer_manager.getPage(tablename, blockAccount);
+		char* p = buffer_manager.getPage(file_path, blockAccount);
 		//插入元组
 		DoInsertOnRecord(p, 0, len, v);
 		//写回表文件
-		PID = buffer_manager.getPageId(tablename, blockAccount);
+		PID = buffer_manager.getPageId(file_path, blockAccount);
 		buffer_manager.modifyPage(PID);
 	}
 
@@ -99,7 +101,7 @@ void RecordManager::insertRecord(std::string tablename, Tuple& tuple) {
 	for (int i = 0; i < indexs.amount; i++)
 	{
 		std::vector<Data> tmp_data = tuple.getData();
-		index_manager.insert_index(tablename, indexs.name[i], tmp_data[i], block_offset);
+		index_manager.insert_index(file_path, indexs.name[i], tmp_data[i], block_offset);
 	}
 	
 	/*for (int i = 0; i < attr.amount; i++) {

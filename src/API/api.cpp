@@ -31,14 +31,14 @@ void API::CreateTable(const std::string &table_name, const Attribute &attr)
 				return;
 			}
 	}
-
+	// 如果存在主键 则检查
 	// 检查primary key是否unique
+	if(attr.primary_key != -1)
 	if(!attr.is_unique[attr.primary_key])
 	{
 		std::cout << "Create table " << table_name << " error!" << ":Primary key must be unique" << '\n';
 		return;
 	}
-
 	try
 	{
 		CL.CreateTable(table_name, attr, tmp_index, attr.primary_key);
@@ -56,6 +56,7 @@ void API::DropTable(const std::string &table_name)
 {
 	if(!CL.isTableExist(table_name))
 	{
+		std::cout << ("Delete table " + table_name + " error!:");
 		std::cout << ("Table " + table_name + " not exists!") << '\n';
 	}
 	else
@@ -83,6 +84,7 @@ void API::CreateIndex(const std::string &table_name, const std::string &attr, co
 {
 	if(!CL.isTableExist(table_name))
 	{
+		std::cout << "Create index " + index_name + " on " + table_name + " error!:";
 		std::cout << ("Table " + table_name + " not exists!") << '\n';
 	}
 	else
@@ -127,6 +129,7 @@ void API::DropIndex(const std::string &table_name, const std::string &index_name
 {
 	if(!CL.isTableExist(table_name))
 	{
+		std::cout << ("Drop index " + index_name + " on table " + table_name + " error!:");
 		std::cout << ("Table " + table_name + " not exists!") << '\n';
 	}
 	else
@@ -134,6 +137,7 @@ void API::DropIndex(const std::string &table_name, const std::string &index_name
 		auto index_pos = CL.isIndexExist(table_name, index_name);
 		if (index_pos == -1)
 		{
+			std::cout << ("Drop index " + index_name + " on table " + table_name + " error!:");
 			std::cout << ("Index " + index_name + " on " + table_name + " not exists!") << '\n';
 			return;
 		}
@@ -153,14 +157,19 @@ void API::DropIndex(const std::string &table_name, const std::string &index_name
 	}
 }
 
-int API::Insert(const std::string &table_name, std::vector<Data> tuple)
+void API::Insert(const std::string &table_name, const std::vector<Data> &tuple)
 {
-	Tuple tmp;
-	for (int i = 0; i < tuple.size(); i++ )
-		tmp.addData(tuple[i]);
-
-	RM.insertRecord( table_name, tmp);
-	return 1;
+	Tuple tmp(tuple);
+	try
+	{
+		RM.insertRecord(table_name, tmp);
+		std::cout << "Insert table " << table_name << " success!" << '\n';
+	}
+	catch(minisql_exception &e)
+	{
+		e.add_msg("Insert table" + table_name  + " error!");
+		e.print();
+	}
 }
 
 

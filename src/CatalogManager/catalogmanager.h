@@ -40,8 +40,7 @@ class CatalogManager{
 		void DropTable(const std::string &table_name);
 		 
 		// 通过表名查看表是否存在	
-		// 输入：表格名称
-		// 输出：正整数-索引序号； 0-不存在	
+		// 输入：表格名称	
 		bool isTableExist(const std::string &table_name);
 		
 		// 打印表格信息  ??待定，不知道查询结果的反馈方式 

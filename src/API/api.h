@@ -33,7 +33,7 @@ class API
 		void DropTable(const std::string &tablename);
 		void CreateIndex(const std::string &table_name, const std::string &attr, const std::string &index_name);
 		void DropIndex(const std::string &table_name, const std::string &index_name);
-		int Insert(const std::string &table_name, std::vector<Data> tuple);
+		void Insert(const std::string &table_name, const std::vector<Data> &tuple);
 		int Delete(const std::string &table_name, SelectCondition scondition);
 		Table Select(const std::string &table_name, std::vector<std::string> attr, SelectCondition scondition);
 };

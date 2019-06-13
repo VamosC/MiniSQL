@@ -41,7 +41,7 @@ public:
 	//向对应表中插入一条记录
 	//输入：表名，一个元组
 	//输出：void
-	void insertRecord(std::string tablename, Tuple& tuple);
+	void insertRecord(const std::string &table_name, Tuple& tuple);
 
 	//删除对应表中记录（不删除表文件）
 	//输入：表名

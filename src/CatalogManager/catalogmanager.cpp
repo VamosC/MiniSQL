@@ -74,7 +74,7 @@ void CatalogManager::CreateTable(const std::string &table_name, Attribute attr, 
 	}
 	//把所有信息保存到字符串中用于输出到文件中
 	//格式,由于用流可以一个单词一个单词的读入，所有这里一般信息用空格隔开 
-	//@@ tablename attribute_number attrbute_name type is_unique(按顺序) primarykeynumber
+	//@ tablename attribute_number attrbute_name type is_unique(按顺序) primarykeynumber
 	// index_number index_name towhatattribute#
 	std::string outputstr = "@ ";
 	outputstr += table_name;

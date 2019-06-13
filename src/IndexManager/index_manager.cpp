@@ -26,7 +26,12 @@ void IndexManager::create_index(const std::string &table_name, const std::string
 		new_file(file_name);
 
 		// 新建bplustree
-
+		// 记录bplustree的属性
+		auto block = bm.getPage(file_name, 0);
+		// root 位置
+		*((int*)block) = -1;
+		*((int*)(block+sizeof(int))) = -1;
+		bm.modifyPage(bm.getPageId(file_name, 0));
 		// 假如bplustree中存在索引树 是编程逻辑bug
 		if(is_BPTree_exist(file_name, type))
 		{
@@ -36,15 +41,15 @@ void IndexManager::create_index(const std::string &table_name, const std::string
 		{
 			if(type == INT_TYPE)
 			{
-				int_index[file_name] = std::make_shared<BPTree<int>>(get_degree(type));
+				int_index[file_name] = std::make_shared<BPTree<int>>(bm, get_degree(type), file_name, type);
 			}
 			else if(type == FLOAT_TYPE)
 			{
-				float_index[file_name] = std::make_shared<BPTree<float>>(get_degree(type));
+				float_index[file_name] = std::make_shared<BPTree<float>>(bm, get_degree(type), file_name, type);
 			}
 			else if(type > 0)
 			{
-				string_index[file_name] = std::make_shared<BPTree<std::string>>(get_degree(type));
+				string_index[file_name] = std::make_shared<BPTree<std::string>>(bm, get_degree(type), file_name, type);
 				if(string_index_length.count(file_name) == 0)
 				{
 					string_index_length[file_name] = type;
@@ -68,10 +73,8 @@ bool IndexManager::find_key(const std::string &table_name, const std::string &in
 	}
 	if(data.type == INT_TYPE)
 	{
-		NodeFound<int> res;
-		if(int_index[file_name]->_find(data.idata, res))
+		if(int_index[file_name]->_find(data.idata, block_id))
 		{
-			block_id.push_back((res.node->block_ids)[res.pos]);
 			return true;
 		}
 		else
@@ -81,10 +84,8 @@ bool IndexManager::find_key(const std::string &table_name, const std::string &in
 	}
 	else if(data.type == FLOAT_TYPE)
 	{
-		NodeFound<float> res;
-		if(float_index[file_name]->_find(data.fdata, res))
+		if(float_index[file_name]->_find(data.fdata, block_id))
 		{
-			block_id.push_back((res.node->block_ids)[res.pos]);
 			return true;
 		}
 		else
@@ -94,10 +95,8 @@ bool IndexManager::find_key(const std::string &table_name, const std::string &in
 	}
 	else if(data.type > 0)
 	{
-		NodeFound<std::string> res;
-		if(string_index[file_name]->_find(data.sdata, res))
+		if(string_index[file_name]->_find(data.sdata, block_id))
 		{
-			block_id.push_back((res.node->block_ids)[res.pos]);
 			return true;
 		}
 		else
@@ -353,201 +352,39 @@ void IndexManager::write_back()
 {
 	for(auto &it : int_index)
 	{
-		auto leaf = it.second->_get_leftist_leaf();
-		auto &file_name = it.first;
-		auto i = 0;
-		char* p = bm.getPage(file_name, i);
-		memset(p, 0, _PAGESIZE);
-		auto k = sizeof(char) + sizeof(int);
-		int count = 0;
-		while(leaf != nullptr)
-		{
-			for(auto j = 0; j < leaf->keys.size(); j++)
-			{
-				if(k + 2*sizeof(int) > _PAGESIZE)
-				{
-					memcpy(p+sizeof(char), &count, sizeof(int));
-					bm.modifyPage(bm.getPageId(file_name, i));
-					count = 0;
-					i++;
-					p = bm.getPage(file_name, i);
-					memset(p, 0, _PAGESIZE);
-					k = sizeof(char) + sizeof(int);
-				}
-				memcpy(p+k, &(leaf->keys[j]), sizeof(int));
-				k += sizeof(int);
-				memcpy(p+k, &(leaf->block_ids[j]), sizeof(int));
-				k += sizeof(int);
-				count++;
-			}
-			leaf = leaf->next_sibling;
-		}
-		p[0] = -1;
-		memcpy(p+sizeof(char), &count, sizeof(int));
-		bm.modifyPage(bm.getPageId(file_name, i));
+		it.second->write_all_back();
 	}
 
 	for(auto &it : float_index)
 	{
-		auto leaf = it.second->_get_leftist_leaf();
-		auto &file_name = it.first;
-		auto i = 0;
-		char* p = bm.getPage(file_name, i);
-		memset(p, 0, _PAGESIZE);
-		auto k = sizeof(char) + sizeof(int);
-		int count = 0;
-		while(leaf != nullptr)
-		{
-			for(auto j = 0; j < leaf->keys.size(); j++)
-			{
-				if(k + sizeof(int) + sizeof(float) > _PAGESIZE)
-				{
-					memcpy(p+sizeof(char), &count, sizeof(int));
-					bm.modifyPage(bm.getPageId(file_name, i));
-					count = 0;
-					i++;
-					p = bm.getPage(file_name, i);
-					memset(p, 0, _PAGESIZE);
-					k = sizeof(char) + sizeof(int);
-				}
-				memcpy(p+k, &(leaf->keys[j]), sizeof(float));
-				k += sizeof(float);
-				memcpy(p+k, &(leaf->block_ids[j]), sizeof(int));
-				k += sizeof(int);
-				count++;
-			}
-			leaf = leaf->next_sibling;
-		}
-		p[0] = -1;
-		memcpy(p+sizeof(char), &count, sizeof(int));
-		bm.modifyPage(bm.getPageId(file_name, i));
+		it.second->write_all_back();
 	}
 
 	for(auto &it : string_index)
 	{
-		auto leaf = it.second->_get_leftist_leaf();
-		auto &file_name = it.first;
-		auto i = 0;
-		auto length = string_index_length[file_name];
-		char* p = bm.getPage(file_name, i);
-		memset(p, 0, _PAGESIZE);
-		auto k = sizeof(char) + sizeof(int);
-		int count = 0;
-		while(leaf != nullptr)
-		{
-			for(auto j = 0; j < leaf->keys.size(); j++)
-			{
-				if(k + length + sizeof(int) > _PAGESIZE)
-				{
-					memcpy(p+sizeof(char), &count, sizeof(int));
-					bm.modifyPage(bm.getPageId(file_name, i));
-					count = 0;
-					i++;
-					p = bm.getPage(file_name, i);
-					memset(p, 0, _PAGESIZE);
-					k = sizeof(char) + sizeof(int);
-				}
-				memcpy(p+k, leaf->keys[j].c_str(), length);
-				k += length;
-				memcpy(p+k, &(leaf->block_ids[j]), sizeof(int));
-				k += sizeof(int);
-				count++;
-			}
-			leaf = leaf->next_sibling;
-		}
-		p[0] = -1;
-		memcpy(p+sizeof(char), &count, sizeof(int));
-		bm.modifyPage(bm.getPageId(file_name, i));
+		it.second->write_all_back();
 	}
 }
 
 
-void IndexManager::read_into(const std::string file_name, int type)
+void IndexManager::read_into(const std::string &file_name, int type)
 {
+	auto block = bm.getPage(file_name, 0);
+	auto root = *((int*)(block));
+	auto lefist_leaf = *((int*)(block+sizeof(int)));
 	if(type == INT_TYPE)
 	{
-		auto bptree = std::make_shared<BPTree<int>>(get_degree(type));
-		auto i = 0;
-		char* p = bm.getPage(file_name, i);
-		while(p[0] != -1)
-		{
-			auto k = sizeof(char) + sizeof(int);
-			while(k + 2*sizeof(int) <= _PAGESIZE)
-			{
-				bptree->_insert(*(int*)(p+k), *(int*)(p+k+sizeof(int)));
-				k += 2*sizeof(int);
-			}
-			i++;
-			p = bm.getPage(file_name, i);
-		}
-		auto count = *(int*)(p+sizeof(char));
-		auto k = sizeof(char) + sizeof(int);
-		while(count > 0)
-		{
-			bptree->_insert(*(int*)(p+k), *(int*)(p+k+sizeof(int)));
-			k += 2*sizeof(int);
-			count--;
-		}
+		auto bptree = std::make_shared<BPTree<int>>(bm, get_degree(type), file_name, type, root, lefist_leaf);
 		int_index[file_name] = bptree;
 	}
 	else if(type == FLOAT_TYPE)
 	{
-		auto bptree = std::make_shared<BPTree<float>>(get_degree(type));
-		auto i = 0;
-		char* p = bm.getPage(file_name, i);
-		while(p[0] != -1)
-		{
-			auto k = sizeof(char) + sizeof(int);
-			while(k + sizeof(float) + sizeof(int) <= _PAGESIZE)
-			{
-				bptree->_insert(*(float*)(p+k), *(int*)(p+k+sizeof(float)));
-				k += (sizeof(int) + sizeof(float));
-			}
-			i++;
-			p = bm.getPage(file_name, i);
-		}
-		auto count = *(int*)(p+sizeof(char));
-		auto k = sizeof(char) + sizeof(int);
-		while(count > 0)
-		{
-			bptree->_insert(*(float*)(p+k), *(int*)(p+k+sizeof(float)));
-			k += (sizeof(int) + sizeof(float));
-			count--;
-		}
+		auto bptree = std::make_shared<BPTree<float>>(bm, get_degree(type), file_name, type, root, lefist_leaf);
 		float_index[file_name] = bptree;
 	}
 	else if(type > 0)
 	{
-		auto bptree = std::make_shared<BPTree<std::string>>(get_degree(type));
-		auto i = 0;
-		char* p = bm.getPage(file_name, i);
-		while(p[0] != -1)
-		{
-			auto k = sizeof(char) + sizeof(int);
-			while(k + sizeof(int) + type <= _PAGESIZE)
-			{
-				char* tmp = new char[type+1];
-				memset(tmp, 0, type+1);
-				memcpy(tmp, p+k, type);
-				bptree->_insert(std::string(tmp), *(int*)(p+k+sizeof(type)));
-				delete[] tmp;
-				k += (sizeof(int) + type);
-			}
-			i++;
-			p = bm.getPage(file_name, i);
-		}
-		auto count = *(int*)(p+sizeof(char));
-		auto k = sizeof(char) + sizeof(int);
-		while(count > 0)
-		{
-			char* tmp = new char[type+1];
-			memset(tmp, 0, type+1);
-			memcpy(tmp, p+k, type);
-			bptree->_insert(std::string(tmp), *(int*)(p+k+sizeof(type)));
-			delete[] tmp;
-			k += (sizeof(int) + type);
-			count--;
-		}
+		auto bptree = std::make_shared<BPTree<std::string>>(bm, get_degree(type), file_name, type, root, lefist_leaf);
 		string_index[file_name] = bptree;
 		if(string_index_length.count(file_name) == 0)
 		{
@@ -560,62 +397,18 @@ int IndexManager::get_degree(int type)
 {
 	if(type == INT_TYPE)
 	{
-		return (_PAGESIZE - sizeof(char) - sizeof(int))/(2*sizeof(int));
+		return (_PAGESIZE - sizeof(char) - 5*sizeof(int))/(2*sizeof(int))+1;
 	}
 	else if(type == FLOAT_TYPE)
 	{
-		return (_PAGESIZE - sizeof(char) - sizeof(int))/(sizeof(float) + sizeof(int));
+		return (_PAGESIZE - sizeof(char) - 5*sizeof(int))/(sizeof(float) + sizeof(int))+1;
 	}
 	else if(type > 0)
 	{
-		return (_PAGESIZE - sizeof(char) - sizeof(int))/(sizeof(int) + type);
+		return (_PAGESIZE - sizeof(char) - 5*sizeof(int))/(sizeof(int) + type)+1;
 	}
 	else
 	{
 		assert(false);
 	}
 }
-
-// int main(int argc, char const *argv[])
-// {
-// 	// int x;
-// 	BufferManager bm;
-// 	// std::string a("132");
-// 	// std::string b("ads");
-// 	// std::string c("02da");
-// 	auto data = Data{.type = -1, .idata = 40};
-// 	auto data1 = Data{.type = -1, .idata = 300};
-// 	auto data2 = Data{.type = -1, .idata = 44};
-// 	auto data3 = Data{.type = -1, .idata = 100};
-// 	auto data4 = Data{.type = -1, .idata = 200};
-// 	auto data5 = Data{.type = -1, .idata = 344};
-
-// 	IndexManager im(bm);
-// 	std::vector<int> block_id;
-// 	// im.create_index("student", "grade", -1);
-// 	// im.insert_index("student", "grade", data, 40);
-// 	// im.insert_index("student", "grade", data1, 300);
-// 	// im.insert_index("student", "grade", data2, 244);
-// 	// im.insert_index("student", "grade", data3, 144);
-// 	// im.insert_index("student", "grade", data4, 444);
-// 	// im.insert_index("student", "grade", data5, 544);
-// 	// im.insert_index("student", "age", data, 9);
-// 	// im.insert_index("student", "age", data1, 0);
-// 	// im.insert_index("student", "age", data2, 3);
-// 	// im.delete_index("student", "grade", data1);
-// 	// im.delete_index("student", "grade", data2);
-// 	// im.delete_index("student", "grade", data4);
-// 	// im.delete_index("student", "grade", data3);
-// 	// im.find_key("student", "grade", data, block_id);
-// 	// im.drop_index("student", "age", 4);
-// 	auto cond = condition{.l_op = 4, .r_op = 4, .start = data, .end = data5};
-// 	im.find_range_key("student", "grade", cond, block_id);
-// 	for(auto it : block_id)
-// 	{
-// 		std::cout << it << " ";
-// 	}
-// 	std::cout << '\n';
-// 	// std::cout << block_id[0] << '\n';
-// 	// std::cin >> x;
-// 	return 0;
-// }

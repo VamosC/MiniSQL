@@ -58,6 +58,15 @@ public:
 
 	// 避免拷贝构造
 	IndexManager(const IndexManager& im) = delete;
+
+	std::shared_ptr<BPTree<int>> get_tree(const std::string &file_name)
+	{
+		return int_index[file_name];
+	}
+	std::shared_ptr<BPTree<std::string>> get_tree_string(const std::string &file_name)
+	{
+		return string_index[file_name];
+	}
 private:
 	static const int INT_TYPE = -1;
 	static const int FLOAT_TYPE = 0;
@@ -75,7 +84,8 @@ private:
 
 	void write_back();
 
-	void read_into(const std::string file_name, int type);
+	void read_into(const std::string &file_name, int type);
 
 	int get_degree(int type);
+
 };

@@ -734,76 +734,84 @@ void Interpreter::ExecInsert()
 			std::cout << "syntax error!" << std::endl; 
 			return;
 		} 
-		//对于结尾的判断：...' - 1; ...') - 2; ...'); -3 ...', -4
-		if (curword[curword.length() - 1] == ';')//...');
+		//对于结尾的判断：... - 1; ...) - 2; ...); -3 ..., -4
+		if (curword[curword.length() - 1] == ';')//...);
 		{
-			if (curword[curword.length() - 3] != '\'' || curword[curword.length() - 2] != ')')
+			if (curword[curword.length() - 2] != ')')
 			{
 				std::cout << "syntax error!" << std::endl;
-				return;
+				return 0;
 			}
-			endtype = 3;
-			curword.erase(curword.length() - 3, 3);
-		}
 
-		if (curword[curword.length() - 1] == ')')//...')  已读掉；
-		{
-			if (curword[curword.length() - 2] != '\'' || GetWord() != ";" )
-			{
-				std::cout << "syntax error!" << std::endl;
-				return;
-			}
-			endtype = 2;
+			endtype = 3;
 			curword.erase(curword.length() - 2, 2);
 		}
-
-		if (curword[curword.length() - 1] == ',')//...',  需要继续读
-			curword.erase(curword.length() - 1, 1);
-
-		if (curword[curword.length() - 1] != '\'')
+		else if (curword[curword.length() - 1] == ')')//...)  
 		{
-			std::cout << "syntax error!" << std::endl;
-			return;
+			if (GetWord() != ";")
+			{
+				std::cout << "syntax error!" << std::endl;
+				return 0;
+			}
+			endtype = 2;
+			curword.erase(curword.length() - 1, 1);
 		}
-		curword.erase( curword.length()-1, 1 );
-		tmp.type = curattr.attr_type[number];
-		if( tmp.type == -1 )//int
-			tmp.idata = atoi(curword.c_str());
-		else if( tmp.type == 0 )//float
-			tmp.fdata = atoi(curword.c_str());
-		else if( tmp.type > 0 )//string
-			tmp.sdata = curword;	
+		else if (curword[curword.length() - 1] == ',')//...,  
+		{
+			curword.erase(curword.length() - 1, 1);
+			endtype = 4;
+		}
 		else
 		{
-			std::cout << "syntax error!" << std::endl; 
-			return;				
+			endtype = 1;
+		}
+		
+		tmp.type = curattr.attr_type[number];
+		if (tmp.type == -1)//int
+			tmp.idata = atoi(curword.c_str());
+		else if (tmp.type == 0)//float
+			tmp.fdata = atoi(curword.c_str());
+		else if (tmp.type > 0)//string
+		{
+			if (curword[0] != '\'' && curword[curword.size() - 1] != '\'')
+			{
+				std::cout << "syntax error!" << std::endl;
+				return 0;
+			}
+			curword.erase(0, 1);
+			curword.erase(curword.size() - 1, 1);
+			tmp.sdata = curword;
+		}
+		else
+		{
+			std::cout << "syntax error!" << std::endl;
+			return 0;
 		}
 		
 		tuple.push_back(tmp);
-		number++;	
-		if (endtype == 3 || endtype == 2)	
-		{
-			break;
-		}
-		
+		number++;
+		if (endtype == 3 || endtype == 2)	break;
+
 		curword = GetWord();
-		if (curword == ")")
+		if (endtype == 1)
 		{
-			if (GetWord() == ";")
+			if (curword == ")")
 			{
-				break;
+				if (GetWord() == ";")
+					break;
+				else
+				{
+					std::cout << "syntax error!" << std::endl;
+					return 0;
+				}
 			}
-			else
+			else if (curword == ");")	break;
+			else if (curword != ",")
 			{
 				std::cout << "syntax error!" << std::endl;
-				return;
+				return 0;
 			}
 		}
-		else if (curword == ");")
-		{
-			break;
-		}
-
 		endtype = 4;
 	}
 	

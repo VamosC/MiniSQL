@@ -547,14 +547,14 @@ int Interpreter::ExecSelect()
 	{
 		while (curword != ";")
 		{
-			//int position;
+			int position;
 			//属性
 			// 
 			curword = GetWord();
 			//属性是否存在 
-			/*
+			
 			position = catalog_manager.isAttributeExist(tablename, curword);
-			if( position == -1)
+			/*if( position == -1)
 			{
 				std::cout << "attributes error!" << std::endl;
 				return 0;
@@ -886,13 +886,13 @@ int Interpreter::ExecDelete()
 	{
 		while( curword != ";" )
 		{
-			//int position;
+			int position;
 			//属性
 			// 
 			curword =  GetWord();
 			//属性是否存在 
-			/*position = catalog_manager.isAttributeExist(tablename, curword);
-			if( position == -1)
+			position = catalog_manager.isAttributeExist(tablename, curword);
+			/*if( position == -1)
 			{
 				std::cout << "attributes error!" << std::endl; 
 				return 0; 		

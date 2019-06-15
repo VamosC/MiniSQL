@@ -727,13 +727,7 @@ void Interpreter::ExecInsert()
 		Data tmp;
 		int isavalueend = 0;
 		
-		if( curword[0] == '\'' )
-			curword.erase( 0, 1 );
-		else
-		{
-			std::cout << "syntax error!" << std::endl; 
-			return;
-		} 
+		
 		//对于结尾的判断：... - 1; ...) - 2; ...); -3 ..., -4
 		if (curword[curword.length() - 1] == ';')//...);
 		{

@@ -170,7 +170,7 @@ void API::Insert(const std::string &table_name, const std::vector<Data> &tuple)
 		try
 		{
 			RM.insertRecord(table_name, tmp);
-			std::cout << "Insert table " << table_name << " success!" << '\n';
+			std::cout << "Query OK, 1 row affected";
 		}
 		catch(minisql_exception &e)
 		{
@@ -181,113 +181,138 @@ void API::Insert(const std::string &table_name, const std::vector<Data> &tuple)
 }
 
 
-int API::Delete(const std::string &table_name, SelectCondition scondition)
+void API::Delete(const std::string &table_name, SelectCondition scondition)
 {
 	int result = 0;
 	Table re;
-
-	if (scondition.amount == 0)
-		result = RM.deleteRecord(table_name);
+	if(!CL.isTableExist(table_name))
+	{
+		std::cout << ("Delete from table " +  table_name + " error!:");
+		std::cout << ("Table " + table_name + " not exists!") << '\n';
+	}
 	else
 	{
-		Where curwhere;
-		curwhere.data = scondition.key[0];
-		switch (scondition.operationtype[0])
+		try
 		{
-			case 0:
+			if (scondition.amount == 0)
+				result = RM.deleteRecord(table_name);
+			else
 			{
-				curwhere.relation_character = EQUAL;
-				break;
+				Where curwhere;
+				curwhere.data = scondition.key[0];
+				switch (scondition.operationtype[0])
+				{
+					case 0:
+					{
+						curwhere.relation_character = EQUAL;
+						break;
+					}
+					case 1:
+					{
+						curwhere.relation_character = NOT_EQUAL;
+						break;
+					}
+					case 2:
+					{
+						curwhere.relation_character = LESS;
+						break;
+					}
+					case 3:
+					{
+						curwhere.relation_character = GREATER;
+						break;
+					}
+					case 4:
+					{
+						curwhere.relation_character = LESS_OR_EQUAL;
+						break;
+					}
+					case 5:
+					{
+						curwhere.relation_character = GREATER_OR_EQUAL;
+						break;
+					}
+					default: break;
+				}
+				result = RM.deleteRecord(table_name, scondition.attr[0], curwhere);
+				if(result > 1)
+					std::cout << "Query OK," << " " << result << "rows affected";
+				else
+					std::cout << "Query OK," << " " << result << "row affected";
 			}
-			case 1:
-			{
-				curwhere.relation_character = NOT_EQUAL;
-				break;
-			}
-			case 2:
-			{
-				curwhere.relation_character = LESS;
-				break;
-			}
-			case 3:
-			{
-				curwhere.relation_character = GREATER;
-				break;
-			}
-			case 4:
-			{
-				curwhere.relation_character = LESS_OR_EQUAL;
-				break;
-			}
-			case 5:
-			{
-				curwhere.relation_character = GREATER_OR_EQUAL;
-				break;
-			}
-			default: break;
 		}
-
-		result = RM.deleteRecord(table_name, scondition.attr[0], curwhere);
-
-		//for (int i = 1; i < scondition.amount; i++)
-			//re = ReMove(result, scondition.attr[i], scondition.operationtype[i], scondition.key[i]);
-
+		catch(minisql_exception &e)
+		{
+			e.add_msg("Delete from table " + table_name + " error!");
+			e.print();
+		}
 	}
-
-	return result;
 }
 
-Table API::Select(const std::string &table_name, std::vector<std::string> attr, SelectCondition scondition)
+void API::Select(const std::string &table_name, std::vector<std::string> attr, SelectCondition scondition)
 {
 	Table result;
 	Attribute cur_attr = CL.GetTableAttribute(table_name);
-	if (attr.size() == cur_attr.amount)
-		return RM.selectRecord(table_name);
+	if(!CL.isTableExist(table_name))
+	{
+		std::cout << ("Delete from table " +  table_name + " error!:");
+		std::cout << ("Table " + table_name + " not exists!") << '\n';
+	}
 	else
 	{
-		Where curwhere;
-		curwhere.data = scondition.key[0];
-		switch (scondition.operationtype[0])
+		try
 		{
-			case 0:
+			if (scondition.amount == 0)
+				result = RM.selectRecord(table_name);
+			else
 			{
-				curwhere.relation_character = EQUAL;
-				break;
+				Where curwhere;
+				curwhere.data = scondition.key[0];
+				switch (scondition.operationtype[0])
+				{
+					case 0:
+					{
+						curwhere.relation_character = EQUAL;
+						break;
+					}
+					case 1:
+					{
+						curwhere.relation_character = NOT_EQUAL;
+						break;
+					}
+					case 2:
+					{
+						curwhere.relation_character = LESS;
+						break;
+					}
+					case 3:
+					{
+						curwhere.relation_character = GREATER;
+						break;
+					}
+					case 4:
+					{
+						curwhere.relation_character = LESS_OR_EQUAL;
+						break;
+					}
+					case 5:
+					{
+						curwhere.relation_character = GREATER_OR_EQUAL;
+						break;
+					}
+					default: break;
+				}
+				result = RM.selectRecord( table_name, scondition.attr[0], curwhere );
+				for (int i = 1; i < scondition.amount; i++)
+					result = Combine(result, scondition.attr[i], scondition.operationtype[i], scondition.key[i]);
 			}
-			case 1:
-			{
-				curwhere.relation_character = NOT_EQUAL;
-				break;
-			}
-			case 2:
-			{
-				curwhere.relation_character = LESS;
-				break;
-			}
-			case 3:
-			{
-				curwhere.relation_character = GREATER;
-				break;
-			}
-			case 4:
-			{
-				curwhere.relation_character = LESS_OR_EQUAL;
-				break;
-			}
-			case 5:
-			{
-				curwhere.relation_character = GREATER_OR_EQUAL;
-				break;
-			}
-			default: break;
+			result.PrintTable();
 		}
-
-		result = RM.selectRecord( table_name, scondition.attr[0], curwhere );
-
-		for (int i = 1; i < scondition.amount; i++)
-			result = Combine(result, scondition.attr[i], scondition.operationtype[i], scondition.key[i]);
-	
-		return result;
+		catch(minisql_exception &e)
+		{
+			e.add_msg("Select from table " + table_name + " error!");
+			e.print();
+		}
 	}
 }
 

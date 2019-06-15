@@ -86,16 +86,7 @@ bool Interpreter::JudgeAndExec()
 	}
 	else if (singleword == "select")//搜索操作
 	{
-		int result = ExecSelect();
-		if (result == 0)
-		{
-			std::cout << "select failed!" << std::endl;
-			return false;
-		}
-		else if (result == -1)
-		{
-			std::cout << "empty returned record!" << std::endl;
-		}
+		ExecSelect();
 		return false;
 	}
 	else if (singleword == "insert")//插入操作
@@ -105,10 +96,7 @@ bool Interpreter::JudgeAndExec()
 	}
 	else if (singleword == "delete")//删除元组操作
 	{
-		if(ExecDelete() == 0)
-		{
-			std::cout << "delete failed!" << std::endl;
-		}
+		ExecDelete();
 		return false;
 	}
 	else if (singleword == "execfile")//执行文件内容操作
@@ -462,9 +450,9 @@ void Interpreter::ExecDropIndex()
 }
 
 //operation here: 0- =	1- <>	2- <	3- >	4- <=	5- >=
-int Interpreter::ExecSelect()
+void Interpreter::ExecSelect()
 {
-	std::string tablename;
+	std::string table_name;
 	std::string curword;
 	std::vector<std::string> targetattr;
 	SelectCondition scondition;
@@ -495,39 +483,31 @@ int Interpreter::ExecSelect()
 			if( targetan > 30 )
 			{
 				std::cout << "too many attributes!" << std::endl; 
-				return 0;	
+				return;	
 			}
 		}
 	}
 	if( curword != "from" )
 	{
 		std::cout << "syntax error!" << std::endl; 
-		return 0;	
+		return;	
 	} 
 	
-	tablename = GetWord();
-	/*
+	table_name = GetWord();
 	//检验该表是否存在 
-	if(catalog_manager.isTableExist(tablename) != 1)
+	if(!catalog_manager.isTableExist(table_name))
 	{
-		std::cout << "table not exists!" << std::endl; 
-		return 0; 		
+		std::cout << "Table " << table_name << " not exists!" << std::endl; 
+		return; 		
 	}
-	//同时可以检验原来的那些属性是否存在
-	for( int i = 0; i < targetan; i++ )
-		if(catalog_manager.isAttributeExist(tablename, targetattr[targetan]) == -1)
-		{
-			std::cout << "attributes error!" << std::endl; 
-			return 0; 		
-		}
-	*/
-	if (tablename[tablename.size() - 1] == ';')
+	
+	if (table_name[table_name.size() - 1] == ';')
 	{
-		tablename.erase(tablename.size() - 1, 1);
+		table_name.erase(table_name.size() - 1, 1);
 		isend = 1;
 	}
 
-	curattr = catalog_manager.GetTableAttribute(tablename);
+	curattr = catalog_manager.GetTableAttribute(table_name);
 	
 	curword = GetWord();
 	
@@ -539,7 +519,7 @@ int Interpreter::ExecSelect()
 	else if( isend == 0 && curword != "where" )
 	{
 		std::cout << "syntax error!" << std::endl; 
-		return 0; 
+		return; 
 	}
 	
 	//开始添加查找条件 
@@ -553,7 +533,7 @@ int Interpreter::ExecSelect()
 			curword = GetWord();
 			//属性是否存在 
 			
-			position = catalog_manager.isAttributeExist(tablename, curword);
+			position = catalog_manager.isAttributeExist(table_name, curword);
 			/*if( position == -1)
 			{
 				std::cout << "attributes error!" << std::endl;
@@ -581,7 +561,7 @@ int Interpreter::ExecSelect()
 			else
 			{
 				std::cout << "syntax error!" << std::endl;
-				return 0;
+				return;
 			}
 
 			//关键值 
@@ -614,7 +594,7 @@ int Interpreter::ExecSelect()
 			else
 			{
 				std::cout << "syntax error!" << std::endl; 
-				return 0;					
+				return;					
 			}			
 			
 			curword =  GetWord();
@@ -625,53 +605,53 @@ int Interpreter::ExecSelect()
 				else
 				{
 					std::cout << "syntax error!" << std::endl;
-					return 0;
+					return;
 				}
 			}
 			else if( curword != "and" && curword != ";" )
 			{
 				std::cout << "syntax error!" << std::endl; 
-				return 0;					
+				return;					
 			}						 
 		}	
 	}
 	
-	if( isAll == 1 )	scondition.amount = 0;
+	if( isAll == 1 )	
+		scondition.amount = 0;
 	
 	//正式调用API函数查找
-	if(isall!=1)
-		selectresult = api.Select( tablename, targetattr, scondition );
+	if(isall == 1)
+		api.Select(table_name, targetattr, scondition);
 	else//select *
 	{
 		for (int i = 0; i < curattr.amount; i++)
 			targetattr[i] = curattr.attr_name[i];
-
-		selectresult = api.Select(tablename, targetattr, scondition );
+		api.Select(table_name, targetattr, scondition );
 	}
 	
-	//输出结果 
-	//表名
-	std::cout << "------------------" << selectresult.table_name << "------------------" << std::endl;
-	//属性名 
-	int namelength = 0;
-	Attribute tmp_attr = selectresult.attr; 
+	// //输出结果 
+	// //表名
+	// std::cout << "------------------" << selectresult.table_name << "------------------" << std::endl;
+	// //属性名 
+	// int namelength = 0;
+	// Attribute tmp_attr = selectresult.attr; 
 	
-	for( int i = 0; i < tmp_attr.amount; i++ )
-	{
-		if( tmp_attr.attr_name[i].length() > namelength )
-			namelength = tmp_attr.attr_name[i].length();
-	}
+	// for( int i = 0; i < tmp_attr.amount; i++ )
+	// {
+	// 	if( tmp_attr.attr_name[i].length() > namelength )
+	// 		namelength = tmp_attr.attr_name[i].length();
+	// }
 	
-	for( int i = 0; i < tmp_attr.amount; i++ )
-		std::cout << std::left << std::setw( namelength+5 ) << tmp_attr.attr_name[i] << '|';
-	std::cout << std::endl;
+	// for( int i = 0; i < tmp_attr.amount; i++ )
+	// 	std::cout << std::left << std::setw( namelength+5 ) << tmp_attr.attr_name[i] << '|';
+	// std::cout << std::endl;
 	
-	//元组 
-	std::vector<Tuple>::iterator it;
-	for( it = selectresult.tuples.begin(); it != selectresult.tuples.end(); it++ )
-		it->Printdata();
+	// //元组 
+	// std::vector<Tuple>::iterator it;
+	// for( it = selectresult.tuples.begin(); it != selectresult.tuples.end(); it++ )
+	// 	it->Printdata();
 	
-	return 1;
+	// return 1;
 } 
 
 //insert into s values ( 'sss', 'aaa' ); 
@@ -765,7 +745,7 @@ void Interpreter::ExecInsert()
 		{
 			endtype = 1;
 		}
-		
+		std::cout << curword << '\n';
 		tmp.type = curattr.attr_type[number];
 		if (tmp.type == -1)//int
 			tmp.idata = atoi(curword.c_str());
@@ -790,7 +770,8 @@ void Interpreter::ExecInsert()
 		
 		tuple.push_back(tmp);
 		number++;
-		if (endtype == 3 || endtype == 2)	break;
+		if (endtype == 3 || endtype == 2)	
+			break;
 
 		curword = GetWord();
 		if (endtype == 1)
@@ -825,9 +806,9 @@ void Interpreter::ExecInsert()
 }
 
 //一定要有where的条件，不然不知道删除什么元组 
-int Interpreter::ExecDelete()
+void Interpreter::ExecDelete()
 {
-	std::string tablename;
+	std::string table_name;
 	std::string curword;
 	SelectCondition scondition;
 	Attribute curattr; 
@@ -839,46 +820,38 @@ int Interpreter::ExecDelete()
 	if( curword != "from" )
 	{
 		std::cout << "syntax error!" << std::endl; 
-		return 0;	
+		return;	
 	} 
 	
-	tablename = GetWord();
-	if (tablename[tablename.size() - 1] == ';')
+	table_name = GetWord();
+	if (table_name[table_name.size() - 1] == ';')
 	{
 		isend = 1;
-		tablename.erase(tablename.size() - 1, 1);
+		table_name.erase(table_name.size() - 1, 1);
 	}
-	/*
+	
 	//检验该表是否存在 
-	if(catalog_manager.isTableExist(tablename) != 1)
+	if(!catalog_manager.isTableExist(table_name))
 	{
-		std::cout << "table not exists!" << std::endl; 
-		return 0; 		
+		std::cout << "Table " << table_name<< " not exists!" << std::endl; 
+		return; 		
 	}
-	*/
-	curattr = catalog_manager.GetTableAttribute(tablename);
+	
+	curattr = catalog_manager.GetTableAttribute(table_name);
 	
 	curword = GetWord();
 	if( (isend == 0 && curword == ";") || (isend == 1 && curword == ""))
 	{
 		//正式调用API函数删除 
-		int deletetuplenum = 0; 
-		deletetuplenum = api.Delete( tablename, scondition );
-
-		if( deletetuplenum != -1 )
-		{
-			std::cout << "delete " << deletetuplenum << " success" << std::endl; 
-			return 1;
-		}	
-		else
-			return 0;		
+		api.Delete( table_name, scondition );
+		return;	
 	}
 			
 	//区分是否有查找条件 
 	if( isend == 1 || curword != "where" )
 	{
 		std::cout << "syntax error!" << std::endl; 
-		return 0; 
+		return; 
 	}
 	
 	//开始添加删除条件 
@@ -891,7 +864,7 @@ int Interpreter::ExecDelete()
 			// 
 			curword =  GetWord();
 			//属性是否存在 
-			position = catalog_manager.isAttributeExist(tablename, curword);
+			position = catalog_manager.isAttributeExist(table_name, curword);
 			/*if( position == -1)
 			{
 				std::cout << "attributes error!" << std::endl; 
@@ -919,7 +892,7 @@ int Interpreter::ExecDelete()
 			else
 			{
 				std::cout << "syntax error!" << std::endl; 
-				return 0;					
+				return;					
 			}
 			
 			//关键值 
@@ -941,7 +914,7 @@ int Interpreter::ExecDelete()
 			{
 				scondition.key[scondition.amount - 1].type = 0;
 				scondition.key[scondition.amount - 1].fdata = atoi(curword.c_str());
-			}
+			}	
 			else if (type > 0)//string
 			{
 				scondition.key[scondition.amount - 1].type = type;
@@ -952,7 +925,7 @@ int Interpreter::ExecDelete()
 			else
 			{
 				std::cout << "syntax error!" << std::endl;
-				return 0;
+				return;
 			}
 
 			curword = GetWord();
@@ -963,28 +936,19 @@ int Interpreter::ExecDelete()
 				else
 				{
 					std::cout << "syntax error!" << std::endl;
-					return 0;
+					return;
 				}
 			}
 			else if (curword != "and" && curword != ";")
 			{
 				std::cout << "syntax error!" << std::endl;
-				return 0;
+				return;
 			}
 		}	
 	}
 	
 	//正式调用API函数删除 
-	int deletetuplenum = 0; 
-	deletetuplenum = api.Delete( tablename, scondition );
-	
-	if( deletetuplenum != -1 )
-	{
-		std::cout << "delete " << deletetuplenum << " success" << std::endl; 
-		return 1;
-	}	
-	else
-		return 0;
+	api.Delete( table_name, scondition );
 }
 
 void Interpreter::ExecFile()

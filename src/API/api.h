@@ -34,8 +34,8 @@ class API
 		void CreateIndex(const std::string &table_name, const std::string &attr, const std::string &index_name);
 		void DropIndex(const std::string &table_name, const std::string &index_name);
 		void Insert(const std::string &table_name, const std::vector<Data> &tuple);
-		int Delete(const std::string &table_name, SelectCondition scondition);
-		Table Select(const std::string &table_name, std::vector<std::string> attr, SelectCondition scondition);
+		void Delete(const std::string &table_name, SelectCondition scondition);
+		void Select(const std::string &table_name, std::vector<std::string> attr, SelectCondition scondition);
 };
 
 #endif

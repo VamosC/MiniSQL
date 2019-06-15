@@ -35,9 +35,9 @@ public:
 	void ExecDropTable();
 	void ExecCreateIndex();
 	void ExecDropIndex();
-	int ExecSelect();
+	void ExecSelect();
 	void ExecInsert();
-	int ExecDelete();
+	void ExecDelete();
 	void ExecFile(); 
 	
 	//对于流的操作

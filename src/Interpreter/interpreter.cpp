@@ -20,12 +20,26 @@ int Interpreter::GetInstruction()
 {
 	std::string input;
 	if(readmode==0)
+	{
 		getline(std::cin, input);
+		while( input == "" )
+		{
+			getline(std::cin, input);
+		}
+	}
 	else
+	{
 		if(!file.eof())
 			getline(file, input);
+		
+		if(!file.eof())
+			while( input == "" )
+			{
+				getline(file, input);
+			}
 		else
 			return 0; 
+	}
 			
 	instruction = std::istringstream(input);
 	return 1;

@@ -9,6 +9,7 @@
 #include <vector>
 #include <sstream>
 #include <cassert>
+#include <algorithm>
 #include "../base.h"
 #include "../CatalogManager/catalogmanager.h"
 #include "../BufferManager/BufferManager.h"
@@ -21,6 +22,9 @@ private:
 	BufferManager &buffer_manager;
 	CatalogManager &catalog_manager;
 	IndexManager &index_manager;
+	const WHERE op_table[6] = {EQUAL, NOT_EQUAL, LESS, GREATER, LESS_OR_EQUAL, GREATER_OR_EQUAL};
+	void removeDuplicate(std::vector<int> &block_ids);
+	void combine(std::vector<int> &tmp, std::vector<int> &block_ids);
 public:
 	RecordManager(BufferManager &bm, CatalogManager &cm, IndexManager &im) : buffer_manager(bm), catalog_manager(cm), index_manager(im) {}
 	//返回整张表
@@ -53,7 +57,7 @@ public:
 	//删除对应表中所有目标属性值满足Where条件的记录
 	//输入：表名，目标属性，一个Where类型的对象
 	//输出：删除的记录数
-	int deleteRecord(const std::string &table_name, const std::string &to_attr, const Where &where);
+	int deleteRecord(const std::string &table_name, SelectCondition scondition);
 	//对表中存在的记录建立索引
 	//输入：表名，目标属性名
 	//输出：void
@@ -81,7 +85,7 @@ public:
 	void searchWithIndex(const std::string &table_name, const std::string &index_name, const Where &where, std::vector<int>& block_ids);
 
 	//在块中进行条件删除
-	int queryDeleteInBlock(const std::string &table_name, int block_id, const Attribute &attr, int index, const Where &where);
+	int queryDeleteInBlock(const std::string &table_name, int block_id, const Attribute &attr, std::vector<int> &index, const SelectCondition &cond);
 
 	//在块中进行条件查询
 	void querySelectInBlock(const std::string &table_name, int block_id, const Attribute &attr, int index, const Where &where, std::vector<Tuple>& v);

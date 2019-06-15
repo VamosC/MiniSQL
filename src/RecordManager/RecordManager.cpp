@@ -140,40 +140,63 @@ int RecordManager::deleteRecord(const std::string &table_name) {
 	return count;
 }
 
-int RecordManager::deleteRecord(const std::string &table_name, const std::string &to_attr, const Where &where) {
+int RecordManager::deleteRecord(const std::string &table_name, SelectCondition scondition) {
 	auto file_path = "./database/data/" + table_name;
 	// API检测表是否存在
-	// API检查目标属性是否存在
-
+	// 检查目标属性是否存在以及是否匹配
 	Attribute attr = catalog_manager.GetTableAttribute(table_name);
-	auto attr_pos = catalog_manager.isAttributeExist(table_name, to_attr);
-	if(attr.attr_type[attr_pos] != where.data.type)
+	std::vector<int> attr_positon;
+	std::map<int, std::string> indexs;
+	for(auto i = 0; i < scondition.amount; i++)
 	{
-		throw minisql_exception("Attribute type not match!");
+		auto attr_pos = catalog_manager.isAttributeExist(table_name, scondition.attr[i]);
+		if(attr_pos == -1)
+		{
+			throw minisql_exception("Attribute " + scondition.attr[i] + " not exists!");
+		}
+		if(attr.attr_type[attr_pos] != scondition.key[i].type)
+		{
+			throw minisql_exception("Attribute type not match!");
+		}
+		attr_positon.push_back(attr_pos);
 	}
 	auto index = catalog_manager.GetTableIndex(table_name);
+	std::vector<int> block_ids;
 	auto flag = false;
-	std::string index_name;
-	// 检查索引是否存在
-	for (int i = 0; i < index.amount; i++)
+	for(auto k = 0; k < attr_positon.size(); k++)
 	{
-		if (index.whose[i] == attr_pos)
+		// 检查索引是否存在
+		for (int i = 0; i < index.amount; i++)
 		{
-			flag = true;
-			index_name = index.name[i];
-			break;
+			if (index.whose[i] == attr_positon[k])
+			{
+				if(op_table[scondition.operationtype[k]] != NOT_EQUAL)
+				{
+					flag = true;
+					if(indexs.count(k) == 0)
+					{
+						indexs[k] = index.name[i];
+					}
+					break;
+				}
+			}
 		}
 	}
-
 	int count = 0;
 	//如果目标属性上有索引
-	if (flag == true && where.relation_character != NOT_EQUAL) 
+	if (flag) 
 	{
-		std::vector<int> block_ids;
-		//通过索引获取满足条件的记录所在的块号
-		searchWithIndex(table_name, index_name, where, block_ids);
+		for(auto it : indexs)
+		{
+			auto where = Where{.data = scondition.key[it.first], .relation_character = op_table[scondition.operationtype[it.first]]};
+			//通过索引获取满足条件的记录所在的块号
+			std::vector<int> tmp;
+			searchWithIndex(table_name, it.second, where, tmp);
+			combine(tmp, block_ids);
+			removeDuplicate(block_ids);
+		}
 		for (int i = 0; i < block_ids.size(); i++) {
-			count += queryDeleteInBlock(table_name, block_ids[i], attr, attr_pos, where);
+			count += queryDeleteInBlock(table_name, block_ids[i], attr, attr_positon, scondition);
 		}
 	}
 	else 
@@ -184,7 +207,7 @@ int RecordManager::deleteRecord(const std::string &table_name, const std::string
 			return 0;
 		//遍历所有的块
 		for (int i = 0; i < blockAccount; i++) {
-			count += queryDeleteInBlock(table_name, i, attr, attr_pos, where);
+			count += queryDeleteInBlock(table_name, i, attr, attr_positon, scondition);
 		}
 	}
 	return count;
@@ -252,6 +275,7 @@ Table RecordManager::selectRecord(const std::string &table_name, const std::stri
 	if (flag == true && where.relation_character != NOT_EQUAL) {
 		std::vector<int> block_ids;
 		searchWithIndex(table_name, index_name, where, block_ids);
+		removeDuplicate(block_ids);
 		for (int i = 0; i < block_ids.size(); i++) {
 			querySelectInBlock(table_name, block_ids[i], attr, attr_pos, where, v);
 		}
@@ -283,6 +307,7 @@ void RecordManager::createIndex(const std::string &table_name, const std::string
 	int blockAccount = getBlockNum(file_path);
 	// 文件大小为0的特殊情况 不需要处理
 	// 遍历所有块
+	int j = 0;
 	for (int i = 0; i < blockAccount; i++) {
 		//获取当前块的句柄
 		char* p = buffer_manager.getPage(file_path, i);
@@ -462,7 +487,7 @@ void RecordManager::searchWithIndex(const std::string &table_name, const std::st
 }
 
 //在块中进行条件删除
-int RecordManager::queryDeleteInBlock(const std::string &table_name, int block_id, const Attribute &attr, int index, const Where &where) {
+int RecordManager::queryDeleteInBlock(const std::string &table_name, int block_id, const Attribute &attr, std::vector<int> &indexs, const SelectCondition &cond) {
 	//获取当前块的句柄
 	auto file_path = "./database/data/" + table_name;
 	char* p = buffer_manager.getPage(file_path, block_id);
@@ -479,38 +504,42 @@ int RecordManager::queryDeleteInBlock(const std::string &table_name, int block_i
 		}
 		std::vector<Data> d = tuple.getData();
 		//根据属性类型执行操作
-		if (attr.attr_type[index] == INT)
+		auto flag = true;
+		for(auto i = 0; i < indexs.size(); i++)
 		{
-			if (QueryJudge(d[index].idata, where.data.idata, where.relation_character))
+			if (attr.attr_type[indexs[i]] == INT)
 			{
-				//将记录删除
-				p = SetDeleteOnRecord(p);
-				count++;
+				if (!QueryJudge(d[indexs[i]].idata, cond.key[i].idata, op_table[cond.operationtype[i]]))
+				{
+					flag = false;
+					break;
+				}
+			}
+			else if (attr.attr_type[indexs[i]] == FLOAT)
+			{
+				if (!QueryJudge(d[indexs[i]].fdata, cond.key[i].fdata, op_table[cond.operationtype[i]]))
+				 {
+					flag = false;
+					break;
+				}
 			}
 			else
 			{
-				p += getTupleLength(p);
+				if (!QueryJudge(d[indexs[i]].sdata, cond.key[i].sdata, op_table[cond.operationtype[i]])) 
+				{
+					flag = false;
+					break;
+				}
 			}
 		}
-		else if (attr.attr_type[index] == FLOAT)
+		if(flag)
 		{
-			if (QueryJudge(d[index].fdata, where.data.fdata, where.relation_character)) {
-				p = SetDeleteOnRecord(p);
-				count++;
-			}
-			else {
-				p += getTupleLength(p);
-			}
+			p = SetDeleteOnRecord(p);
+			count++;
 		}
 		else
 		{
-			if (QueryJudge(d[index].sdata, where.data.sdata, where.relation_character)) {
-				p = SetDeleteOnRecord(p);
-				count++;
-			}
-			else {
-				p += getTupleLength(p);
-			}
+			p += getTupleLength(p);
 		}
 	}
 	int PID = buffer_manager.getPageId(file_path, block_id);
@@ -535,7 +564,6 @@ void RecordManager::querySelectInBlock(const std::string &table_name, int block_
 			continue;
 		}
 		std::vector<Data> d = tuple.getData();
-
 		if (attr.attr_type[index] == INT)
 		{
 			if (QueryJudge(d[index].idata, where.data.idata, where.relation_character)) 
@@ -574,4 +602,28 @@ void RecordManager::dropTableFile(const std::string &table_name) {
 	remove(file_path.c_str());
 }
 
+void RecordManager::removeDuplicate(std::vector<int> &block_ids)
+{
+	std::sort(block_ids.begin(), block_ids.end());
+	auto it = block_ids.begin();
+	while(it != block_ids.end() && it+1 != block_ids.end())
+	{
+		if(*it == *(it+1))
+		{
+			it = block_ids.erase(it);
+		}
+		else
+		{
+			it++;
+		}
+	}
+}
+
+void RecordManager::combine(std::vector<int> &tmp, std::vector<int> &block_ids)
+{
+	for(auto i = 0; i < tmp.size(); i++)
+	{
+		block_ids.push_back(tmp[i]);
+	}
+}
 

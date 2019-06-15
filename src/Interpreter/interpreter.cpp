@@ -8,7 +8,7 @@
 #include <iomanip>
 
 Interpreter::Interpreter(API &api, CatalogManager &cm)
-	: api(api), catalog_manager(cm), readmode(0)
+	: api(api), catalog_manager(cm)
 {}
 
 void Interpreter::GetInput(std::string &input)
@@ -16,20 +16,38 @@ void Interpreter::GetInput(std::string &input)
 	instruction = std::istringstream(input);
 }
 
-int Interpreter::GetInstruction()
+bool Interpreter::GetInstruction(std::ifstream* file)
 {
 	std::string input;
-	if(readmode==0)
-		getline(std::cin, input);
+	if(file == nullptr)
+	{
+		do
+		{
+			getline(std::cin, input);
+		}
+		while(input == "");
+		GetInput(input);
+		return true;
+	}
 	else
-		if(!file.eof())
-			getline(file, input);
+	{
+		do
+		{
+			getline(*file, input);
+		}
+		while(input == "" && !file->eof());
+		if(file->eof())
+		{
+			return false;
+		}
 		else
-			return 0; 
-			
-	instruction = std::istringstream(input);
-	return 1;
+		{
+			GetInput(input);
+			return true;
+		}
+	}
 }
+
 
 std::string Interpreter::GetWord()
 {
@@ -39,8 +57,8 @@ std::string Interpreter::GetWord()
 }
 
 //输入：无
-//输出：1-操作成功，会执行相应的结果； 0-失败； 2-退出 
-bool Interpreter::JudgeAndExec()
+//输出：true 退出 false 继续
+bool Interpreter::JudgeAndExec(std::ifstream *file)
 {
 	std::string singleword = GetWord();
 
@@ -51,7 +69,7 @@ bool Interpreter::JudgeAndExec()
 		singleword = GetWord();
 		if (singleword == "table")//新建表操作
 		{
-			ExecCreateTable();
+			ExecCreateTable(file);
 			return false;
 		}
 		else if (singleword == "index")//新建索引操作
@@ -101,8 +119,7 @@ bool Interpreter::JudgeAndExec()
 	}
 	else if (singleword == "execfile")//执行文件内容操作
 	{
-		ExecFile();
-		return false;
+		return ExecFile();
 	}
 	else//输入错误
 	{
@@ -115,7 +132,7 @@ bool Interpreter::JudgeAndExec()
 //判断语句是否正确，给出错误原因/拆解调用执行函数
 
 //此时从create table后面开始读 
-void Interpreter::ExecCreateTable()
+void Interpreter::ExecCreateTable(std::ifstream *file)
 {
 	std::string nameoftable;
 	std::string cur_word;
@@ -129,12 +146,16 @@ void Interpreter::ExecCreateTable()
 	if (nameoftable[nameoftable.size() - 1] == '(')
 		nameoftable.erase(nameoftable.size() - 1, 1);
 	else if(GetWord() != "(")
+	{
 		std::cout << "syntax error!" << std::endl;
+		return;
+	}
 
 	cur_attr.amount = 0;
-	if (GetInstruction() == 0)
+	if (!GetInstruction(file))
 	{
 		std::cout << "read error!" << std::endl;
+		return;
 	}
 	cur_word = GetWord();
 	while (cur_word != ");")
@@ -142,9 +163,16 @@ void Interpreter::ExecCreateTable()
 		if (cur_word == "primary")
 		{
 			cur_word = GetWord();
-			if (cur_word == "key")
+			if (cur_word.substr(0, 3) == "key")
 			{
-				cur_word = GetWord();
+				if(cur_word.size() == 3)
+				{
+					cur_word = GetWord();
+				}
+				else
+				{
+					cur_word.erase(0, 3);
+				}
 				if (cur_word[0] != '(')
 				{
 					std::cout << "syntax error!" << std::endl;
@@ -320,7 +348,7 @@ void Interpreter::ExecCreateTable()
 			}
 
 		}
-		if (GetInstruction() == 0)
+		if (!GetInstruction(file))
 		{
 			std::cout << "read error!" << std::endl;
 			return;
@@ -494,17 +522,18 @@ void Interpreter::ExecSelect()
 	} 
 	
 	table_name = GetWord();
+
+	if (table_name[table_name.size() - 1] == ';')
+	{
+		table_name.erase(table_name.size() - 1, 1);
+		isend = 1;
+	}
+
 	//检验该表是否存在 
 	if(!catalog_manager.isTableExist(table_name))
 	{
 		std::cout << "Table " << table_name << " not exists!" << std::endl; 
 		return; 		
-	}
-	
-	if (table_name[table_name.size() - 1] == ';')
-	{
-		table_name.erase(table_name.size() - 1, 1);
-		isend = 1;
 	}
 
 	curattr = catalog_manager.GetTableAttribute(table_name);
@@ -582,7 +611,7 @@ void Interpreter::ExecSelect()
 			else if( type == 0 )//float
 			{
 				scondition.key[scondition.amount-1].type = 0;
-				scondition.key[scondition.amount-1].fdata = atoi(curword.c_str());
+				scondition.key[scondition.amount-1].fdata = atof(curword.c_str());
 			}
 			else if( type > 0 )//string
 			{
@@ -679,13 +708,19 @@ void Interpreter::ExecInsert()
 	}
 	
 	curword = GetWord();
-	if( curword != "values" )
+	if( curword.substr(0, 6) != "values" )
 	{
 		std::cout << "syntax error!" << std::endl; 
 		return;
 	}
-
-	curword = GetWord();
+	if(curword.size() == 6)
+	{
+		curword = GetWord();
+	}
+	else
+	{
+		curword.erase(0, 6);
+	}
 	if (curword[0] != '(')
 	{
 		std::cout << "syntax error!" << std::endl;
@@ -704,10 +739,7 @@ void Interpreter::ExecInsert()
 	int curpos = 0;
 	while( endtype == 4 )
 	{
-		Data tmp;
-		int isavalueend = 0;
-		
-		
+		int isavalueend = 0;	
 		//对于结尾的判断：... - 1; ...) - 2; ...); -3 ..., -4
 		if (curword[curword.length() - 1] == ';')//...);
 		{
@@ -739,31 +771,46 @@ void Interpreter::ExecInsert()
 		{
 			endtype = 1;
 		}
-		std::cout << curword << '\n';
-		tmp.type = curattr.attr_type[number];
-		if (tmp.type == -1)//int
-			tmp.idata = atoi(curword.c_str());
-		else if (tmp.type == 0)//float
-			tmp.fdata = atoi(curword.c_str());
-		else if (tmp.type > 0)//string
+		while(!curword.empty())
 		{
-			if (curword[0] != '\'' && curword[curword.size() - 1] != '\'')
+			auto comma = curword.find(",");
+			std::string item;
+			if(comma != std::string::npos)
 			{
-				std::cout << "syntax error!" << std::endl;
+				item = curword.substr(0, comma);
+				curword.erase(0, comma+1);
+			}
+			else
+			{
+				item = curword;
+				curword = "";
+			}
+			Data tmp;
+			tmp.type = curattr.attr_type[number];
+			if (tmp.type == -1)//int
+				tmp.idata = atoi(item.c_str());
+			else if (tmp.type == 0)//float
+				tmp.fdata = atof(item.c_str());
+			else if (tmp.type > 0)//string
+			{
+				if (curword[0] != '\'' && curword[item.size() - 1] != '\'')
+				{
+					std::cout << "syntax error!" << std::endl;
+					return;
+				}
+				item.erase(0, 1);
+				item.erase(item.size() - 1, 1);
+				tmp.sdata = item;
+			}
+			else
+			{
+				std::cout << "MiniSQL not support such type!" << std::endl;
 				return;
 			}
-			curword.erase(0, 1);
-			curword.erase(curword.size() - 1, 1);
-			tmp.sdata = curword;
+			tuple.push_back(tmp);
+			number++;
 		}
-		else
-		{
-			std::cout << "syntax error!" << std::endl;
-			return;
-		}
-		
-		tuple.push_back(tmp);
-		number++;
+
 		if (endtype == 3 || endtype == 2)	
 			break;
 
@@ -795,7 +842,21 @@ void Interpreter::ExecInsert()
 		std::cout << "syntax error!" << std::endl;
 		return;
 	}
-
+	// for(auto it : tuple)
+	// {
+	// 	if(it.type == INT)
+	// 	{
+	// 		std::cout << it.idata << '\n';
+	// 	}
+	// 	else if(it.type == FLOAT)
+	// 	{
+	// 		std::cout << it.fdata << '\n';
+	// 	}
+	// 	else
+	// 	{
+	// 		std::cout << it.sdata << '\n';
+	// 	}
+	// }
 	api.Insert(table_name, tuple);
 }
 
@@ -907,7 +968,7 @@ void Interpreter::ExecDelete()
 			else if (type == 0)//float
 			{
 				scondition.key[scondition.amount - 1].type = 0;
-				scondition.key[scondition.amount - 1].fdata = atoi(curword.c_str());
+				scondition.key[scondition.amount - 1].fdata = atof(curword.c_str());
 			}	
 			else if (type > 0)//string
 			{
@@ -945,59 +1006,46 @@ void Interpreter::ExecDelete()
 	api.Delete( table_name, scondition );
 }
 
-void Interpreter::ExecFile()
+bool Interpreter::ExecFile()
 {
+	std::string input;
+	std::ifstream file;
 	std::string fileaddress;
 	fileaddress = GetWord();
-
-	if (fileaddress[0] != '\"')
+	if(fileaddress[fileaddress.size() - 1] == ';')
 	{
-		std::cout << "syntax error!" << std::endl;
-		return;
+		fileaddress.erase(fileaddress.size() - 1, 1);
 	}
-	fileaddress.erase(0, 1);
-	if (fileaddress[fileaddress.length()-1] != '\"')
+	// 读;
+	else
 	{
-		std::cout << "syntax error!" << std::endl;
-		return;
+		GetWord();
 	}
-	fileaddress.erase(fileaddress.length() - 1, 1);
-		
 	file.open(fileaddress.c_str()); 
 
 	if (!file)
 	{
 		std::cout << "open file failed!" << std::endl;
-		return;
+		return false;
 	}
-
-	fileaddress = GetWord();
-	readmode = 1;
 
 	int execresult;
 	//每次操作 
 	while (!file.eof())
 	{
-		if (GetInstruction() == 0)
+		if(!GetInstruction(&file))
 		{
-			std::cout << "read error!" << std::endl;
-			return;
+			return false;
 		}
-		execresult = JudgeAndExec();
-		if (execresult == 0)
-			break;
-
+		if(JudgeAndExec(&file))
+		{
+			return true;
+		}
 	}
 
 	if (!file.eof())	
 		std::cout << "file exec error!" << std::endl;
 
 	//执行完切换回输入模式 
-	readmode = 0;
-
-	if (fileaddress != ";")
-	{
-		std::cout << "syntax error!" << std::endl;
-		return;
-	}
+	return false;
 }

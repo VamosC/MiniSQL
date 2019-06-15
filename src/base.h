@@ -8,6 +8,8 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <cassert>
+#include <iomanip>
 
 const int _PAGESIZE = 4096;
 const int _MAXFRAMESIZE = 100;
@@ -17,11 +19,37 @@ const int _MAXFRAMESIZE = 100;
 //数据 
 //一个数据的类型以及数据的存放
 //sdata的长度为 1~255 
-struct Data{
+class Data{
+public:
 	int type;				//-1 - int; 0 - float; 正数 - string（varchar长度） 
 	int idata;
 	float fdata;
 	std::string sdata;
+	Data(){}
+	~Data(){}
+	bool operator==(const Data &data)
+	{
+		if(data.type != type)
+		{
+			return false;
+		}
+		if(type == INT)
+		{
+			return idata == data.idata;
+		}
+		else if(type == FLOAT)
+		{
+			return fdata == data.fdata;
+		}
+		else
+		{
+			return sdata == data.sdata;
+		}
+	}
+	bool operator!=(const Data &data)
+	{
+		return !operator==(data);
+	}
 };
 //用于where的判断
 typedef enum{
@@ -93,6 +121,19 @@ public:
 			addData(it);
 		}
 	}
+	bool operator==(const Tuple &t)
+	{
+		if(t.data.size() != data.size())
+		{
+			return false;
+		}
+		for(auto i = 0; i < data.size(); i++)
+		{
+			if(data[i] != t.data[i])
+				return false;
+		}
+		return true;
+	}
 	
 	//输入元组
 	//初步设想是在insert操作时按顺序一个一个把data导进来 
@@ -103,19 +144,40 @@ public:
 	
 	//打印一个元祖的数据
 	//按顺序输出，中间的间隔还需调整 
-	void Printdata()
+	void Printdata(const std::vector<int>& width)
 	{
-		for(auto it = data.begin(); it != data.end(); it++ )
+		int i = 0;
+		for(auto it = data.begin(); it != data.end(); it++, i++)
 		{
+			std::cout << "|";
 			if( (*it).type == INT)
-				std::cout << (*it).idata << "\t";
+				std::cout << std::left << std::setw(width[i]) << (*it).idata;
 			else if( (*it).type == FLOAT)
-				std::cout << (*it).fdata << "\t";
+				std::cout << std::left << std::setw(width[i]) << (*it).fdata;
 			else
-				std::cout << (*it).sdata << "\t";
+				std::cout << std::left << std::setw(width[i]) << (*it).sdata;
 		}
-		std::cout << '\n';
+		std::cout << "|\n";
 	}
+	int getWidth(int i)
+	{
+		assert(i >= 0 && i < data.size());
+		if(data[i].type == INT)
+		{
+			auto item = std::to_string(data[i].idata);
+			return item.size();
+		}
+		else if(data[i].type == FLOAT)
+		{
+			auto item = std::to_string(data[i].fdata);
+			return item.size();
+		}
+		else
+		{
+			assert(false);
+		}
+	}
+
 	//返回数据
 	std::vector<Data> getData() const
 	{
@@ -142,23 +204,89 @@ struct Index{
 //表格
 class Table{
 private:
-public:
+	std::vector<Tuple> tuples;
 	std::string table_name;
 	struct Attribute attr;
-	std::vector<Tuple> tuples;
-	
+public:
 	Table(){};
-	Table( std::string name, Attribute tmpa ): table_name(name), attr(tmpa){};
-	
+	Table(std::string name, Attribute tmpa ): table_name(name), attr(tmpa){};
 	void PrintTable()
 	{
+		std::vector<int> width;
+		for(auto i = 0; i < attr.amount; i++)
+		{
+			if(attr.attr_type[i] == INT)
+			{
+				auto max = 0;
+				for(auto j = 0; j < tuples.size(); j++)
+				{
+					max = tuples[j].getWidth(i) > max ? tuples[j].getWidth(i) : max;
+				}
+				max = max > attr.attr_name[i].size() ? max : attr.attr_name[i].size();
+				width.push_back(max);
+			}
+			else if(attr.attr_type[i] == FLOAT)
+			{
+				auto max = 0;
+				for(auto j = 0; j < tuples.size(); j++)
+				{
+					max = tuples[j].getWidth(i) > max ? tuples[j].getWidth(i) : max;
+				}
+				max = max > attr.attr_name[i].size() ? max : attr.attr_name[i].size();
+				width.push_back(max);
+			}
+			else
+			{
+				auto max = attr.attr_name[i].size() > attr.attr_type[i] ? attr.attr_name[i].size() : attr.attr_type[i]; 
+				width.push_back(max);
+			}
+		}
+
+		// 打印表头
+		for(auto i = 0; i < width.size(); i++)
+		{
+			std::cout << "+";
+			for(auto j = 0; j < width[i]; j++)
+			{
+				std::cout << "-";
+			}
+		}
+		std::cout << "+\n";
+		for(auto i = 0; i < width.size(); i++)
+		{
+			std::cout << "|";
+			std::cout << std::left << std::setw(width[i]) << attr.attr_name[i];
+		}
+		std::cout << "|\n";
+		for(auto i = 0; i < width.size(); i++)
+		{
+			std::cout << "+";
+			for(auto j = 0; j < width[i]; j++)
+			{
+				std::cout << "-";
+			}
+		}
+		std::cout << "+\n";
+
+		// 打印数据
 		for(auto it : tuples)
 		{
-			it.Printdata();
+			it.Printdata(width);
 		}
+
+		// 打印结尾
+		for(auto i = 0; i < width.size(); i++)
+		{
+			std::cout << "+";
+			for(auto j = 0; j < width[i]; j++)
+			{
+				std::cout << "-";
+			}
+		}
+		std::cout << "+\n";
 	}
 	
-	std::string GetTablename()
+	std::string GetTableName()
 	{
 		return table_name;
 	}
@@ -170,6 +298,10 @@ public:
 	{
 		return tuples;
 	} 
+	int size()
+	{
+		return tuples.size();
+	}
 };
 
 #endif

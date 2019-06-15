@@ -214,7 +214,7 @@ class BPTree
 public:
 	BPTree(BufferManager &bm, int degree, const std::string &file_path, int type, BlockId root = -1, BlockId leftist_leaf = -1) 
 	: bm(bm), 
-	  degree(5), 
+	  degree(degree), 
 	  file_path(file_path),  
 	  type(type),
 	  root(root),
@@ -463,10 +463,6 @@ bool BPTree<T>::_find_range(const T& start, const T& end, int l_op, int r_op, st
 					{
 						if(node->keys[i] >= start && node->keys[i] <= end)
 						{
-							// std::cout << i << '\n';
-							// std::cout << start << '\n';
-							// std::cout << node->keys[i] << '\n';
-							// std::cout << "========" << '\n';
 							res.push_back(node->block_ids[i]);
 						}
 						// 超过范围
@@ -680,7 +676,6 @@ void BPTree<T>::write_back(std::shared_ptr<TreeNode<T>> &node)
 					i += sizeof(int);
 				}
 			}
-			// std::cout << "===========================" << '\n';
 		}
 		else
 		{
@@ -738,8 +733,6 @@ bool BPTree<T>::_insert(const T &key, int block_id)
 			auto block = bm.getPage(file_path, res.node);
 			auto node = std::make_shared<TreeNode<T>>(block, type, res.node);
 			// 叶子结点满
-			// std::cout << "node->num : " <<  node->num + 1 << '\n';
-			// std::cout << "degree : " << degree << '\n';
 			if(node->num + 1 == degree)
 			{
 				auto new_node = std::make_shared<TreeNode<T>>();

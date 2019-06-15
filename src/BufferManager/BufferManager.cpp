@@ -42,7 +42,7 @@ inline int Page::getBlockId()
 
 inline void Page::setPinCount(int PIN_Count) 
 {
-    PinCount = PIN_Count;
+    this->PinCount = PIN_Count;
 }
 
 inline int Page::getPinCount() 
@@ -52,7 +52,7 @@ inline int Page::getPinCount()
 
 inline void Page::setDirty(bool Is_Dirty) 
 {
-    IsDirty = Is_Dirty;
+    this->IsDirty = Is_Dirty;
 }
 
 inline bool Page::getDirty() 
@@ -72,7 +72,7 @@ inline bool Page::getRef()
 
 inline void Page::setAvaliable(bool Is_Avaliable) 
 {
-    IsAvaliable = Is_Avaliable;
+    this->IsAvaliable = Is_Avaliable;
 }
 
 inline bool Page::getAvaliable() 
@@ -190,7 +190,7 @@ int BufferManager::flushPage(int PageID , std::string FileName , int BlockID)
 int BufferManager::getEmptyPageId() {
     // 遍历一遍
     for (int i = 0;i < frame_size_;i++) {
-        if (Frames[i].getAvaliable() == true)
+        if (Frames[i].getAvaliable())
             return i;
     }
 
@@ -232,7 +232,7 @@ int BufferManager::loadDiskBlock(int PageID , const std::string &file_name , int
     // 对新载入的页进行相应设置
     Frames[PageID].setFileName(file_name);
     Frames[PageID].setBlockId(BlockID);
-    Frames[PageID].setPinCount(1);
+    Frames[PageID].setPinCount(0);
     Frames[PageID].setDirty(false);
     Frames[PageID].setRef(true);
     Frames[PageID].setAvaliable(false);

@@ -32,7 +32,11 @@ int main()
 	
 	while (!quit_flag)
 	{
-		getline(std::cin, input);
+		do
+		{
+			getline(std::cin, input);
+		}
+		while(input == "");
 		interpreter.GetInput(input);
 		quit_flag = interpreter.JudgeAndExec();
 	}

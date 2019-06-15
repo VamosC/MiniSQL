@@ -740,7 +740,7 @@ void Interpreter::ExecInsert()
 			if (curword[curword.length() - 2] != ')')
 			{
 				std::cout << "syntax error!" << std::endl;
-				return 0;
+				return;
 			}
 
 			endtype = 3;
@@ -751,7 +751,7 @@ void Interpreter::ExecInsert()
 			if (GetWord() != ";")
 			{
 				std::cout << "syntax error!" << std::endl;
-				return 0;
+				return;
 			}
 			endtype = 2;
 			curword.erase(curword.length() - 1, 1);
@@ -776,7 +776,7 @@ void Interpreter::ExecInsert()
 			if (curword[0] != '\'' && curword[curword.size() - 1] != '\'')
 			{
 				std::cout << "syntax error!" << std::endl;
-				return 0;
+				return;
 			}
 			curword.erase(0, 1);
 			curword.erase(curword.size() - 1, 1);
@@ -785,7 +785,7 @@ void Interpreter::ExecInsert()
 		else
 		{
 			std::cout << "syntax error!" << std::endl;
-			return 0;
+			return;
 		}
 		
 		tuple.push_back(tmp);
@@ -802,14 +802,14 @@ void Interpreter::ExecInsert()
 				else
 				{
 					std::cout << "syntax error!" << std::endl;
-					return 0;
+					return;
 				}
 			}
 			else if (curword == ");")	break;
 			else if (curword != ",")
 			{
 				std::cout << "syntax error!" << std::endl;
-				return 0;
+				return;
 			}
 		}
 		endtype = 4;

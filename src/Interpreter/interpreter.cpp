@@ -699,13 +699,17 @@ void Interpreter::ExecInsert()
 	}
 	
 	curword = GetWord();
-	if( curword != "values" )
+	if (curword.substr(0,6) != "values")
 	{
-		std::cout << "syntax error!" << std::endl; 
-		return;
+		std::cout << "syntax error!" << std::endl;
+		return 0;
 	}
 
-	curword = GetWord();
+	if (curword.size() == 6)
+		curword = GetWord();
+	else
+		curword.erase(0, 6);
+	
 	if (curword[0] != '(')
 	{
 		std::cout << "syntax error!" << std::endl;

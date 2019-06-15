@@ -985,19 +985,6 @@ void Interpreter::ExecFile()
 {
 	std::string fileaddress;
 	fileaddress = GetWord();
-
-	if (fileaddress[0] != '\"')
-	{
-		std::cout << "syntax error!" << std::endl;
-		return;
-	}
-	fileaddress.erase(0, 1);
-	if (fileaddress[fileaddress.length()-1] != '\"')
-	{
-		std::cout << "syntax error!" << std::endl;
-		return;
-	}
-	fileaddress.erase(fileaddress.length() - 1, 1);
 		
 	file.open(fileaddress.c_str()); 
 

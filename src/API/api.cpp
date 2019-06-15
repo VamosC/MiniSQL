@@ -159,16 +159,24 @@ void API::DropIndex(const std::string &table_name, const std::string &index_name
 
 void API::Insert(const std::string &table_name, const std::vector<Data> &tuple)
 {
-	Tuple tmp(tuple);
-	try
+	if(!CL.isTableExist(table_name))
 	{
-		RM.insertRecord(table_name, tmp);
-		std::cout << "Insert table " << table_name << " success!" << '\n';
+		std::cout << ("Insert table " +  table_name + " error!:");
+		std::cout << ("Table " + table_name + " not exists!") << '\n';
 	}
-	catch(minisql_exception &e)
+	else
 	{
-		e.add_msg("Insert table" + table_name  + " error!");
-		e.print();
+		Tuple tmp(tuple);
+		try
+		{
+			RM.insertRecord(table_name, tmp);
+			std::cout << "Insert table " << table_name << " success!" << '\n';
+		}
+		catch(minisql_exception &e)
+		{
+			e.add_msg("Insert table" + table_name  + " error!");
+			e.print();
+		}
 	}
 }
 

@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <cassert>
 #include "../base.h"
 #include "../CatalogManager/catalogmanager.h"
 #include "../BufferManager/BufferManager.h"
@@ -25,11 +26,11 @@ public:
 	//返回整张表
 	//输入：表名
 	//输出：Table类型对象
-	Table selectRecord(std::string tablename, std::string result_table_name = "DefaultName");
+	Table selectRecord(const std::string &table_name, std::string result_table_name = "DefaultName");
 	//返回包含所有目标属性满足Where条件的记录的表
 	//输入：表名，目标属性，一个Where类型的对象
 	//输出：Table类型对象
-	Table selectRecord(std::string tablename, std::string attr, Where where, std::string result_table_name = "DefaultName");
+	Table selectRecord(const std::string &table_name, const std::string &to_attr, Where where, std::string result_table_name = "DefaultName");
 	//建立表文件
 	//输入：表名
 	//输出：void
@@ -46,20 +47,20 @@ public:
 	//删除对应表中记录（不删除表文件）
 	//输入：表名
 	//输出：删除的记录数
-	int deleteRecord(std::string tablename);
+	int deleteRecord(const std::string &table_name);
 
 
 	//删除对应表中所有目标属性值满足Where条件的记录
 	//输入：表名，目标属性，一个Where类型的对象
 	//输出：删除的记录数
-	int deleteRecord(std::string tablename, std::string attr, Where where);
+	int deleteRecord(const std::string &table_name, const std::string &to_attr, const Where &where);
 	//对表中存在的记录建立索引
 	//输入：表名，目标属性名
 	//输出：void
 	void createIndex(const std::string &table_name, const std::string &index_name, const std::string &attr);
 
 	//获取文件大小
-	int getBlockNum(std::string tablename);
+	int getBlockNum(const std::string &table_name);
 
 	//insertRecord的辅助函数
 	void DoInsertOnRecord(char* p, int offset, int len, const std::vector<Data>& v);
@@ -77,13 +78,13 @@ public:
 	bool isConflict(std::vector<Tuple>& tuples, std::vector<Data>& v, int index);
 
 	//带索引查找
-	void searchWithIndex(const std::string &table_name, const std::string &index_name, Where where, std::vector<int>& block_ids);
+	void searchWithIndex(const std::string &table_name, const std::string &index_name, const Where &where, std::vector<int>& block_ids);
 
 	//在块中进行条件删除
-	int queryDeleteInBlock(std::string tablename, int block_id, Attribute attr, int index, Where where);
+	int queryDeleteInBlock(const std::string &table_name, int block_id, const Attribute &attr, int index, const Where &where);
 
 	//在块中进行条件查询
-	void querySelectInBlock(std::string tablename, int block_id, Attribute attr, int index, Where where, std::vector<Tuple>& v);
+	void querySelectInBlock(const std::string &table_name, int block_id, const Attribute &attr, int index, const Where &where, std::vector<Tuple>& v);
 
 };
 
@@ -140,6 +141,9 @@ bool QueryJudge(T a, T b, WHERE relation) {
 		else
 			return false;
 	}
+	// 出现这种情况是编程出错
+	else
+		assert(false);
 }
 
 template <typename T>

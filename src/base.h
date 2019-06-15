@@ -78,7 +78,7 @@ private:
 	std::vector<Data> data;
 	bool isDeleted_;
 public:
-	Tuple(){};
+	Tuple() : isDeleted_(false){};
 	
 	//拷贝函数 
 	Tuple(const Tuple &copytuple)
@@ -96,11 +96,6 @@ public:
 	
 	//输入元组
 	//初步设想是在insert操作时按顺序一个一个把data导进来 
-	void Inputdata( Data &td )
-	{
-		struct Data tmp = td;
-		data.push_back(tmp);
-	}
 	void addData(const Data &d)
 	{
 		this->data.push_back(d);
@@ -113,11 +108,11 @@ public:
 		for(auto it = data.begin(); it != data.end(); it++ )
 		{
 			if( (*it).type == INT)
-				std::cout << (*it).idata << "\t\t\t";
+				std::cout << (*it).idata << "\t";
 			else if( (*it).type == FLOAT)
-				std::cout << (*it).fdata << "\t\t\t";
+				std::cout << (*it).fdata << "\t";
 			else
-				std::cout << (*it).sdata << "\t\t\t";
+				std::cout << (*it).sdata << "\t";
 		}
 		std::cout << '\n';
 	}
@@ -150,20 +145,18 @@ private:
 public:
 	std::string table_name;
 	struct Attribute attr;
-	struct Index indices; 
 	std::vector<Tuple> tuples;
 	
 	Table(){};
 	Table( std::string name, Attribute tmpa ): table_name(name), attr(tmpa){};
 	
-	void PrintTable();
-	void PrintTable( int* limitattr );
-	
-	int InsertTuple( Tuple &tmpt );
-	int DeleteTuple( Tuple &tmpt );
-	
-	int SetIndex( int numofattr, std::string name );
-	int DropIndex( std::string name );
+	void PrintTable()
+	{
+		for(auto it : tuples)
+		{
+			it.Printdata();
+		}
+	}
 	
 	std::string GetTablename()
 	{
@@ -176,10 +169,6 @@ public:
 	std::vector<Tuple>& GetTuples()
 	{
 		return tuples;
-	} 
-	Index GetIndex()
-	{
-		return indices;
 	} 
 };
 

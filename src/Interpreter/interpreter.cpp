@@ -168,9 +168,13 @@ void Interpreter::ExecCreateTable()
 		if (cur_word == "primary")
 		{
 			cur_word = GetWord();
-			if (cur_word == "key")
+			if (cur_word.substr(0,3) == "key")
 			{
-				cur_word = GetWord();
+				if (cur_word.size() == 3)
+					cur_word = GetWord();
+				else
+					cur_word.erase(0.3);
+				
 				if (cur_word[0] != '(')
 				{
 					std::cout << "syntax error!" << std::endl;

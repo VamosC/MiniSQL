@@ -34,7 +34,7 @@ public:
 	//返回包含所有目标属性满足Where条件的记录的表
 	//输入：表名，目标属性，一个Where类型的对象
 	//输出：Table类型对象
-	Table selectRecord(const std::string &table_name, const std::string &to_attr, Where where, std::string result_table_name = "DefaultName");
+	Table selectRecord(const std::string &table_name, SelectCondition scondition, std::string result_table_name = "DefaultName");
 	//建立表文件
 	//输入：表名
 	//输出：void
@@ -88,7 +88,7 @@ public:
 	int queryDeleteInBlock(const std::string &table_name, int block_id, const Attribute &attr, std::vector<int> &index, const SelectCondition &cond);
 
 	//在块中进行条件查询
-	void querySelectInBlock(const std::string &table_name, int block_id, const Attribute &attr, int index, const Where &where, std::vector<Tuple>& v);
+	void querySelectInBlock(const std::string &table_name, int block_id, const Attribute &attr, std::vector<int> &index, const SelectCondition &cond, std::vector<Tuple>& v);
 
 };
 

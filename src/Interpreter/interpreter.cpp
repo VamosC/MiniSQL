@@ -815,21 +815,6 @@ void Interpreter::ExecInsert()
 		std::cout << "syntax error!" << std::endl;
 		return;
 	}
-	// for(auto it : tuple)
-	// {
-	// 	if(it.type == INT)
-	// 	{
-	// 		std::cout << it.idata << '\n';
-	// 	}
-	// 	else if(it.type == FLOAT)
-	// 	{
-	// 		std::cout << it.fdata << '\n';
-	// 	}
-	// 	else
-	// 	{
-	// 		std::cout << it.sdata << '\n';
-	// 	}
-	// }
 	api.Insert(table_name, tuple);
 }
 

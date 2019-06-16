@@ -48,6 +48,8 @@ public:
 	// 如何使用:
 	// index_manager.delete_index("student", "name", data);
 	bool delete_index(const std::string &table_name, const std::string &index_name, Data data);
+
+	bool delete_index(const std::string &table_name, const std::string &index_name);
 	
 	// 删除索引
 	// 如何使用:

@@ -887,13 +887,11 @@ bool BPTree<T>::_delete(const T &key)
 	else
 	{
 		NodeFound<T> res;
-
 		//没有找到相应的key
 		if(!_find(key, res))
 		{
 			return false;
 		}
-
 		else
 		{
 			auto block = bm.getPage(file_path, res.node);
@@ -1150,6 +1148,7 @@ bool BPTree<T>::_delete(const T &key)
 					else
 					{
 						assert(node->parent == r_bro->parent);
+						
 						for(auto i = 0;i < r_bro->keys.size(); i++)
 						{
 							node->keys.push_back(r_bro->keys[i]);

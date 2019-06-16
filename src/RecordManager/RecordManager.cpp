@@ -34,7 +34,7 @@ void RecordManager::insertRecord(const std::string &table_name, Tuple& tuple) {
 		if (attr.is_unique[i] == true) {
 			if (isConflict(tuples, v, i))
 				//存在unqiue冲突异常
-				throw minisql_exception("Primary key conflict!");
+				throw minisql_exception("Unique attribute conflict!");
 		}
 	}
 
@@ -126,6 +126,7 @@ int RecordManager::deleteRecord(const std::string &table_name) {
 			for (int j = 0; j < index.amount; j++)
 			{
 				std::vector<Data> tmp_data = tuple.getData();
+				// index_manager.delete_index(table_name, index.name[j]);
 				index_manager.delete_index(table_name, index.name[j], tmp_data[index.whose[j]]);
 			}
 			
@@ -237,7 +238,9 @@ Table RecordManager::selectRecord(const std::string &table_name, std::string res
 			Tuple tuple = readTuple(p, attr);
 			//如果记录没有被删除，将其添加到table中
 			if (!tuple.isDeleted())
+			{
 				v.push_back(tuple);
+			}
 			int len = getTupleLength(p);
 			p += len;
 		}
@@ -245,39 +248,59 @@ Table RecordManager::selectRecord(const std::string &table_name, std::string res
 	return table;
 }
 
-Table RecordManager::selectRecord(const std::string &table_name, const std::string &to_attr, Where where, std::string result_table_name) {
+Table RecordManager::selectRecord(const std::string &table_name, SelectCondition scondition, std::string result_table_name) {
 	auto file_path = "./database/data/" + table_name;
 	// API会检查表是否存在
 	// 也会检查属性是否存在
 	Attribute attr = catalog_manager.GetTableAttribute(table_name);
-	auto attr_pos = catalog_manager.isAttributeExist(table_name, to_attr);
-	// where条件中的两个数据的类型不匹配异常
-	if(attr.attr_type[attr_pos] != where.data.type)
-		throw minisql_exception("Attribute type not match!");
-	// 索引是否存在
-	auto flag = false;
-	auto indexs = catalog_manager.GetTableIndex(table_name);
-	std::string index_name;
-
-	// 索引是否存在
-	for (int i = 0; i < indexs.amount; i++)
+	std::vector<int> attr_positon;
+	std::map<int, std::string> indexs;
+	for(auto i = 0; i < scondition.amount; i++)
 	{
-		if (attr_pos == indexs.whose[i])
+		auto attr_pos = catalog_manager.isAttributeExist(table_name, scondition.attr[i]);
+		if(attr.attr_type[attr_pos] != scondition.key[i].type)
 		{
-			flag = true;
-			index_name = indexs.name[i];
-			break;
+			throw minisql_exception("Attribute type not match!");
+		}
+		attr_positon.push_back(attr_pos);
+	}
+	auto index = catalog_manager.GetTableIndex(table_name);
+	std::vector<int> block_ids;
+	auto flag = false;
+	for(auto k = 0; k < attr_positon.size(); k++)
+	{
+		// 检查索引是否存在
+		for (int i = 0; i < index.amount; i++)
+		{
+			if (index.whose[i] == attr_positon[k])
+			{
+				if(op_table[scondition.operationtype[k]] != NOT_EQUAL)
+				{
+					flag = true;
+					if(indexs.count(k) == 0)
+					{
+						indexs[k] = index.name[i];
+					}
+					break;
+				}
+			}
 		}
 	}
 	//构建table
 	Table new_table(result_table_name, attr);
 	std::vector<Tuple>& v = new_table.GetTuples();
-	if (flag == true && where.relation_character != NOT_EQUAL) {
-		std::vector<int> block_ids;
-		searchWithIndex(table_name, index_name, where, block_ids);
-		removeDuplicate(block_ids);
+	if (flag == true) {
+		for(auto it : indexs)
+		{
+			auto where = Where{.data = scondition.key[it.first], .relation_character = op_table[scondition.operationtype[it.first]]};
+			//通过索引获取满足条件的记录所在的块号
+			std::vector<int> tmp;
+			searchWithIndex(table_name, it.second, where, tmp);
+			combine(tmp, block_ids);
+			removeDuplicate(block_ids);
+		}
 		for (int i = 0; i < block_ids.size(); i++) {
-			querySelectInBlock(table_name, block_ids[i], attr, attr_pos, where, v);
+			querySelectInBlock(table_name, block_ids[i], attr, attr_positon, scondition, v);
 		}
 	}
 	else {
@@ -285,7 +308,7 @@ Table RecordManager::selectRecord(const std::string &table_name, const std::stri
 		int blockAccount = getBlockNum(file_path);
 		//遍历所有块
 		for (int i = 0; i < blockAccount; i++) {
-			querySelectInBlock(table_name, i, attr, attr_pos, where, v);
+			querySelectInBlock(table_name, i, attr, attr_positon, scondition, v);
 		}
 	}
 	return new_table;
@@ -422,6 +445,10 @@ int RecordManager::getTupleLength(char* p) {
 bool RecordManager::isConflict(std::vector<Tuple> & tuples, std::vector<Data> & v, int index) {
 	for (int i = 0; i < tuples.size(); i++) {
 		// 不可能出现删除掉的元素
+		if(tuples[i].isDeleted())
+		{
+			continue;
+		}
 		auto d = tuples[i].getData();
 		if (v[index].type == INT)
 		{
@@ -548,7 +575,7 @@ int RecordManager::queryDeleteInBlock(const std::string &table_name, int block_i
 }
 
 //在块中进行条件查询
-void RecordManager::querySelectInBlock(const std::string &table_name, int block_id, const Attribute &attr, int index, const Where &where, std::vector<Tuple> & v) {
+void RecordManager::querySelectInBlock(const std::string &table_name, int block_id, const Attribute &attr, std::vector<int> &indexs, const SelectCondition &cond, std::vector<Tuple> & v) {
 	//获取块的句柄
 	auto file_path = "./database/data/" + table_name;
 	char* p = buffer_manager.getPage(file_path, block_id);
@@ -564,24 +591,37 @@ void RecordManager::querySelectInBlock(const std::string &table_name, int block_
 			continue;
 		}
 		std::vector<Data> d = tuple.getData();
-		if (attr.attr_type[index] == INT)
+		auto flag = true;
+		for(auto i = 0; i < indexs.size(); i++)
 		{
-			if (QueryJudge(d[index].idata, where.data.idata, where.relation_character)) 
+			if (attr.attr_type[indexs[i]] == INT)
 			{
-				v.push_back(tuple);
+				if (!QueryJudge(d[indexs[i]].idata, cond.key[i].idata, op_table[cond.operationtype[i]]))
+				{
+					flag = false;
+					break;
+				}
+			}
+			else if (attr.attr_type[indexs[i]] == FLOAT)
+			{
+				if (!QueryJudge(d[indexs[i]].fdata, cond.key[i].fdata, op_table[cond.operationtype[i]]))
+				 {
+					flag = false;
+					break;
+				}
+			}
+			else
+			{
+				if (!QueryJudge(d[indexs[i]].sdata, cond.key[i].sdata, op_table[cond.operationtype[i]])) 
+				{
+					flag = false;
+					break;
+				}
 			}
 		}
-		else if (attr.attr_type[index] == FLOAT)
+		if(flag)
 		{
-			if (QueryJudge(d[index].fdata, where.data.fdata, where.relation_character)) {
-				v.push_back(tuple);
-			}
-		}
-		else
-		{
-			if (QueryJudge(d[index].sdata, where.data.sdata, where.relation_character)) {
-				v.push_back(tuple);
-			}
+			v.push_back(tuple);
 		}
 		p += getTupleLength(p);
 	}

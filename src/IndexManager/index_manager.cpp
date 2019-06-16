@@ -234,7 +234,6 @@ bool IndexManager::insert_index(const std::string &table_name, const std::string
 bool IndexManager::delete_index(const std::string &table_name, const std::string &index_name, Data data)
 {
 	auto file_name = "./database/index/" + table_name + "_" + index_name;
-	
 	// 首先查看内存中是否存在b+tree索引
 	// 不存在就需要先从硬盘中加载
 	if(!is_BPTree_exist(file_name, data.type))
@@ -280,6 +279,9 @@ void IndexManager::drop_index(const std::string &table_name, const std::string &
 			string_index_length.erase(file_name);
 		}
 	}
+
+	// 删除内存中的内容
+
 
 	// 删除硬盘上的文件
 	if(is_file_exist(file_name))
@@ -391,6 +393,18 @@ void IndexManager::read_into(const std::string &file_name, int type)
 			string_index_length[file_name] = type;
 		}
 	}
+}
+
+bool IndexManager::delete_index(const std::string &table_name, const std::string &index_name)
+{
+	auto file_path = "../database/index/" + table_name + "_" + index_name;
+	for(auto i = 0; i < 100; i++)
+	{
+		auto block = bm.getPage(file_path, i);
+		block[0] = '\0';
+		bm.modifyPage(bm.getPageId(file_path, i));
+	}
+	return true;
 }
 
 int IndexManager::get_degree(int type)

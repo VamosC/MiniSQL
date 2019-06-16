@@ -34,16 +34,23 @@ void API::CreateTable(const std::string &table_name, const Attribute &attr)
 	// 如果存在主键 则检查
 	// 检查primary key是否unique
 	if(attr.primary_key != -1)
-	if(!attr.is_unique[attr.primary_key])
 	{
-		std::cout << "Create table " << table_name << " error!" << ":Primary key must be unique" << '\n';
-		return;
+		if(!attr.is_unique[attr.primary_key])
+		{
+			std::cout << "Create table " << table_name << " error!" << ":Primary key must be unique" << '\n';
+			return;
+		}
 	}
 	try
 	{
 		auto start = clock();
 		CL.CreateTable(table_name, attr, tmp_index, attr.primary_key);
 		RM.createTableFile(table_name);
+		// 主键自动建立索引
+		if(attr.primary_key != -1)
+		{
+			CreateIndex(table_name, attr.attr_name[attr.primary_key], "PRIMARY_KEY");
+		}
 		auto end = clock();
 		std::cout << "Query OK, 0 rows affected";
 		std::cout << " (" << (double)(end - start)/CLOCKS_PER_SEC << " sec)" << '\n';
@@ -69,8 +76,10 @@ void API::DropTable(const std::string &table_name)
 			auto start = clock();
 			Index tmp_index= CL.GetTableIndex(table_name);
 			Attribute tmp_attr = CL.GetTableAttribute(table_name);
+			// RM.deleteRecord(table_name);
 			for (int i = 0; i < tmp_index.amount; i++)
 				IM.drop_index(table_name, tmp_index.name[i], tmp_attr.attr_type[tmp_index.whose[i]]);
+			// RM.deleteRecord(table_name);
 			CL.DropTable(table_name);
 			RM.dropTableFile(table_name);
 			auto end = clock();
@@ -189,7 +198,7 @@ void API::Insert(const std::string &table_name, const std::vector<Data> &tuple)
 		}
 		catch(minisql_exception &e)
 		{
-			e.add_msg("Insert table" + table_name  + " error!");
+			e.add_msg("Insert table " + table_name  + " error!");
 			e.print();
 		}
 	}
@@ -262,14 +271,14 @@ void API::Select(const std::string &table_name, std::vector<std::string> attr, S
 				result = RM.selectRecord(table_name);
 			else
 			{
-				auto curwhere = Where{.data = scondition.key[0], .relation_character = op_table[scondition.operationtype[0]]};
-				result = RM.selectRecord(table_name, scondition.attr[0], curwhere );
-				for (int i = 1; i < scondition.amount; i++)
-				{
-					std::cout << scondition.key[i].sdata << '\n';
-					std::cout << scondition.operationtype[i] << '\n';
-					result = Combine(result, table_name, scondition.attr[i], scondition.operationtype[i], scondition.key[i]);
-				}
+				// auto curwhere = Where{.data = scondition.key[0], .relation_character = op_table[scondition.operationtype[0]]};
+				result = RM.selectRecord(table_name, scondition);
+				// for (int i = 1; i < scondition.amount; i++)
+				// {
+				// 	std::cout << scondition.key[i].sdata << '\n';
+				// 	std::cout << scondition.operationtype[i] << '\n';
+				// 	result = Combine(result, table_name, scondition.attr[i], scondition.operationtype[i], scondition.key[i]);
+				// }
 			}
 			auto end = clock();
 			result.PrintTable();
@@ -287,31 +296,31 @@ void API::Select(const std::string &table_name, std::vector<std::string> attr, S
 	}
 }
 
-Table API::Combine(Table &table1, const std::string &table_name, const std::string &tattr, int optype, Data key)
-{	
-	auto where = Where{.data = key, .relation_character = op_table[optype]};
-	Table table2 = RM.selectRecord(table_name, tattr, where);
-	Table res(table1.GetTableName(), table1.GetAttr());
-	auto &tuple1 = table1.GetTuples();
-	auto &tuple2 = table2.GetTuples();
-	std::sort(tuple1.begin(), tuple1.end(), Datacompare);
-	std::sort(tuple2.begin(), tuple2.end(), Datacompare);
-	auto &tuple_res = res.GetTuples();
-	int pos = 0;
-	for(auto i = 0; i < tuple1.size(); i++)
-	{
-		for(auto j = pos; j < tuple2.size(); j++)
-		{
-			if(tuple1[i] == tuple2[j])
-			{
-				pos = j;
-				tuple_res.push_back(tuple1[i]);
-				break;
-			}
-		}
-	}
-	return res;
-}
+// Table API::Combine(Table &table1, const std::string &table_name, const std::string &tattr, int optype, Data key)
+// {	
+// 	auto where = Where{.data = key, .relation_character = op_table[optype]};
+// 	Table table2 = RM.selectRecord(table_name, tattr, where);
+// 	Table res(table1.GetTableName(), table1.GetAttr());
+// 	auto &tuple1 = table1.GetTuples();
+// 	auto &tuple2 = table2.GetTuples();
+// 	std::sort(tuple1.begin(), tuple1.end(), Datacompare);
+// 	std::sort(tuple2.begin(), tuple2.end(), Datacompare);
+// 	auto &tuple_res = res.GetTuples();
+// 	int pos = 0;
+// 	for(auto i = 0; i < tuple1.size(); i++)
+// 	{
+// 		for(auto j = pos; j < tuple2.size(); j++)
+// 		{
+// 			if(tuple1[i] == tuple2[j])
+// 			{
+// 				pos = j;
+// 				tuple_res.push_back(tuple1[i]);
+// 				break;
+// 			}
+// 		}
+// 	}
+// 	return res;
+// }
 
 // Table API::ReMove(Table &table1, std::string tattr, int optype, Data key)
 // {

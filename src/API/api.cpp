@@ -263,8 +263,6 @@ void API::Select(const std::string &table_name, std::vector<std::string> attr, S
 			else
 			{
 				auto curwhere = Where{.data = scondition.key[0], .relation_character = op_table[scondition.operationtype[0]]};
-				std::cout << curwhere.data.sdata << '\n';
-				std::cout << curwhere.relation_character << '\n';
 				result = RM.selectRecord(table_name, scondition.attr[0], curwhere );
 				for (int i = 1; i < scondition.amount; i++)
 				{

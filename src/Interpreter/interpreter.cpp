@@ -563,12 +563,7 @@ void Interpreter::ExecSelect()
 			//属性是否存在 
 			
 			position = catalog_manager.isAttributeExist(table_name, curword);
-			/*if( position == -1)
-			{
-				std::cout << "attributes error!" << std::endl;
-				return 0;
-			}
-			*/
+
 			scondition.attr[scondition.amount] = curword;
 			scondition.amount++;
 
@@ -657,30 +652,6 @@ void Interpreter::ExecSelect()
 			targetattr[i] = curattr.attr_name[i];
 		api.Select(table_name, targetattr, scondition );
 	}
-	
-	// //输出结果 
-	// //表名
-	// std::cout << "------------------" << selectresult.table_name << "------------------" << std::endl;
-	// //属性名 
-	// int namelength = 0;
-	// Attribute tmp_attr = selectresult.attr; 
-	
-	// for( int i = 0; i < tmp_attr.amount; i++ )
-	// {
-	// 	if( tmp_attr.attr_name[i].length() > namelength )
-	// 		namelength = tmp_attr.attr_name[i].length();
-	// }
-	
-	// for( int i = 0; i < tmp_attr.amount; i++ )
-	// 	std::cout << std::left << std::setw( namelength+5 ) << tmp_attr.attr_name[i] << '|';
-	// std::cout << std::endl;
-	
-	// //元组 
-	// std::vector<Tuple>::iterator it;
-	// for( it = selectresult.tuples.begin(); it != selectresult.tuples.end(); it++ )
-	// 	it->Printdata();
-	
-	// return 1;
 } 
 
 //insert into s values ( 'sss', 'aaa' ); 

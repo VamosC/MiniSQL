@@ -147,7 +147,7 @@ void Interpreter::ExecCreateTable(std::ifstream *file)
 		nameoftable.erase(nameoftable.size() - 1, 1);
 	else if(GetWord() != "(")
 	{
-		std::cout << "syntax error!" << std::endl;
+		std::cout << "syntax error! : lack (" << std::endl;
 		return;
 	}
 
@@ -207,7 +207,7 @@ void Interpreter::ExecCreateTable(std::ifstream *file)
 				cur_word = GetWord();
 				if( (isend == 1 && cur_word != "" ) || (isend == 0 && cur_word != ")") )
 				{
-					std::cout << "syntax error!" << std::endl;
+					std::cout << "syntax error! : wrong ending" << std::endl;
 					return;
 				}
 			}
@@ -372,13 +372,13 @@ void Interpreter::ExecDropTable()
 		nameoftable.erase(nameoftable.size() - 1, 1);
 		if(GetWord()!="")
 		{
-			std::cout << "syntax error!" << std::endl;
+			std::cout << "syntax error! : wrong ending" << std::endl;
 			return;
 		}
 	}
 	else if (GetWord() != ";")
 	{
-		std::cout << "syntax error!" << std::endl;
+		std::cout << "syntax error! : wrong ending" << std::endl;
 		return;
 	}
 
@@ -427,19 +427,19 @@ void Interpreter::ExecCreateIndex()
 	if (isend == 0 && tattr == "" )  tattr = GetWord(); //只有(
 	if ((isend == 1 && GetWord() != "") || (isend == -1 && GetWord() != ";") )
 	{
-		std::cout << "syntax error!" << std::endl;
+		std::cout << "syntax error! : wrong ending" << std::endl;
 		return;
 	}
 	else if (isend == 0 && tattr == ")")
 	{	if (GetWord() != ";")
 		{
-			std::cout << "syntax error!" << std::endl;
+			std::cout << "syntax error! : wrong ending" << std::endl;
 			return;
 		}
 	}
 	else if (isend == 0 && tattr != ");")
 	{
-		std::cout << "syntax error!" << std::endl;
+		std::cout << "syntax error! : wrong ending" << std::endl;
 		return;
 	}
 
@@ -465,13 +465,13 @@ void Interpreter::ExecDropIndex()
 		tablename.erase(tablename.size() - 1, 1);
 		if (GetWord() != "")
 		{
-			std::cout << "syntax error!" << std::endl;
+			std::cout << "syntax error! : wrong ending" << std::endl;
 			return;
 		}
 	}
 	else if (GetWord() != ";")
 	{
-		std::cout << "syntax error!" << std::endl;
+		std::cout << "syntax error! : wrong ending" << std::endl;
 		return;
 	}
 	api.DropIndex(tablename, indexname);
@@ -584,7 +584,7 @@ void Interpreter::ExecSelect()
 				scondition.operationtype[scondition.amount - 1] = 5;
 			else
 			{
-				std::cout << "syntax error!" << std::endl;
+				std::cout << "syntax error! : wrong operator" << std::endl;
 				return;
 			}
 
@@ -628,7 +628,7 @@ void Interpreter::ExecSelect()
 				if (curword == "")	break;
 				else
 				{
-					std::cout << "syntax error!" << std::endl;
+					std::cout << "syntax error! : wrong ending" << std::endl;
 					return;
 				}
 			}
@@ -665,7 +665,7 @@ void Interpreter::ExecInsert()
 	curword = GetWord();
 	if( curword != "into" )
 	{
-		std::cout << "syntax error!" << std::endl; 
+		std::cout << "syntax error! : lack into" << std::endl; 
 		return;
 	}
 	
@@ -682,7 +682,7 @@ void Interpreter::ExecInsert()
 
 	if( curword.substr(0, 6) != "values" )
 	{
-		std::cout << "syntax error!" << std::endl;
+		std::cout << "syntax error! : lack values" << std::endl;
 		return;
 	}
 
@@ -696,7 +696,7 @@ void Interpreter::ExecInsert()
 	}
 	if (curword[0] != '(')
 	{
-		std::cout << "syntax error!" << std::endl;
+		std::cout << "syntax error! : lack (" << std::endl;
 		return;
 	}
 	else
@@ -796,7 +796,7 @@ void Interpreter::ExecInsert()
 					break;
 				else
 				{
-					std::cout << "syntax error!" << std::endl;
+					std::cout << "syntax error! : wrong ending" << std::endl;
 					return;
 				}
 			}
@@ -812,7 +812,7 @@ void Interpreter::ExecInsert()
 	
 	if( GetWord() != "" )
 	{
-		std::cout << "syntax error!" << std::endl;
+		std::cout << "syntax error! : wrong ending" << std::endl;
 		return;
 	}
 	api.Insert(table_name, tuple);
@@ -904,7 +904,7 @@ void Interpreter::ExecDelete()
 				scondition.operationtype[scondition.amount-1] = 5;
 			else
 			{
-				std::cout << "syntax error!" << std::endl; 
+				std::cout << "syntax error! : wrong operater" << std::endl; 
 				return;					
 			}
 			
@@ -948,7 +948,7 @@ void Interpreter::ExecDelete()
 				if (curword == "")	break;
 				else
 				{
-					std::cout << "syntax error!" << std::endl;
+					std::cout << "syntax error! : wrong ending" << std::endl;
 					return;
 				}
 			}

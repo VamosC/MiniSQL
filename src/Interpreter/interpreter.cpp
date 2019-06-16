@@ -19,6 +19,7 @@ void Interpreter::GetInput(std::string &input)
 bool Interpreter::GetInstruction(std::ifstream* file)
 {
 	std::string input;
+<<<<<<< HEAD
 	if(file == nullptr)
 	{
 		do
@@ -46,6 +47,32 @@ bool Interpreter::GetInstruction(std::ifstream* file)
 			return true;
 		}
 	}
+=======
+	if(readmode==0)
+	{
+		getline(std::cin, input);
+		while( input == "" )
+		{
+			getline(std::cin, input);
+		}
+	}
+	else
+	{
+		if(!file.eof())
+			getline(file, input);
+		
+		if(!file.eof())
+			while( input == "" )
+			{
+				getline(file, input);
+			}
+		else
+			return 0; 
+	}
+			
+	instruction = std::istringstream(input);
+	return 1;
+>>>>>>> 6d04763ade56a25639c1e6f595c9f3665fac4139
 }
 
 
@@ -163,6 +190,7 @@ void Interpreter::ExecCreateTable(std::ifstream *file)
 		if (cur_word == "primary")
 		{
 			cur_word = GetWord();
+<<<<<<< HEAD
 			if (cur_word.substr(0, 3) == "key")
 			{
 				if(cur_word.size() == 3)
@@ -173,6 +201,15 @@ void Interpreter::ExecCreateTable(std::ifstream *file)
 				{
 					cur_word.erase(0, 3);
 				}
+=======
+			if (cur_word.substr(0,3) == "key")
+			{
+				if (cur_word.size() == 3)
+					cur_word = GetWord();
+				else
+					cur_word.erase(0.3);
+				
+>>>>>>> 6d04763ade56a25639c1e6f595c9f3665fac4139
 				if (cur_word[0] != '(')
 				{
 					std::cout << "syntax error!" << std::endl;
@@ -708,11 +745,13 @@ void Interpreter::ExecInsert()
 	}
 	
 	curword = GetWord();
+
 	if( curword.substr(0, 6) != "values" )
 	{
-		std::cout << "syntax error!" << std::endl; 
-		return;
+		std::cout << "syntax error!" << std::endl;
+		return 0;
 	}
+
 	if(curword.size() == 6)
 	{
 		curword = GetWord();
@@ -1012,6 +1051,7 @@ bool Interpreter::ExecFile()
 	std::ifstream file;
 	std::string fileaddress;
 	fileaddress = GetWord();
+	
 	if(fileaddress[fileaddress.size() - 1] == ';')
 	{
 		fileaddress.erase(fileaddress.size() - 1, 1);

@@ -1,6 +1,9 @@
 # MiniSQL
+DataBase MiniSQL
 
-DataBase 期末大程 MiniSQL
+## 编译环境
+- c++17 以上
+- GNU make
 
 ## 支持语法
 
@@ -22,7 +25,7 @@ DataBase 期末大程 MiniSQL
 - 删除表
 
   ```sql
-  drop table student ;
+  drop table student;
   ```
 
   
@@ -30,7 +33,7 @@ DataBase 期末大程 MiniSQL
 - 创建索引
 
   ```sql
-  create index stuname on student(sname) ;
+  create index stuname on student(sname);
   ```
 
   
@@ -38,7 +41,7 @@ DataBase 期末大程 MiniSQL
 - 删除索引
 
   ```sql
-  drop index stuname ;
+  drop index stuname;
   ```
 
   
@@ -46,9 +49,9 @@ DataBase 期末大程 MiniSQL
 - 选择语句
 
   ```sql
-  select * from	student ;
-  select * from student where sid = '88888888' ;
-  select * from student where sage > 20 and scome < 2000 ;
+  select * from	student;
+  select * from student where sid = '88888888';
+  select * from student where sage > 20 and scome < 2000;
   
   // < > <= >= <> = 
   ```
@@ -58,7 +61,7 @@ DataBase 期末大程 MiniSQL
 - 插入语句
 
   ```sql
-  insert into student values ( '88888888', 'xiaoming', 20, 2000.00 ) ;
+  insert into student values('88888888','xiaoming',20,2000.00);
   ```
 
   
@@ -66,8 +69,8 @@ DataBase 期末大程 MiniSQL
 - 删除语句
 
   ```sql
-  delete from student ;
-  delete from student where sid = '88888888' ;
+  delete from student;
+  delete from student where sid = '88888888';
   ```
 
   
@@ -83,19 +86,13 @@ DataBase 期末大程 MiniSQL
 - 执行脚本
 
   ```sql
-  execfile "test.txt" ;
+  execfile test.txt;
   ```
 
   
 
 ## 要求
 
-- 需要返回查询时间、执行返回或影响的行数、错误信息
+- 返回查询时间、执行返回或影响的行数、错误信息
 
 ## 文件格式
-
-- 定长记录 or 不定长记录？
-- 块内存放信息？
-- ………………...
-
-## 备忘/提醒

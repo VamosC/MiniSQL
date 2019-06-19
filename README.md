@@ -41,7 +41,7 @@ DataBase MiniSQL
 - 删除索引
 
   ```sql
-  drop index stuname;
+  drop index stuname on student;
   ```
 
   

@@ -248,16 +248,11 @@ public:
 	{
 		std::cout << "{\"node\":[";
 		std::cout << to_string(node->keys);
-		// std::cout << '\n';
 		for(auto i = 0;i < node->children.size(); i++)
 		{
 			std::cout << ",";
 			auto block = bm.getPage(file_path, node->children[i]);
 			auto child = std::make_shared<TreeNode<T>>(block, type, node->children[i]);
-			// std::cout << "child->id : " << child->id << '\n';
-			// std::cout << "child->parent : " << child->parent << '\n';
-			// std::cout << "child->next_sibling : " << child->next_sibling << '\n';
-			// std::cout << "child->left_sibling : " << child->left_sibling << '\n';
 			print(child);
 		}
 		std::cout << "]}";

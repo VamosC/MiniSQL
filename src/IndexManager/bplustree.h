@@ -241,17 +241,23 @@ public:
 	{
 		auto block = bm.getPage(file_path, root);
 		auto root_node = std::make_shared<TreeNode<T>>(block, type, root);
+		// std::cout << "root : " << root_node->id << '\n';
 		print(root_node);
 	}
 	void print(std::shared_ptr<TreeNode<T>> &node)
 	{
 		std::cout << "{\"node\":[";
 		std::cout << to_string(node->keys);
+		// std::cout << '\n';
 		for(auto i = 0;i < node->children.size(); i++)
 		{
 			std::cout << ",";
 			auto block = bm.getPage(file_path, node->children[i]);
 			auto child = std::make_shared<TreeNode<T>>(block, type, node->children[i]);
+			// std::cout << "child->id : " << child->id << '\n';
+			// std::cout << "child->parent : " << child->parent << '\n';
+			// std::cout << "child->next_sibling : " << child->next_sibling << '\n';
+			// std::cout << "child->left_sibling : " << child->left_sibling << '\n';
 			print(child);
 		}
 		std::cout << "]}";
@@ -1034,7 +1040,6 @@ bool BPTree<T>::_delete(const T &key)
 									write_back(l_bro);
 									// 调整父结点
 									adjust_in_parent(node);
-
 									return true;
 								}
 
@@ -1205,12 +1210,11 @@ void BPTree<T>::adjust_in_parent(std::shared_ptr<TreeNode<T>> &node)
 		if(parent_node->children[i] == node->id)
 			break;
 	}
-	assert(i >= 0 && i < parent_node->children.size());
+	assert(i > 0 && i < parent_node->children.size());
 	// 先删该结点中的内容
 	parent_node->children.erase(parent_node->children.begin()+i);
 	parent_node->keys.erase(parent_node->keys.begin()+i-1);
 	parent_node->num--;
-
 	// 父结点是根结点 special case
 	if(parent_node->parent == -1)
 	{
@@ -1223,6 +1227,10 @@ void BPTree<T>::adjust_in_parent(std::shared_ptr<TreeNode<T>> &node)
 			auto root_node = std::make_shared<TreeNode<T>>(block, type, root);
 			root_node->parent = -1;
 			write_back(root_node);
+			write_back(parent_node);
+		}
+		else
+		{
 			write_back(parent_node);
 		}
 		return;
@@ -1490,6 +1498,10 @@ void BPTree<T>::adjust_in_parent(std::shared_ptr<TreeNode<T>> &node)
 		}
 		else
 			assert(false);
+	}
+	else
+	{
+		write_back(parent_node);
 	}
 }
 

@@ -76,10 +76,9 @@ void API::DropTable(const std::string &table_name)
 			auto start = clock();
 			Index tmp_index= CL.GetTableIndex(table_name);
 			Attribute tmp_attr = CL.GetTableAttribute(table_name);
-			// RM.deleteRecord(table_name);
+			RM.deleteRecord(table_name);
 			for (int i = 0; i < tmp_index.amount; i++)
 				IM.drop_index(table_name, tmp_index.name[i], tmp_attr.attr_type[tmp_index.whose[i]]);
-			// RM.deleteRecord(table_name);
 			CL.DropTable(table_name);
 			RM.dropTableFile(table_name);
 			auto end = clock();
@@ -271,14 +270,7 @@ void API::Select(const std::string &table_name, std::vector<std::string> attr, S
 				result = RM.selectRecord(table_name);
 			else
 			{
-				// auto curwhere = Where{.data = scondition.key[0], .relation_character = op_table[scondition.operationtype[0]]};
 				result = RM.selectRecord(table_name, scondition);
-				// for (int i = 1; i < scondition.amount; i++)
-				// {
-				// 	std::cout << scondition.key[i].sdata << '\n';
-				// 	std::cout << scondition.operationtype[i] << '\n';
-				// 	result = Combine(result, table_name, scondition.attr[i], scondition.operationtype[i], scondition.key[i]);
-				// }
 			}
 			auto end = clock();
 			result.PrintTable();
@@ -295,106 +287,3 @@ void API::Select(const std::string &table_name, std::vector<std::string> attr, S
 		}
 	}
 }
-
-// Table API::Combine(Table &table1, const std::string &table_name, const std::string &tattr, int optype, Data key)
-// {	
-// 	auto where = Where{.data = key, .relation_character = op_table[optype]};
-// 	Table table2 = RM.selectRecord(table_name, tattr, where);
-// 	Table res(table1.GetTableName(), table1.GetAttr());
-// 	auto &tuple1 = table1.GetTuples();
-// 	auto &tuple2 = table2.GetTuples();
-// 	std::sort(tuple1.begin(), tuple1.end(), Datacompare);
-// 	std::sort(tuple2.begin(), tuple2.end(), Datacompare);
-// 	auto &tuple_res = res.GetTuples();
-// 	int pos = 0;
-// 	for(auto i = 0; i < tuple1.size(); i++)
-// 	{
-// 		for(auto j = pos; j < tuple2.size(); j++)
-// 		{
-// 			if(tuple1[i] == tuple2[j])
-// 			{
-// 				pos = j;
-// 				tuple_res.push_back(tuple1[i]);
-// 				break;
-// 			}
-// 		}
-// 	}
-// 	return res;
-// }
-
-// Table API::ReMove(Table &table1, std::string tattr, int optype, Data key)
-// {
-// 	Table result;
-// 	std::vector<Tuple>& rtuple = result.tuples;
-// 	rtuple = table1.tuples;
-
-// 	int curattr;
-// 	for (curattr = 0; curattr < table1.attr.amount; curattr++)
-// 		if (table1.attr.attr_name[curattr] == tattr)
-// 			break;
-
-// 	int i = 0;
-// 	while( i != rtuple.size() )
-// 	{
-// 		std::vector<Data> curdata = rtuple[i].getData();
-// 		int curre = 0;
-// 		switch (key.type)
-// 		{
-// 		case -1:
-// 		{
-// 			if (optype == 0)//=
-// 				curre = key.idata == curdata[curattr].idata;
-// 			else if (optype == 1)//<>
-// 				curre = key.idata != curdata[curattr].idata;
-// 			else if (optype == 2)//<
-// 				curre = key.idata > curdata[curattr].idata;
-// 			else if (optype == 3)//>
-// 				curre = key.idata < curdata[curattr].idata;
-// 			else if (optype == 4)//<=
-// 				curre = key.idata >= curdata[curattr].idata;
-// 			else if (optype == 5)//>=
-// 				curre = key.idata <= curdata[curattr].idata;
-// 			break;
-// 		}
-// 		case 0:
-// 		{
-// 			if (optype == 0)//=
-// 				curre = key.fdata == curdata[curattr].fdata;
-// 			else if (optype == 1)//<>
-// 				curre = key.fdata != curdata[curattr].fdata;
-// 			else if (optype == 2)//<
-// 				curre = key.fdata > curdata[curattr].fdata;
-// 			else if (optype == 3)//>
-// 				curre = key.fdata < curdata[curattr].fdata;
-// 			else if (optype == 4)//<=
-// 				curre = key.fdata >= curdata[curattr].fdata;
-// 			else if (optype == 5)//>=
-// 				curre = key.fdata <= curdata[curattr].fdata;
-// 			break;
-// 		}
-// 		default:
-// 		{
-// 			if (optype == 0)//=
-// 				curre = key.sdata == curdata[curattr].sdata;
-// 			else if (optype == 1)//<>
-// 				curre = key.sdata != curdata[curattr].sdata;
-// 			else if (optype == 2)//<
-// 				curre = key.sdata > curdata[curattr].sdata;
-// 			else if (optype == 3)//>
-// 				curre = key.sdata < curdata[curattr].sdata;
-// 			else if (optype == 4)//<=
-// 				curre = key.sdata >= curdata[curattr].sdata;
-// 			else if (optype == 5)//>=
-// 				curre = key.sdata <= curdata[curattr].sdata;
-// 			break;
-// 		}
-// 		}//switch
-// 		if (curre != 0)
-// 			rtuple.erase(rtuple.begin() + i);
-// 		else
-// 			i++;
-// 	}
-
-// 	std::sort(rtuple.begin(), rtuple.end(), Datacompare);
-// 	return result;
-// }

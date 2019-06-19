@@ -293,7 +293,6 @@ void CatalogManager::PrintTable(const std::string &table_name)
 	if(!isTableExist(table_name))
 	{
 		throw minisql_exception("Table " + table_name + " not exists!");
-		return;
 	}
 
 	//打印表的信息

@@ -395,18 +395,6 @@ void IndexManager::read_into(const std::string &file_name, int type)
 	}
 }
 
-bool IndexManager::delete_index(const std::string &table_name, const std::string &index_name)
-{
-	auto file_path = "../database/index/" + table_name + "_" + index_name;
-	for(auto i = 0; i < 100; i++)
-	{
-		auto block = bm.getPage(file_path, i);
-		block[0] = '\0';
-		bm.modifyPage(bm.getPageId(file_path, i));
-	}
-	return true;
-}
-
 int IndexManager::get_degree(int type)
 {
 	if(type == INT_TYPE)

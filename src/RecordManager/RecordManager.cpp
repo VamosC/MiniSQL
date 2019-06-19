@@ -126,7 +126,6 @@ int RecordManager::deleteRecord(const std::string &table_name) {
 			for (int j = 0; j < index.amount; j++)
 			{
 				std::vector<Data> tmp_data = tuple.getData();
-				// index_manager.delete_index(table_name, index.name[j]);
 				index_manager.delete_index(table_name, index.name[j], tmp_data[index.whose[j]]);
 			}
 			

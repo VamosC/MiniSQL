@@ -19,13 +19,12 @@ void Interpreter::GetInput(std::string &input)
 bool Interpreter::GetInstruction(std::ifstream* file)
 {
 	std::string input;
-	if(file == nullptr)
+	if (file == nullptr)
 	{
 		do
 		{
 			getline(std::cin, input);
-		}
-		while(input == "");
+		} while (input == "");
 		GetInput(input);
 		return true;
 	}
@@ -34,9 +33,8 @@ bool Interpreter::GetInstruction(std::ifstream* file)
 		do
 		{
 			getline(*file, input);
-		}
-		while(input == "" && !file->eof());
-		if(file->eof())
+		} while (input == "" && !file->eof());
+		if (file->eof())
 		{
 			return false;
 		}
@@ -62,7 +60,7 @@ bool Interpreter::JudgeAndExec(std::ifstream *file)
 {
 	std::string singleword = GetWord();
 
-	if(singleword == "quit")
+	if (singleword == "quit")
 		return true;
 	else if (singleword == "create")
 	{
@@ -79,8 +77,8 @@ bool Interpreter::JudgeAndExec(std::ifstream *file)
 		}
 		else//输入错误
 		{
-			std::cout << "syntax error!" << std::endl; 
-			return false; 
+			std::cout << "syntax error! : There is no such instruction. You can only create table or index." << std::endl;
+			return false;
 		}
 	}
 	else if (singleword == "drop")
@@ -98,9 +96,9 @@ bool Interpreter::JudgeAndExec(std::ifstream *file)
 		}
 		else//输入错误
 		{
-			std::cout << "syntax error!" << std::endl; 
+			std::cout << "syntax error! : There is no such instruction. You can only drop table or index." << std::endl;
 			return false;
-		}	
+		}
 	}
 	else if (singleword == "select")//搜索操作
 	{
@@ -123,8 +121,8 @@ bool Interpreter::JudgeAndExec(std::ifstream *file)
 	}
 	else//输入错误
 	{
-		std::cout << "syntax error!" << std::endl; 
-		return false; 		
+		std::cout << "syntax error! : There is no such instruction." << std::endl;
+		return false;
 	}
 }
 
@@ -142,12 +140,12 @@ void Interpreter::ExecCreateTable(std::ifstream *file)
 	int isend = 0;
 
 	nameoftable = GetWord();
-	
+
 	if (nameoftable[nameoftable.size() - 1] == '(')
 		nameoftable.erase(nameoftable.size() - 1, 1);
-	else if(GetWord() != "(")
+	else if (GetWord() != "(")
 	{
-		std::cout << "syntax error! : lack (" << std::endl;
+		std::cout << "syntax error! : The character '(' is lost or not at the correct position." << std::endl;
 		return;
 	}
 
@@ -165,7 +163,7 @@ void Interpreter::ExecCreateTable(std::ifstream *file)
 			cur_word = GetWord();
 			if (cur_word.substr(0, 3) == "key")
 			{
-				if(cur_word.size() == 3)
+				if (cur_word.size() == 3)
 				{
 					cur_word = GetWord();
 				}
@@ -175,7 +173,7 @@ void Interpreter::ExecCreateTable(std::ifstream *file)
 				}
 				if (cur_word[0] != '(')
 				{
-					std::cout << "syntax error!" << std::endl;
+					std::cout << "syntax error! : The character '(' of primary key is lost or not at the correct position." << std::endl;
 					return;
 				}
 
@@ -203,17 +201,17 @@ void Interpreter::ExecCreateTable(std::ifstream *file)
 					std::cout << "primary key is not in the attribute!" << std::endl;
 					return;
 				}
-				
+
 				cur_word = GetWord();
-				if( (isend == 1 && cur_word != "" ) || (isend == 0 && cur_word != ")") )
+				if ((isend == 1 && cur_word != "") || (isend == 0 && cur_word != ")"))
 				{
-					std::cout << "syntax error! : wrong ending" << std::endl;
+					std::cout << "syntax error! : The character ')' is lost or there are some extra things at the end of the command." << std::endl;
 					return;
 				}
 			}
 			else
 			{
-				std::cout << "syntax error!" << std::endl;
+				std::cout << "syntax error! : The word 'key' is lost or not at the correct position." << std::endl;
 				return;
 			}
 		}
@@ -223,15 +221,15 @@ void Interpreter::ExecCreateTable(std::ifstream *file)
 			attrname = cur_word;
 			attrtype = GetWord();
 			int isattrend = 0;
-			if (attrtype.substr(0,3) == "int")
+			if (attrtype.substr(0, 3) == "int")
 			{
 				if (attrtype.size() == 4)
 				{
-					if(attrtype[3] == ',')
+					if (attrtype[3] == ',')
 						isattrend = 1;
 					else
 					{
-						std::cout << "syntax error!" << std::endl;
+						std::cout << "syntax error! : Wrong attribute type." << std::endl;
 						return;
 					}
 				}
@@ -241,13 +239,13 @@ void Interpreter::ExecCreateTable(std::ifstream *file)
 				if (isattrend == 0)
 				{
 					cur_word = GetWord();
-					if (cur_word.substr(0,6) == "unique" || cur_word == ",")
+					if (cur_word.substr(0, 6) == "unique" || cur_word == ",")
 					{
 						if (cur_word == "unique," || (cur_word == "unique" && GetWord() == ",") || cur_word == ",")
 							isattrend = 1;
 						else
 						{
-							std::cout << "syntax error!" << std::endl;
+							std::cout << "syntax error! : Wrong ending of property description." << std::endl;
 							return;
 						}
 						if (cur_word.substr(0, 6) == "unique")
@@ -255,7 +253,7 @@ void Interpreter::ExecCreateTable(std::ifstream *file)
 					}
 					else
 					{
-						std::cout << "syntax error!" << std::endl;
+						std::cout << "syntax error! : Wrong ending of property description." << std::endl;
 						return;
 					}
 				}
@@ -269,7 +267,7 @@ void Interpreter::ExecCreateTable(std::ifstream *file)
 						isattrend = 1;
 					else
 					{
-						std::cout << "syntax error!" << std::endl;
+						std::cout << "syntax error! : Wrong attribute type." << std::endl;
 						return;
 					}
 				}
@@ -281,11 +279,11 @@ void Interpreter::ExecCreateTable(std::ifstream *file)
 					cur_word = GetWord();
 					if (cur_word.substr(0, 6) == "unique" || cur_word == ",")
 					{
-						if (cur_word == "unique," || (cur_word == "unique" && GetWord() == ",") || cur_word == "," )
+						if (cur_word == "unique," || (cur_word == "unique" && GetWord() == ",") || cur_word == ",")
 							isattrend = 1;
 						else
 						{
-							std::cout << "syntax error!" << std::endl;
+							std::cout << "syntax error! : Wrong ending of property description." << std::endl;
 							return;
 						}
 
@@ -294,7 +292,7 @@ void Interpreter::ExecCreateTable(std::ifstream *file)
 					}
 					else
 					{
-						std::cout << "syntax error!" << std::endl;
+						std::cout << "syntax error! : Wrong ending of property description." << std::endl;
 						return;
 					}
 				}
@@ -322,7 +320,7 @@ void Interpreter::ExecCreateTable(std::ifstream *file)
 							isattrend = 1;
 						else
 						{
-							std::cout << "syntax error!" << std::endl;
+							std::cout << "syntax error! : Wrong ending of property description." << std::endl;
 							return;
 						}
 
@@ -336,15 +334,15 @@ void Interpreter::ExecCreateTable(std::ifstream *file)
 					}
 					else
 					{
-						std::cout << "syntax error!" << std::endl;
+						std::cout << "syntax error! : Wrong ending of property description." << std::endl;
 						return;
 					}
 				}
 			}
 			else
 			{
-				std::cout << "syntax error!" << std::endl;
-				return;
+			std::cout << "syntax error! : Wrong attribute type." << std::endl;
+			return;
 			}
 
 		}
@@ -364,21 +362,21 @@ void Interpreter::ExecCreateTable(std::ifstream *file)
 //此时从drop table后面开始读 
 void Interpreter::ExecDropTable()
 {
-	std::string nameoftable;	
+	std::string nameoftable;
 	std::string cur_word;
-	nameoftable	= GetWord();
+	nameoftable = GetWord();
 	if (nameoftable[nameoftable.size() - 1] == ';')
 	{
 		nameoftable.erase(nameoftable.size() - 1, 1);
-		if(GetWord()!="")
+		if (GetWord() != "")
 		{
-			std::cout << "syntax error! : wrong ending" << std::endl;
+			std::cout << "syntax error! : Wrong ending of the instruction." << std::endl;
 			return;
 		}
 	}
 	else if (GetWord() != ";")
 	{
-		std::cout << "syntax error! : wrong ending" << std::endl;
+		std::cout << "syntax error! : Wrong ending of the instruction." << std::endl;
 		return;
 	}
 
@@ -393,7 +391,7 @@ void Interpreter::ExecCreateIndex()
 	indexname = GetWord();
 	if (GetWord() != "on")
 	{
-		std::cout << "syntax error!" << std::endl;
+		std::cout << "syntax error! : The word 'on' is lost or not at the correct position." << std::endl;
 		return;
 	}
 	tablename = GetWord();
@@ -420,26 +418,27 @@ void Interpreter::ExecCreateIndex()
 	}
 	else
 	{
-		std::cout << "syntax error!" << std::endl;
+		std::cout << "syntax error! : Wrong ending of the instruction." << std::endl;
 		return;
 	}
 
-	if (isend == 0 && tattr == "" )  tattr = GetWord(); //只有(
-	if ((isend == 1 && GetWord() != "") || (isend == -1 && GetWord() != ";") )
+	if (isend == 0 && tattr == "")  tattr = GetWord(); //只有(
+	if ((isend == 1 && GetWord() != "") || (isend == -1 && GetWord() != ";"))
 	{
-		std::cout << "syntax error! : wrong ending" << std::endl;
+		std::cout << "syntax error! : Wrong ending of the instruction." << std::endl;
 		return;
 	}
 	else if (isend == 0 && tattr == ")")
-	{	if (GetWord() != ";")
+	{
+		if (GetWord() != ";")
 		{
-			std::cout << "syntax error! : wrong ending" << std::endl;
+			std::cout << "syntax error! : Wrong ending of the instruction." << std::endl;
 			return;
 		}
 	}
 	else if (isend == 0 && tattr != ");")
 	{
-		std::cout << "syntax error! : wrong ending" << std::endl;
+		std::cout << "syntax error! : Wrong ending of the instruction." << std::endl;
 		return;
 	}
 
@@ -453,11 +452,11 @@ void Interpreter::ExecDropIndex()
 
 	indexname = GetWord();
 
-	if( GetWord() != "on" )
+	if (GetWord() != "on")
 	{
-		std::cout << "syntax error!" << std::endl; 
+		std::cout << "syntax error! : The word 'on' is lost or not at the correct position." << std::endl;
 		return;
-	}	
+	}
 	tablename = GetWord();
 
 	if (tablename[tablename.size() - 1] == ';')
@@ -465,13 +464,13 @@ void Interpreter::ExecDropIndex()
 		tablename.erase(tablename.size() - 1, 1);
 		if (GetWord() != "")
 		{
-			std::cout << "syntax error! : wrong ending" << std::endl;
+			std::cout << "syntax error! : Wrong ending of the instruction." << std::endl;
 			return;
 		}
 	}
 	else if (GetWord() != ";")
 	{
-		std::cout << "syntax error! : wrong ending" << std::endl;
+		std::cout << "syntax error! : Wrong ending of the instruction." << std::endl;
 		return;
 	}
 	api.DropIndex(tablename, indexname);
@@ -484,43 +483,43 @@ void Interpreter::ExecSelect()
 	std::string curword;
 	std::vector<std::string> targetattr;
 	SelectCondition scondition;
-	Attribute curattr; 
+	Attribute curattr;
 	int targetan = 0;
-	int isAll = 0; 
-	Table selectresult;	
+	int isAll = 0;
+	Table selectresult;
 	int isall = 0;
 	int isend = 0;
 
 	scondition.amount = 0;
 	curword = GetWord();
-	if( curword == "*" )
+	if (curword == "*")
 	{
 		curword = GetWord();
 		isall = 1;
 	}
 	else
 	{
-		while( curword != "from" )
+		while (curword != "from")
 		{
 			targetattr.push_back(curword);
 			targetan++;
 			curword = GetWord();
-			if(curword == ",")
+			if (curword == ",")
 				curword = GetWord();
-			
-			if( targetan > 30 )
+
+			if (targetan > 30)
 			{
-				std::cout << "too many attributes!" << std::endl; 
-				return;	
+				std::cout << "too many attributes!" << std::endl;
+				return;
 			}
 		}
 	}
-	if( curword != "from" )
+	if (curword != "from")
 	{
-		std::cout << "syntax error!" << std::endl; 
-		return;	
-	} 
-	
+		std::cout << "syntax error! : The word 'from' is lost or not at the correct position." << std::endl;
+		return;
+	}
+
 	table_name = GetWord();
 
 	if (table_name[table_name.size() - 1] == ';')
@@ -530,29 +529,29 @@ void Interpreter::ExecSelect()
 	}
 
 	//检验该表是否存在 
-	if(!catalog_manager.isTableExist(table_name))
+	if (!catalog_manager.isTableExist(table_name))
 	{
-		std::cout << "Table " << table_name << " not exists!" << std::endl; 
-		return; 		
+		std::cout << "Table " << table_name << " not exists!" << std::endl;
+		return;
 	}
 
 	curattr = catalog_manager.GetTableAttribute(table_name);
-	
+
 	curword = GetWord();
-	
+
 	//区分是否有查找条件 
-	if( (isend == 1 && curword == "") || (isend == 0 && curword == ";") )
+	if ((isend == 1 && curword == "") || (isend == 0 && curword == ";"))
 	{
 		isAll = 1;//表示选择全部信息 
-	} 
-	else if( isend == 0 && curword != "where" )
-	{
-		std::cout << "syntax error!" << std::endl; 
-		return; 
 	}
-	
+	else if (isend == 0 && curword != "where")
+	{
+		std::cout << "syntax error! : The word 'where' is lost or not at the correct position." << std::endl;
+		return;
+	}
+
 	//开始添加查找条件 
-	if( curword == "where" )
+	if (curword == "where")
 	{
 		while (curword != ";")
 		{
@@ -561,7 +560,7 @@ void Interpreter::ExecSelect()
 			// 
 			curword = GetWord();
 			//属性是否存在 
-			
+
 			position = catalog_manager.isAttributeExist(table_name, curword);
 
 			scondition.attr[scondition.amount] = curword;
@@ -584,330 +583,10 @@ void Interpreter::ExecSelect()
 				scondition.operationtype[scondition.amount - 1] = 5;
 			else
 			{
-				std::cout << "syntax error! : wrong operator" << std::endl;
+				std::cout << "syntax error! : Wrong operator '" << curword << "'." << std::endl;
 				return;
 			}
 
-			//关键值 
-			// 
-			curword = GetWord();
-			if (curword[curword.size() - 1] == ';')
-			{
-				curword.erase(curword.size() - 1, 1);
-				isend = 1;
-			}
-
-			int type = curattr.attr_type[position];
-			if( type == -1 )//int
-			{
-				scondition.key[scondition.amount-1].type = -1;
-				scondition.key[scondition.amount-1].idata = atoi(curword.c_str());
-			}
-			else if( type == 0 )//float
-			{
-				scondition.key[scondition.amount-1].type = 0;
-				scondition.key[scondition.amount-1].fdata = atof(curword.c_str());
-			}
-			else if( type > 0 )//string
-			{
-				scondition.key[scondition.amount-1].type = type;
-				curword = curword.erase(0,1);
-				curword = curword.erase(curword.length()-1,1);
-				scondition.key[scondition.amount-1].sdata = curword;	
-			} 
-			else
-			{
-				std::cout << "syntax error!" << std::endl; 
-				return;					
-			}			
-			
-			curword =  GetWord();
-			//连接字符-and
-			if (isend == 1)
-			{
-				if (curword == "")	break;
-				else
-				{
-					std::cout << "syntax error! : wrong ending" << std::endl;
-					return;
-				}
-			}
-			else if( curword != "and" && curword != ";" )
-			{
-				std::cout << "syntax error!" << std::endl; 
-				return;					
-			}						 
-		}	
-	}
-	
-	if( isAll == 1 )	
-		scondition.amount = 0;
-	
-	//正式调用API函数查找
-	if(isall == 1)
-		api.Select(table_name, targetattr, scondition);
-	else//select *
-	{
-		for (int i = 0; i < curattr.amount; i++)
-			targetattr[i] = curattr.attr_name[i];
-		api.Select(table_name, targetattr, scondition );
-	}
-} 
-
-//insert into s values ( 'sss', 'aaa' ); 
-//对于结尾的判断：...' - 1; ...') - 2; ...'); -3 ...', -4
-void Interpreter::ExecInsert()
-{
-	std::vector<Data> tuple;
-	Attribute curattr;
-	std::string table_name, curword;
-	
-	curword = GetWord();
-	if( curword != "into" )
-	{
-		std::cout << "syntax error! : lack into" << std::endl; 
-		return;
-	}
-	
-	table_name = GetWord();
-	//检验该表是否存在 
-	if(!catalog_manager.isTableExist(table_name))
-	{
-		std::cout << "Insert into table " << table_name << " error!:";
-		std::cout << "Table " << table_name << " not exists!" << std::endl; 
-		return;	
-	}
-	
-	curword = GetWord();
-
-	if( curword.substr(0, 6) != "values" )
-	{
-		std::cout << "syntax error! : lack values" << std::endl;
-		return;
-	}
-
-	if(curword.size() == 6)
-	{
-		curword = GetWord();
-	}
-	else
-	{
-		curword.erase(0, 6);
-	}
-	if (curword[0] != '(')
-	{
-		std::cout << "syntax error! : lack (" << std::endl;
-		return;
-	}
-	else
-		curword.erase(0, 1);
-	
-	//处理第一个值
-	if(curword == "")  
-		curword = GetWord();
-	curattr = catalog_manager.GetTableAttribute(table_name);
-	int number = 0;
-	int isend = 0;
-	int endtype = 4;
-	int curpos = 0;
-	while( endtype == 4 )
-	{
-		int isavalueend = 0;	
-		//对于结尾的判断：... - 1; ...) - 2; ...); -3 ..., -4
-		if (curword[curword.length() - 1] == ';')//...);
-		{
-			if (curword[curword.length() - 2] != ')')
-			{
-				std::cout << "syntax error!" << std::endl;
-				return;
-			}
-
-			endtype = 3;
-			curword.erase(curword.length() - 2, 2);
-		}
-		else if (curword[curword.length() - 1] == ')')//...)  
-		{
-			if (GetWord() != ";")
-			{
-				std::cout << "syntax error!" << std::endl;
-				return;
-			}
-			endtype = 2;
-			curword.erase(curword.length() - 1, 1);
-		}
-		else if (curword[curword.length() - 1] == ',')//...,  
-		{
-			curword.erase(curword.length() - 1, 1);
-			endtype = 4;
-		}
-		else
-		{
-			endtype = 1;
-		}
-		while(!curword.empty())
-		{
-			auto comma = curword.find(",");
-			std::string item;
-			if(comma != std::string::npos)
-			{
-				item = curword.substr(0, comma);
-				curword.erase(0, comma+1);
-			}
-			else
-			{
-				item = curword;
-				curword = "";
-			}
-			Data tmp;
-			tmp.type = curattr.attr_type[number];
-			if (tmp.type == -1)//int
-				tmp.idata = atoi(item.c_str());
-			else if (tmp.type == 0)//float
-				tmp.fdata = atof(item.c_str());
-			else if (tmp.type > 0)//string
-			{
-				if (curword[0] != '\'' && curword[item.size() - 1] != '\'')
-				{
-					std::cout << "syntax error!" << std::endl;
-					return;
-				}
-				item.erase(0, 1);
-				item.erase(item.size() - 1, 1);
-				tmp.sdata = item;
-			}
-			else
-			{
-				std::cout << "MiniSQL not support such type!" << std::endl;
-				return;
-			}
-			tuple.push_back(tmp);
-			number++;
-		}
-
-		if (endtype == 3 || endtype == 2)	
-			break;
-
-		curword = GetWord();
-		if (endtype == 1)
-		{
-			if (curword == ")")
-			{
-				if (GetWord() == ";")
-					break;
-				else
-				{
-					std::cout << "syntax error! : wrong ending" << std::endl;
-					return;
-				}
-			}
-			else if (curword == ");")	break;
-			else if (curword != ",")
-			{
-				std::cout << "syntax error!" << std::endl;
-				return;
-			}
-		}
-		endtype = 4;
-	}
-	
-	if( GetWord() != "" )
-	{
-		std::cout << "syntax error! : wrong ending" << std::endl;
-		return;
-	}
-	api.Insert(table_name, tuple);
-}
-
-//一定要有where的条件，不然不知道删除什么元组 
-void Interpreter::ExecDelete()
-{
-	std::string table_name;
-	std::string curword;
-	SelectCondition scondition;
-	Attribute curattr; 
-	int targetan = 0;
-	int isend = 0;
-
-	scondition.amount = 0;
-	curword = GetWord();
-	if( curword != "from" )
-	{
-		std::cout << "syntax error!" << std::endl; 
-		return;	
-	} 
-	
-	table_name = GetWord();
-	if (table_name[table_name.size() - 1] == ';')
-	{
-		isend = 1;
-		table_name.erase(table_name.size() - 1, 1);
-	}
-	
-	//检验该表是否存在 
-	if(!catalog_manager.isTableExist(table_name))
-	{
-		std::cout << "Table " << table_name<< " not exists!" << std::endl; 
-		return; 		
-	}
-	
-	curattr = catalog_manager.GetTableAttribute(table_name);
-	
-	curword = GetWord();
-	if( (isend == 0 && curword == ";") || (isend == 1 && curword == ""))
-	{
-		//正式调用API函数删除 
-		api.Delete( table_name, scondition );
-		return;	
-	}
-			
-	//区分是否有查找条件 
-	if( isend == 1 || curword != "where" )
-	{
-		std::cout << "syntax error!" << std::endl; 
-		return; 
-	}
-	
-	//开始添加删除条件 
-	if( curword == "where" )
-	{
-		while( curword != ";" )
-		{
-			int position;
-			//属性
-			// 
-			curword =  GetWord();
-			//属性是否存在 
-			position = catalog_manager.isAttributeExist(table_name, curword);
-			/*if( position == -1)
-			{
-				std::cout << "attributes error!" << std::endl; 
-				return 0; 		
-			}
-			*/
-			scondition.attr[scondition.amount] = curword;
-			scondition.amount ++; 
-			
-			//条件
-			//
-			curword =  GetWord();
-			if( curword == "=" )
-				scondition.operationtype[scondition.amount-1] = 0;
-			else if( curword == "<>" )
-				scondition.operationtype[scondition.amount-1] = 1;
-			else if( curword == "<" )
-				scondition.operationtype[scondition.amount-1] = 2;
-			else if( curword == ">" )
-				scondition.operationtype[scondition.amount-1] = 3;
-			else if( curword == "<=" )
-				scondition.operationtype[scondition.amount-1] = 4;
-			else if( curword == ">=" )
-				scondition.operationtype[scondition.amount-1] = 5;
-			else
-			{
-				std::cout << "syntax error! : wrong operater" << std::endl; 
-				return;					
-			}
-			
 			//关键值 
 			// 
 			curword = GetWord();
@@ -927,7 +606,7 @@ void Interpreter::ExecDelete()
 			{
 				scondition.key[scondition.amount - 1].type = 0;
 				scondition.key[scondition.amount - 1].fdata = atof(curword.c_str());
-			}	
+			}
 			else if (type > 0)//string
 			{
 				scondition.key[scondition.amount - 1].type = type;
@@ -948,20 +627,340 @@ void Interpreter::ExecDelete()
 				if (curword == "")	break;
 				else
 				{
-					std::cout << "syntax error! : wrong ending" << std::endl;
+					std::cout << "syntax error! : Extra words at the end of the instruction." << std::endl;
 					return;
 				}
 			}
 			else if (curword != "and" && curword != ";")
 			{
+				std::cout << "syntax error! : The word 'and' or the character ';' is lost or not at the correct position." << std::endl;
+				return;
+			}
+		}
+	}
+
+	if (isAll == 1)
+		scondition.amount = 0;
+
+	//正式调用API函数查找
+	if (isall == 1)
+		api.Select(table_name, targetattr, scondition);
+	else//select *
+	{
+		for (int i = 0; i < curattr.amount; i++)
+			targetattr[i] = curattr.attr_name[i];
+		api.Select(table_name, targetattr, scondition);
+	}
+}
+
+//insert into s values ( 'sss', 'aaa' ); 
+//对于结尾的判断：...' - 1; ...') - 2; ...'); -3 ...', -4
+void Interpreter::ExecInsert()
+{
+	std::vector<Data> tuple;
+	Attribute curattr;
+	std::string table_name, curword;
+
+	curword = GetWord();
+	if (curword != "into")
+	{
+		std::cout << "syntax error! : The word 'into' is lost or not at the correct position." << std::endl;
+		return;
+	}
+
+	table_name = GetWord();
+	//检验该表是否存在 
+	if (!catalog_manager.isTableExist(table_name))
+	{
+		std::cout << "Insert into table " << table_name << " error!:";
+		std::cout << "Table " << table_name << " not exists!" << std::endl;
+		return;
+	}
+
+	curword = GetWord();
+
+	if (curword.substr(0, 6) != "values")
+	{
+		std::cout << "syntax error! : The word 'values' is lost or not at the correct position." << std::endl;
+		return;
+	}
+
+	if (curword.size() == 6)
+	{
+		curword = GetWord();
+	}
+	else
+	{
+		curword.erase(0, 6);
+	}
+	if (curword[0] != '(')
+	{
+		std::cout << "syntax error! : The character '(' is lost or not at the correct position." << std::endl;
+		return;
+	}
+	else
+		curword.erase(0, 1);
+
+	//处理第一个值
+	if (curword == "")
+		curword = GetWord();
+	curattr = catalog_manager.GetTableAttribute(table_name);
+	int number = 0;
+	int isend = 0;
+	int endtype = 4;
+	int curpos = 0;
+	while (endtype == 4)
+	{
+		int isavalueend = 0;
+		//对于结尾的判断：... - 1; ...) - 2; ...); -3 ..., -4
+		if (curword[curword.length() - 1] == ';')//...);
+		{
+			if (curword[curword.length() - 2] != ')')
+			{
+				std::cout << "syntax error! : The character ')' is lost or not at the correct position." << std::endl;
+				return;
+			}
+
+			endtype = 3;
+			curword.erase(curword.length() - 2, 2);
+		}
+		else if (curword[curword.length() - 1] == ')')//...)  
+		{
+			if (GetWord() != ";")
+			{
+				std::cout << "syntax error! : The character ')' is lost or not at the correct position." << std::endl;
+				return;
+			}
+			endtype = 2;
+			curword.erase(curword.length() - 1, 1);
+		}
+		else if (curword[curword.length() - 1] == ',')//...,  
+		{
+			curword.erase(curword.length() - 1, 1);
+			endtype = 4;
+		}
+		else
+		{
+			endtype = 1;
+		}
+		while (!curword.empty())
+		{
+			auto comma = curword.find(",");
+			std::string item;
+			if (comma != std::string::npos)
+			{
+				item = curword.substr(0, comma);
+				curword.erase(0, comma + 1);
+			}
+			else
+			{
+				item = curword;
+				curword = "";
+			}
+			Data tmp;
+			tmp.type = curattr.attr_type[number];
+			if (tmp.type == -1)//int
+				tmp.idata = atoi(item.c_str());
+			else if (tmp.type == 0)//float
+				tmp.fdata = atof(item.c_str());
+			else if (tmp.type > 0)//string
+			{
+				if (curword[0] != '\'' && curword[item.size() - 1] != '\'')
+				{
+					std::cout << "syntax error! : The character ''' is lost or not at the correct position." << std::endl;
+					return;
+				}
+				item.erase(0, 1);
+				item.erase(item.size() - 1, 1);
+				tmp.sdata = item;
+			}
+			else
+			{
+				std::cout << "MiniSQL not support such type!" << std::endl;
+				return;
+			}
+			tuple.push_back(tmp);
+			number++;
+		}
+
+		if (endtype == 3 || endtype == 2)
+			break;
+
+		curword = GetWord();
+		if (endtype == 1)
+		{
+			if (curword == ")")
+			{
+				if (GetWord() == ";")
+					break;
+				else
+				{
+					std::cout << "syntax error! : Wrong ending of instruction." << std::endl;
+					return;
+				}
+			}
+			else if (curword == ");")	break;
+			else if (curword != ",")
+			{
+				std::cout << "syntax error! : The character ',' is lost or not at the correct position." << std::endl;
+				return;
+			}
+		}
+		endtype = 4;
+	}
+
+	if (GetWord() != "")
+	{
+		std::cout << "syntax error! : Extra words at the end of the instruction." << std::endl;
+		return;
+	}
+	api.Insert(table_name, tuple);
+}
+
+//一定要有where的条件，不然不知道删除什么元组 
+void Interpreter::ExecDelete()
+{
+	std::string table_name;
+	std::string curword;
+	SelectCondition scondition;
+	Attribute curattr;
+	int targetan = 0;
+	int isend = 0;
+
+	scondition.amount = 0;
+	curword = GetWord();
+	if (curword != "from")
+	{
+		std::cout << "syntax error! : The word 'from' is lost or not at the correct position." << std::endl;
+		return;
+	}
+
+	table_name = GetWord();
+	if (table_name[table_name.size() - 1] == ';')
+	{
+		isend = 1;
+		table_name.erase(table_name.size() - 1, 1);
+	}
+
+	//检验该表是否存在 
+	if (!catalog_manager.isTableExist(table_name))
+	{
+		std::cout << "Table " << table_name << " not exists!" << std::endl;
+		return;
+	}
+
+	curattr = catalog_manager.GetTableAttribute(table_name);
+
+	curword = GetWord();
+	if ((isend == 0 && curword == ";") || (isend == 1 && curword == ""))
+	{
+		//正式调用API函数删除 
+		api.Delete(table_name, scondition);
+		return;
+	}
+
+	//区分是否有查找条件 
+	if (isend == 1 || curword != "where")
+	{
+		std::cout << "syntax error! : The word 'where' is lost or not at the correct position." << std::endl;
+		return;
+	}
+
+	//开始添加删除条件 
+	if (curword == "where")
+	{
+		while (curword != ";")
+		{
+			int position;
+			//属性
+			// 
+			curword = GetWord();
+			//属性是否存在 
+			position = catalog_manager.isAttributeExist(table_name, curword);
+			/*if( position == -1)
+			{
+				std::cout << "attributes error!" << std::endl;
+				return 0;
+			}
+			*/
+			scondition.attr[scondition.amount] = curword;
+			scondition.amount++;
+
+			//条件
+			//
+			curword = GetWord();
+			if (curword == "=")
+				scondition.operationtype[scondition.amount - 1] = 0;
+			else if (curword == "<>")
+				scondition.operationtype[scondition.amount - 1] = 1;
+			else if (curword == "<")
+				scondition.operationtype[scondition.amount - 1] = 2;
+			else if (curword == ">")
+				scondition.operationtype[scondition.amount - 1] = 3;
+			else if (curword == "<=")
+				scondition.operationtype[scondition.amount - 1] = 4;
+			else if (curword == ">=")
+				scondition.operationtype[scondition.amount - 1] = 5;
+			else
+			{
+				std::cout << "syntax error! : Wrong operator '" << curword << "'." << std::endl;
+				return;
+			}
+
+			//关键值 
+			// 
+			curword = GetWord();
+			if (curword[curword.size() - 1] == ';')
+			{
+				curword.erase(curword.size() - 1, 1);
+				isend = 1;
+			}
+
+			int type = curattr.attr_type[position];
+			if (type == -1)//int
+			{
+				scondition.key[scondition.amount - 1].type = -1;
+				scondition.key[scondition.amount - 1].idata = atoi(curword.c_str());
+			}
+			else if (type == 0)//float
+			{
+				scondition.key[scondition.amount - 1].type = 0;
+				scondition.key[scondition.amount - 1].fdata = atof(curword.c_str());
+			}
+			else if (type > 0)//string
+			{
+				scondition.key[scondition.amount - 1].type = type;
+				curword = curword.erase(0, 1);
+				curword = curword.erase(curword.length() - 1, 1);
+				scondition.key[scondition.amount - 1].sdata = curword;
+			}
+			else
+			{
 				std::cout << "syntax error!" << std::endl;
 				return;
 			}
-		}	
+
+			curword = GetWord();
+			//连接字符-and
+			if (isend == 1)
+			{
+				if (curword == "")	break;
+				else
+				{
+					std::cout << "syntax error! : Extra words at the end of the instruction." << std::endl;
+					return;
+				}
+			}
+			else if (curword != "and" && curword != ";")
+			{
+				std::cout << "syntax error! : The word 'and' and the character ';' is lost or not at the correct position." << std::endl;
+				return;
+			}
+		}
 	}
-	
+
 	//正式调用API函数删除 
-	api.Delete( table_name, scondition );
+	api.Delete(table_name, scondition);
 }
 
 bool Interpreter::ExecFile()
@@ -971,7 +970,7 @@ bool Interpreter::ExecFile()
 	std::string fileaddress;
 	fileaddress = GetWord();
 
-	if(fileaddress[fileaddress.size() - 1] == ';')
+	if (fileaddress[fileaddress.size() - 1] == ';')
 	{
 		fileaddress.erase(fileaddress.size() - 1, 1);
 	}
@@ -980,7 +979,7 @@ bool Interpreter::ExecFile()
 	{
 		GetWord();
 	}
-	file.open(fileaddress.c_str()); 
+	file.open(fileaddress.c_str());
 
 	if (!file)
 	{
@@ -992,17 +991,17 @@ bool Interpreter::ExecFile()
 	//每次操作 
 	while (!file.eof())
 	{
-		if(!GetInstruction(&file))
+		if (!GetInstruction(&file))
 		{
 			return false;
 		}
-		if(JudgeAndExec(&file))
+		if (JudgeAndExec(&file))
 		{
 			return true;
 		}
 	}
 
-	if (!file.eof())	
+	if (!file.eof())
 		std::cout << "file exec error!" << std::endl;
 
 	//执行完切换回输入模式 
